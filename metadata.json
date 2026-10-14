@@ -1,0 +1,6 @@
+{
+  "name": "MAC — Moonshot Academy Campus",
+  "description": "Interactive 2.5D floor-plan-driven campus platform for Moonshot Academy, featuring spatial exploration, room intelligence, environmental layers, campus pulse, and campus life.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
