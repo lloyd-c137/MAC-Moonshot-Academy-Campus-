@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Navigation, MapPin, Footprints, Clock, ArrowRight } from 'lucide-react';
+import { X, Navigation, MapPin } from 'lucide-react';
 import { CAMPUS_SPACES } from '../../data/floorplanData';
-import { findCampusRoute } from '../../services/navigation';
 import { NavigationRoute } from '../../types/campus';
 
 interface NavigationPanelProps {
@@ -19,7 +18,6 @@ export const NavigationPanel: React.FC<NavigationPanelProps> = ({
 }) => {
   const [startId, setStartId] = useState<string>('NODE-ENT-WEST');
   const [destId, setDestId] = useState<string>(selectedDestinationId || 'ARENA-01');
-  const [currentRoute, setCurrentRoute] = useState<NavigationRoute | null>(null);
 
   // Sync destination if passed externally
   useEffect(() => {
@@ -31,9 +29,7 @@ export const NavigationPanel: React.FC<NavigationPanelProps> = ({
   // Recalculate route whenever start or dest changes
   useEffect(() => {
     if (!isOpen) return;
-    const route = findCampusRoute(startId, destId);
-    setCurrentRoute(route);
-    onRouteCalculated(route);
+    onRouteCalculated(null);
   }, [startId, destId, isOpen]);
 
   if (!isOpen) return null;
@@ -49,7 +45,7 @@ export const NavigationPanel: React.FC<NavigationPanelProps> = ({
       <div className="p-4 border-b border-neutral-200/80 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Navigation className="w-4 h-4 text-neutral-800" />
-          <h2 className="text-sm font-bold text-neutral-900">室内走廊导航 (Corridor Routing)</h2>
+          <h2 className="text-sm font-bold text-neutral-900">室内导航（等待空间核验）</h2>
         </div>
         <button
           onClick={handleClear}
@@ -66,6 +62,7 @@ export const NavigationPanel: React.FC<NavigationPanelProps> = ({
             起点 (Start Point)
           </label>
           <select
+            disabled
             value={startId}
             onChange={(e) => setStartId(e.target.value)}
             className="w-full px-3 py-1.5 text-xs bg-white border border-neutral-200 rounded-lg outline-none focus:border-neutral-400"
@@ -88,6 +85,7 @@ export const NavigationPanel: React.FC<NavigationPanelProps> = ({
             目的地 (Destination)
           </label>
           <select
+            disabled
             value={destId}
             onChange={(e) => setDestId(e.target.value)}
             className="w-full px-3 py-1.5 text-xs bg-white border border-neutral-200 rounded-lg outline-none focus:border-neutral-400"
@@ -102,48 +100,17 @@ export const NavigationPanel: React.FC<NavigationPanelProps> = ({
       </div>
 
       {/* Route Summary */}
-      {currentRoute ? (
-        <div className="p-4 flex-1 overflow-y-auto space-y-4">
-          <div className="grid grid-cols-2 gap-3 p-3 bg-neutral-100/70 rounded-xl text-xs">
-            <div className="flex items-center gap-2">
-              <Footprints className="w-4 h-4 text-neutral-600" />
-              <div>
-                <div className="text-[11px] text-neutral-500">步行距离</div>
-                <div className="font-mono font-bold text-neutral-900">{currentRoute.totalDistanceMeters} 米</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-neutral-600" />
-              <div>
-                <div className="text-[11px] text-neutral-500">预估时间</div>
-                <div className="font-mono font-bold text-neutral-900">约 {currentRoute.estimatedMinutes} 分钟</div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-xs font-semibold text-neutral-800 mb-2">沿走廊通行指引 (无穿墙路径)</h4>
-            <div className="space-y-2 text-xs">
-              {currentRoute.steps.map((step, idx) => (
-                <div key={idx} className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center font-mono text-[10px] shrink-0 mt-0.5">
-                    {idx + 1}
-                  </div>
-                  <div className="text-neutral-700 leading-relaxed pt-0.5">{step}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="p-8 text-center text-xs text-neutral-500">
-          正在计算无阻挡室内连通走廊...
-        </div>
-      )}
+      <div className="p-6 flex-1 text-center">
+        <MapPin className="w-5 h-5 text-amber-600 mx-auto mb-2" />
+        <p className="text-sm font-semibold text-neutral-800">导航暂不可用</p>
+        <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+          FF-01 的门洞、走廊和可通行区域尚未逐段核验。完成空间拓扑校准前，不显示路线、距离或时间估算。
+        </p>
+      </div>
 
       {/* Footer */}
       <div className="p-3 bg-neutral-50 border-t border-neutral-200/80 flex items-center justify-between text-xs text-neutral-500">
-        <span>路径已在 2.5D 地图中高亮描画</span>
+        <span>等待 G4 空间拓扑校验</span>
         <button
           onClick={handleClear}
           className="text-neutral-600 hover:text-neutral-900 font-medium"

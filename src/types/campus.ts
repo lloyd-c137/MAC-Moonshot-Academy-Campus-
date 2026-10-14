@@ -19,6 +19,7 @@ export type SpaceCategory =
 export type AccessStatus = 'open' | 'closed' | 'restricted' | 'unknown';
 export type OccupancyStatus = 'available' | 'in_use' | 'crowded' | 'unknown';
 export type PulseLevel = 'quiet' | 'moderate' | 'busy' | 'very_busy' | 'unknown';
+export type GeometryProvenance = 'verified' | 'derived' | 'illustrative' | 'unverified';
 
 export interface Point2D {
   x: number;
@@ -63,6 +64,8 @@ export interface CampusSpace {
   description: string;
   tags: string[];
   isVerifiedInPlan: boolean; // Geometric audit
+  geometryProvenance?: GeometryProvenance;
+  locationProvenance?: GeometryProvenance;
   notes?: string;
 }
 

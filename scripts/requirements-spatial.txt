@@ -1,0 +1,6 @@
+pdfplumber==0.11.8
+pypdf==6.10.0
+PyMuPDF==1.24.14
+Shapely==2.0.7
+numpy==1.26.4
+Pillow==11.3.0

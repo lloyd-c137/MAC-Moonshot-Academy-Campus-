@@ -1,15 +1,13 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { CAMPUS_SPACES } from '../../data/floorplanData';
-import { NAVIGATION_NODES, NAVIGATION_EDGES } from '../../services/navigation';
-import { CampusSpace, MapLayerMode, NavigationRoute } from '../../types/campus';
-import {
-  buildArchitecturalModel,
-  planToWorld,
-  ModelBuildResult,
-} from './architecturalModel';
+import { MapLayerMode, NavigationRoute } from '../../types/campus';
+import { SOURCE_ANCHORS } from '../../data/sourceAnchors';
+import { planToWorld, SPATIAL_PLAN } from '../../data/spatialPlan';
 import { CampusCameraController, CameraState, ViewMode } from './cameraController';
 import { Compass, Maximize2, RotateCcw, Plus, Minus, Layers } from 'lucide-react';
+
+const planPointToWorld = (x: number, y: number) => planToWorld({ x, y });
 
 interface CampusCanvasProps {
   layerMode: MapLayerMode;
@@ -19,115 +17,24 @@ interface CampusCanvasProps {
   reviewMode: boolean;
   showNavGraph: boolean;
   showGrid: boolean;
+  showSourceOverlay: boolean;
+  hasSelectedSpace: boolean;
   onSelectSpace: (spaceId: string | null) => void;
   onHoverSpace: (spaceId: string | null) => void;
 }
 
-// Generate color based on active layer mode
-function getSpaceColor(space: CampusSpace, layerMode: MapLayerMode, isHovered: boolean, isSelected: boolean): number {
-  if (isSelected) return 0xf59e0b; // Bright amber accent
-  if (isHovered) return 0xfcd34d; // Soft amber hover
-
-  if (layerMode === 'temperature') {
-    const t = space.environment.temperature;
-    if (t < 22.0) return 0x38bdf8; // Light Sky Blue (Cool)
-    if (t < 22.8) return 0x34d399; // Mint Emerald (Ideal)
-    if (t < 23.5) return 0xfbbf24; // Warm Amber
-    return 0xf87171; // Soft Coral (Warm)
-  }
-
-  if (layerMode === 'humidity') {
-    const h = space.environment.humidity;
-    if (h < 44) return 0x93c5fd; // Pale Blue
-    if (h < 48) return 0x38bdf8; // Cyan
-    if (h < 52) return 0x2dd4bf; // Teal
-    return 0x0ea5e9; // Deeper Blue
-  }
-
-  if (layerMode === 'co2') {
-    const c = space.environment.co2;
-    if (c < 550) return 0x4ade80; // Fresh Green
-    if (c < 680) return 0xa3e635; // Lime Green
-    if (c < 750) return 0xfbbf24; // Moderate Amber
-    return 0xf87171; // Higher CO2 Warning
-  }
-
-  if (layerMode === 'pulse') {
-    switch (space.pulse) {
-      case 'very_busy':
-        return 0xec4899; // Rose Red
-      case 'busy':
-        return 0xf97316; // Orange
-      case 'moderate':
-        return 0x38bdf8; // Cyan Blue
-      case 'quiet':
-      default:
-        return 0x10b981; // Tranquil Green
-    }
-  }
-
-  if (layerMode === 'spaces') {
-    switch (space.category) {
-      case 'arena':
-        return 0xc98d50; // Maple court
-      case 'creative_maker':
-        return 0xa7f3d0; // Mint green creative
-      case 'quiet_study':
-        return 0xbae6fd; // Quiet sky
-      case 'library_reading':
-        return 0xc7d2fe; // Lavender blue
-      case 'laboratory':
-        return 0x99f6e4; // Crisp scientific teal
-      case 'dining':
-        return 0xfde68a; // Warm dining cream
-      case 'performance_hall':
-        return 0xfecdd3; // Velvet rose
-      case 'courtyard':
-        return 0x8cc67c; // Fresh garden grass
-      case 'entrance':
-        return 0xe2e8f0; // Slate lobby
-      default:
-        return 0xf1f5f9;
-    }
-  }
-
-  // Default 'explore' mode: architectural soft materials
-  if (space.category === 'arena') return 0xc98d50;
-  if (space.category === 'courtyard') return 0x8cc67c;
-  if (space.category === 'creative_maker') return 0xd1fae5;
-  if (space.category === 'quiet_study') return 0xe0f2fe;
-  if (space.category === 'dining') return 0xfef3c7;
-  if (space.category === 'performance_hall') return 0xfce7f3;
-
-  return 0xffffff;
-}
-
 export const CampusCanvas: React.FC<CampusCanvasProps> = ({
-  layerMode,
   selectedSpaceId,
-  hoveredSpaceId,
-  activeRoute,
-  reviewMode,
-  showNavGraph,
-  showGrid,
+  hasSelectedSpace,
   onSelectSpace,
   onHoverSpace,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
   const controllerRef = useRef<CampusCameraController | null>(null);
-  const modelResultRef = useRef<ModelBuildResult | null>(null);
-
-  const routeLineRef = useRef<THREE.Line | null>(null);
-  const navGraphGroupRef = useRef<THREE.Group | null>(null);
-  const gridHelperGroupRef = useRef<THREE.Group | null>(null);
-  const pulseRipplesRef = useRef<THREE.Mesh[]>([]);
+  const sourceSelectionMarkerRef = useRef<THREE.Mesh | null>(null);
 
   // Local camera state for HUD display
-  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>('explore');
-  const [currentZoom, setCurrentZoom] = useState(1.0);
+  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>('plan');
 
   // Focus on selected space smoothly
   useEffect(() => {
@@ -135,8 +42,19 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     const space = CAMPUS_SPACES.find((s) => s.id === selectedSpaceId);
     if (!space) return;
 
-    const wPos = planToWorld(space.center.x, space.center.y);
+    const wPos = planPointToWorld(space.center.x, space.center.y);
     controllerRef.current.focusOnPosition(wPos.x, wPos.z, 1.45);
+  }, [selectedSpaceId]);
+
+  useEffect(() => {
+    const marker = sourceSelectionMarkerRef.current;
+    if (!marker) return;
+    const space = CAMPUS_SPACES.find((candidate) => candidate.id === selectedSpaceId);
+    marker.visible = Boolean(space);
+    if (space) {
+      const point = planPointToWorld(space.center.x, space.center.y);
+      marker.position.set(point.x, 0.04, point.z);
+    }
   }, [selectedSpaceId]);
 
   // Three.js scene initialization
@@ -149,13 +67,11 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
 
     // 1. Scene
     const scene = new THREE.Scene();
-    sceneRef.current = scene;
     scene.background = new THREE.Color(0xf6f5f1); // Warm architectural off-white
-    scene.fog = new THREE.FogExp2(0xf6f5f1, 0.0005);
 
     // 2. Camera: Orthographic Isometric Camera
     const aspect = width / height;
-    const frustumSize = 460;
+    const frustumSize = 180;
     const camera = new THREE.OrthographicCamera(
       (-frustumSize * aspect) / 2,
       (frustumSize * aspect) / 2,
@@ -164,7 +80,6 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       1,
       2500
     );
-    cameraRef.current = camera;
 
     // 3. Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -174,210 +89,103 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    rendererRef.current = renderer;
     container.appendChild(renderer.domElement);
 
-    // 4. Studio Lighting Rig
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    scene.add(ambientLight);
+    // Keep the source sheet as the only spatial drawing until semantic paths
+    // have been reviewed and a separate reconstruction can be compared.
+    const sourceMaterial = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 1,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      side: THREE.DoubleSide,
+    });
+    const sourceOverlay = new THREE.Mesh(new THREE.PlaneGeometry(
+      SPATIAL_PLAN.sourcePageWorldWidth,
+      SPATIAL_PLAN.sourcePageWorldHeight,
+    ), sourceMaterial);
+    sourceOverlay.name = 'FF-01 source drawing overlay';
+    sourceOverlay.rotation.x = -Math.PI / 2;
+    sourceOverlay.position.set(SPATIAL_PLAN.sourcePageWorldOffsetX, 0.02, SPATIAL_PLAN.sourcePageWorldOffsetZ);
+    sourceOverlay.visible = true;
+    sourceOverlay.renderOrder = 1;
+    scene.add(sourceOverlay);
+    new THREE.TextureLoader().load(
+      SPATIAL_PLAN.sourceOverlay,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        sourceMaterial.map = texture;
+        sourceMaterial.needsUpdate = true;
+      },
+      undefined,
+      (error) => console.warn('FF-01 reference overlay could not be loaded.', error),
+    );
 
-    const dirLight = new THREE.DirectionalLight(0xfff8ee, 1.3);
-    dirLight.position.set(320, 520, 260);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.near = 50;
-    dirLight.shadow.camera.far = 1300;
-    const d = 340;
-    dirLight.shadow.camera.left = -d;
-    dirLight.shadow.camera.right = d;
-    dirLight.shadow.camera.top = d;
-    dirLight.shadow.camera.bottom = -d;
-    dirLight.shadow.bias = -0.0004;
-    scene.add(dirLight);
-
-    const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.45);
-    fillLight.position.set(-300, 250, -250);
-    scene.add(fillLight);
-
-    // 5. Build Architectural Cutaway Campus Model (Hollow rooms + 3D walls + 3D Lotus Arena)
-    const modelResult = buildArchitecturalModel();
-    modelResultRef.current = modelResult;
-    scene.add(modelResult.rootGroup);
+    const selectionMarker = new THREE.Mesh(
+      new THREE.RingGeometry(1.6, 2.2, 40),
+      new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false }),
+    );
+    selectionMarker.name = 'SourceRoomLabelSelectionMarker';
+    selectionMarker.rotation.x = -Math.PI / 2;
+    selectionMarker.position.y = 0.04;
+    selectionMarker.visible = false;
+    selectionMarker.renderOrder = 3;
+    scene.add(selectionMarker);
+    sourceSelectionMarkerRef.current = selectionMarker;
 
     // 6. Camera Controller
     const controller = new CampusCameraController(camera, renderer.domElement);
     controllerRef.current = controller;
 
     controller.setCallbacks({
-      onStateChange: (state: CameraState) => {
-        setCurrentViewMode(state.viewMode);
-        setCurrentZoom(state.zoom);
-
-        // Adjust walls in 2D Plan View: in Plan view, scale wall height down slightly
-        // so the flat floor blueprint is 100% visible and unoccluded!
-        if (modelResultRef.current) {
-          const isPlan = state.viewMode === 'plan';
-          const wallYScale = THREE.MathUtils.lerp(
-            modelResultRef.current.wallGroup.scale.y,
-            isPlan ? 0.05 : 1.0,
-            0.15
-          );
-          modelResultRef.current.wallGroup.scale.y = wallYScale;
-        }
-      },
+      onStateChange: (state: CameraState) => setCurrentViewMode(state.viewMode),
       onClickRaycast: (ndc: THREE.Vector2) => {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(ndc, camera);
-        if (modelResultRef.current) {
-          const intersects = raycaster.intersectObjects(
-            modelResultRef.current.pickingMeshes,
-            false
-          );
-          if (intersects.length > 0) {
-            const hit = intersects[0].object;
-            const spaceId = hit.userData?.spaceId;
-            if (spaceId) {
-              onSelectSpace(spaceId);
-              return;
-            }
+        // Spatial selection currently targets source-confirmed room labels only;
+        // the surrounding room boundaries have not been traced yet.
+        const point = raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.02), new THREE.Vector3());
+        if (point) {
+          const label = SOURCE_ANCHORS.find((anchor) => {
+            const anchorWorld = planPointToWorld(anchor.x, anchor.y);
+            return Math.hypot(anchorWorld.x - point.x, anchorWorld.z - point.z) < 1.6;
+          });
+          if (label && CAMPUS_SPACES.some((space) => space.id === label.id)) {
+            onSelectSpace(label.id);
+            return;
           }
         }
-        // Clicked on ground/empty area
+        // Clicked on an unassigned drawing area
         onSelectSpace(null);
+      },
+      onDoubleClickRaycast: (ndc: THREE.Vector2) => {
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(ndc, camera);
+        const point = raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.02), new THREE.Vector3());
+        if (point) controller.zoomToPosition(point.x, point.z);
       },
       onHoverRaycast: (ndc: THREE.Vector2) => {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(ndc, camera);
-        if (modelResultRef.current) {
-          const intersects = raycaster.intersectObjects(
-            modelResultRef.current.pickingMeshes,
-            false
-          );
-          if (intersects.length > 0) {
-            const hit = intersects[0].object;
-            const spaceId = hit.userData?.spaceId;
-            if (spaceId && spaceId !== hoveredSpaceId) {
-              onHoverSpace(spaceId);
-              renderer.domElement.style.cursor = 'pointer';
-              return;
-            }
-          } else if (hoveredSpaceId) {
-            onHoverSpace(null);
-            renderer.domElement.style.cursor = 'default';
-          }
-        }
+        const point = raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.02), new THREE.Vector3());
+        const label = point && SOURCE_ANCHORS.find((anchor) => {
+          const anchorWorld = planPointToWorld(anchor.x, anchor.y);
+          return Math.hypot(anchorWorld.x - point.x, anchorWorld.z - point.z) < 1.6;
+        });
+        const hoveredId = label && CAMPUS_SPACES.some((space) => space.id === label.id) ? label.id : null;
+        onHoverSpace(hoveredId);
+        renderer.domElement.style.cursor = hoveredId ? 'pointer' : 'grab';
       },
     });
 
-    // 7. Architectural Grid & Axis Markers (FF-01 Reference Grid 1-18, A-Q)
-    const gridGroup = new THREE.Group();
-    gridHelperGroupRef.current = gridGroup;
-    scene.add(gridGroup);
-
-    const gridLinesMat = new THREE.LineBasicMaterial({
-      color: 0x94a3b8,
-      transparent: true,
-      opacity: 0.25,
-    });
-
-    for (let xNorm = 50; xNorm <= 950; xNorm += 55) {
-      const wPt1 = planToWorld(xNorm, 40);
-      const wPt2 = planToWorld(xNorm, 820);
-      const pts = [new THREE.Vector3(wPt1.x, 0.4, wPt1.z), new THREE.Vector3(wPt2.x, 0.4, wPt2.z)];
-      const gLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), gridLinesMat);
-      gridGroup.add(gLine);
-    }
-    for (let yNorm = 60; yNorm <= 800; yNorm += 55) {
-      const wPt1 = planToWorld(40, yNorm);
-      const wPt2 = planToWorld(960, yNorm);
-      const pts = [new THREE.Vector3(wPt1.x, 0.4, wPt1.z), new THREE.Vector3(wPt2.x, 0.4, wPt2.z)];
-      const gLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), gridLinesMat);
-      gridGroup.add(gLine);
-    }
-
-    // 8. Navigation Graph Visualization (Review Mode)
-    const navGroup = new THREE.Group();
-    navGraphGroupRef.current = navGroup;
-    scene.add(navGroup);
-
-    const edgeLineMat = new THREE.LineBasicMaterial({
-      color: 0x0ea5e9,
-      transparent: true,
-      opacity: 0.6,
-    });
-
-    NAVIGATION_EDGES.forEach((edge) => {
-      const fromNode = NAVIGATION_NODES.find((n) => n.id === edge.from);
-      const toNode = NAVIGATION_NODES.find((n) => n.id === edge.to);
-      if (fromNode && toNode) {
-        const p1 = planToWorld(fromNode.x, fromNode.y);
-        const p2 = planToWorld(toNode.x, toNode.y);
-        const pts = [new THREE.Vector3(p1.x, 2.5, p1.z), new THREE.Vector3(p2.x, 2.5, p2.z)];
-        const eLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), edgeLineMat);
-        navGroup.add(eLine);
-      }
-    });
-
-    const nodeDotGeo = new THREE.SphereGeometry(1.4, 8, 8);
-    const nodeDotMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
-    NAVIGATION_NODES.forEach((n) => {
-      const p = planToWorld(n.x, n.y);
-      const dot = new THREE.Mesh(nodeDotGeo, nodeDotMat);
-      dot.position.set(p.x, 2.5, p.z);
-      navGroup.add(dot);
-    });
-
-    // 9. Pulse Ripples
-    const pulseLocs = [
-      { x: 500, y: 432, col: 0xf97316 }, // Lotus Arena
-      { x: 780, y: 150, col: 0xec4899 }, // A114 Dining
-      { x: 230, y: 220, col: 0x6366f1 }, // M103 Makerspace
-      { x: 500, y: 780, col: 0x10b981 }, // South Entrance
-    ];
-
-    pulseLocs.forEach((loc) => {
-      const rippleGeo = new THREE.RingGeometry(4, 7, 32);
-      const rippleMat = new THREE.MeshBasicMaterial({
-        color: loc.col,
-        transparent: true,
-        opacity: 0.6,
-        side: THREE.DoubleSide,
-      });
-      const ripple = new THREE.Mesh(rippleGeo, rippleMat);
-      ripple.rotation.x = -Math.PI / 2;
-      const wp = planToWorld(loc.x, loc.y);
-      ripple.position.set(wp.x, 9.2, wp.z);
-      scene.add(ripple);
-      pulseRipplesRef.current.push(ripple);
-    });
-
-    // 10. Animation Loop
+    // Render only the source sheet and a selected source-label marker.
     let animId: number;
-    const clock = new THREE.Clock();
-
     const animate = () => {
       animId = requestAnimationFrame(animate);
       controller.update();
-
-      // Animate pulse ripples
-      const time = clock.getElapsedTime();
-      pulseRipplesRef.current.forEach((r, idx) => {
-        const s = 1.0 + Math.sin(time * 3 + idx * 1.5) * 0.35;
-        r.scale.set(s, s, 1);
-        (r.material as THREE.MeshBasicMaterial).opacity =
-          0.35 + Math.cos(time * 3 + idx * 1.5) * 0.25;
-      });
-
-      // Animate active navigation route glow
-      if (routeLineRef.current) {
-        const mat = routeLineRef.current.material as THREE.LineBasicMaterial;
-        mat.opacity = 0.75 + Math.sin(time * 4) * 0.25;
-      }
-
       renderer.render(scene, camera);
     };
 
@@ -416,6 +224,22 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       canvasElem.removeEventListener('webglcontextrestored', handleContextRestored);
       cancelAnimationFrame(animId);
       controller.dispose();
+      sourceSelectionMarkerRef.current = null;
+      const geometries = new Set<THREE.BufferGeometry>();
+      const materials = new Set<THREE.Material>();
+      const textures = new Set<THREE.Texture>();
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh || object instanceof THREE.Line) geometries.add(object.geometry);
+        const attached = (object as THREE.Mesh).material;
+        if (Array.isArray(attached)) attached.forEach((material) => materials.add(material));
+        else if (attached) materials.add(attached);
+      });
+      for (const material of materials) {
+        for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value);
+        material.dispose();
+      }
+      geometries.forEach((geometry) => geometry.dispose());
+      textures.forEach((texture) => texture.dispose());
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -423,92 +247,31 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     };
   }, []);
 
-  // Sync Layer Mode & Color Highlights
-  useEffect(() => {
-    if (!modelResultRef.current) return;
-    const { floorMeshes } = modelResultRef.current;
-
-    CAMPUS_SPACES.forEach((space) => {
-      const mesh = floorMeshes.get(space.id);
-      if (!mesh) return;
-
-      const isSel = space.id === selectedSpaceId;
-      const isHov = space.id === hoveredSpaceId;
-      const col = getSpaceColor(space, layerMode, isHov, isSel);
-
-      const mat = mesh.material as THREE.MeshStandardMaterial;
-      mat.color.setHex(col);
-
-      // Floor height slight elevation on select
-      if (isSel) {
-        mesh.position.y = 0.45;
-      } else if (isHov) {
-        mesh.position.y = 0.3;
-      } else {
-        mesh.position.y = space.category === 'courtyard' ? 0.08 : 0.12;
-      }
-    });
-  }, [layerMode, selectedSpaceId, hoveredSpaceId]);
-
-  // Sync Active Route Line in 3D
-  useEffect(() => {
-    const scene = sceneRef.current;
-    if (!scene) return;
-
-    if (routeLineRef.current) {
-      scene.remove(routeLineRef.current);
-      routeLineRef.current.geometry.dispose();
-      routeLineRef.current = null;
-    }
-
-    if (activeRoute && activeRoute.nodes.length > 1) {
-      const points = activeRoute.nodes.map((n) => {
-        const p = planToWorld(n.x, n.y);
-        return new THREE.Vector3(p.x, 1.2, p.z);
-      });
-
-      const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-      const lineMat = new THREE.LineBasicMaterial({
-        color: 0x0284c7, // Vibrant electric cyan path
-        linewidth: 4,
-        transparent: true,
-        opacity: 0.9,
-      });
-
-      const routeMesh = new THREE.Line(lineGeo, lineMat);
-      scene.add(routeMesh);
-      routeLineRef.current = routeMesh;
-    }
-  }, [activeRoute]);
-
-  // Sync Review Mode, Grid, and Nav Graph Visibility
-  useEffect(() => {
-    if (navGraphGroupRef.current) {
-      navGraphGroupRef.current.visible = showNavGraph || reviewMode;
-    }
-    if (gridHelperGroupRef.current) {
-      gridHelperGroupRef.current.visible = showGrid || reviewMode;
-    }
-  }, [showNavGraph, showGrid, reviewMode]);
-
   return (
     <div className="relative w-full h-full select-none overflow-hidden">
       <div ref={mountRef} className="w-full h-full" />
 
+      <div className="absolute left-6 top-20 z-10 rounded-xl border border-amber-200 bg-amber-50/95 px-3 py-2 text-xs text-amber-900 shadow-sm pointer-events-none">
+        <div className="font-semibold">FF-01 原始图纸 · 1:300 等比坐标</div>
+        <div className="mt-0.5 text-amber-800">空间边界与门墙待核验；仅房间编号可定位，环境值为模拟样例</div>
+      </div>
+
       {/* Modern Compact Map Controls HUD (Bottom Right of 3D Canvas) */}
-      <div className="absolute bottom-6 right-6 z-20 flex flex-col items-end gap-2 pointer-events-auto">
+      <div className={`absolute z-20 flex flex-col items-end gap-2 pointer-events-auto transition-[right,bottom] duration-300 ${hasSelectedSpace ? 'right-[26rem] bottom-[5.5rem] max-lg:right-6 max-lg:bottom-[34rem]' : 'right-6 bottom-6'}`}>
         {/* 2D / 2.5D View Mode Segmented Switcher */}
         <div className="flex items-center p-1 bg-white/90 backdrop-blur-md rounded-xl border border-neutral-200/90 shadow-lg">
           <button
+            disabled
+            title="等待 FF-01 房间边界、墙体和门洞完成校验"
             onClick={() => controllerRef.current?.setViewMode('explore')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-not-allowed ${
               currentViewMode === 'explore'
                 ? 'bg-neutral-900 text-white shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-900'
+                : 'text-neutral-400'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>2.5D 立体</span>
+            <span>2.5D 待校验</span>
           </button>
           <button
             onClick={() => controllerRef.current?.setViewMode('plan')}
@@ -570,22 +333,9 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
           </>
         )}
         <span aria-hidden="true">·</span>
-        <span>点击教室查看详情</span>
+        <span>点击房间编号查看详情</span>
       </div>
 
-      {/* Verified Plan Stamp Badge (Top Left) */}
-      <div className="absolute top-20 left-6 z-10 pointer-events-none flex flex-col gap-1 text-xs text-neutral-500">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-neutral-800">图纸标准: FF-01</span>
-          <span aria-hidden="true">·</span>
-          <span>比例 1:300</span>
-          <span aria-hidden="true">·</span>
-          <span>134.1m × 115.8m</span>
-        </div>
-        <div className="text-[11px] text-neutral-400">
-          基于广州亚泰工程出图平面 · 莲花球场与各翼真实轴网
-        </div>
-      </div>
     </div>
   );
 };

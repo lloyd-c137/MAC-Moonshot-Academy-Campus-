@@ -1,0 +1,151 @@
+{
+  "summary": {
+    "sourcePdfSha256": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+    "sourceDrawingCount": 33355,
+    "wallLayerPathCount": 3722,
+    "primitiveLineCount": 8455,
+    "polygonizeFaceCount": 2647,
+    "snapGridPt": 0.1,
+    "doorLayerUsedToCloseFaces": false,
+    "status": "IMPLEMENTED_BUT_UNVERIFIED",
+    "reason": "CAD layer and wall geometry produce candidate planar faces; labels and room/corridor semantics need visual human approval."
+  },
+  "pilots": [
+    {
+      "id": "pilot-a-m102-m103-m104",
+      "sourceBoundingBoxPt": [
+        590,
+        1090,
+        805,
+        1310
+      ],
+      "targetRoomIDs": [
+        "M102",
+        "M103",
+        "M104"
+      ],
+      "polygonizedFacesIntersectingCrop": 5,
+      "labelOccurrencesAccounted": 3,
+      "candidatePolygonCount": 0,
+      "roomPolygonCoverage": "0/3",
+      "roomPolygonIoU": "NOT_MEASURABLE: no reviewed reference polygons exist",
+      "wallAlignmentError": "NOT_MEASURABLE: CAD layer paths are candidates, not independent reference wall axes",
+      "spaces": [
+        {
+          "id": "M102",
+          "sourceLabel": "M102",
+          "labelPointPt": [
+            733.76,
+            1154.56
+          ],
+          "polygonPt": [],
+          "geometryStatus": "UNRESOLVED",
+          "confidence": "NONE",
+          "sourcePathIDs": [],
+          "issues": [
+            "No plausible polygonized face contains the extracted source label anchor."
+          ]
+        },
+        {
+          "id": "M103",
+          "sourceLabel": "M103",
+          "labelPointPt": [
+            664.16,
+            1154.56
+          ],
+          "polygonPt": [],
+          "geometryStatus": "UNRESOLVED",
+          "confidence": "NONE",
+          "sourcePathIDs": [],
+          "issues": [
+            "No plausible polygonized face contains the extracted source label anchor."
+          ]
+        },
+        {
+          "id": "M104",
+          "sourceLabel": "M104",
+          "labelPointPt": [
+            651.384,
+            1261.817
+          ],
+          "polygonPt": [],
+          "geometryStatus": "UNRESOLVED",
+          "confidence": "NONE",
+          "sourcePathIDs": [],
+          "issues": [
+            "No plausible polygonized face contains the extracted source label anchor."
+          ]
+        }
+      ],
+      "status": "IMPLEMENTED_BUT_UNVERIFIED"
+    },
+    {
+      "id": "pilot-b-arena-ring",
+      "sourceBoundingBoxPt": [
+        735,
+        535,
+        1040,
+        760
+      ],
+      "targetRoomIDs": [
+        "S208",
+        "S209",
+        "S210"
+      ],
+      "polygonizedFacesIntersectingCrop": 5,
+      "labelOccurrencesAccounted": 3,
+      "candidatePolygonCount": 0,
+      "roomPolygonCoverage": "0/3",
+      "roomPolygonIoU": "NOT_MEASURABLE: no reviewed reference polygons exist",
+      "wallAlignmentError": "NOT_MEASURABLE: CAD layer paths are candidates, not independent reference wall axes",
+      "spaces": [
+        {
+          "id": "S208",
+          "sourceLabel": "S208",
+          "labelPointPt": [
+            966.384,
+            572.777
+          ],
+          "polygonPt": [],
+          "geometryStatus": "UNRESOLVED",
+          "confidence": "NONE",
+          "sourcePathIDs": [],
+          "issues": [
+            "No plausible polygonized face contains the extracted source label anchor."
+          ]
+        },
+        {
+          "id": "S209",
+          "sourceLabel": "S209",
+          "labelPointPt": [
+            812.183,
+            649.217
+          ],
+          "polygonPt": [],
+          "geometryStatus": "UNRESOLVED",
+          "confidence": "NONE",
+          "sourcePathIDs": [],
+          "issues": [
+            "No plausible polygonized face contains the extracted source label anchor."
+          ]
+        },
+        {
+          "id": "S210",
+          "sourceLabel": "S210",
+          "labelPointPt": [
+            777.624,
+            703.937
+          ],
+          "polygonPt": [],
+          "geometryStatus": "UNRESOLVED",
+          "confidence": "NONE",
+          "sourcePathIDs": [],
+          "issues": [
+            "No plausible polygonized face contains the extracted source label anchor."
+          ]
+        }
+      ],
+      "status": "IMPLEMENTED_BUT_UNVERIFIED"
+    }
+  ]
+}

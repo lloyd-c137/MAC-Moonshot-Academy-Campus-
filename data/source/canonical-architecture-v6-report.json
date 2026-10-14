@@ -1,0 +1,22 @@
+{
+  "model": "data/source/canonical-architecture-v6.json",
+  "publicCopy": "public/ff01-architecture-v6.json",
+  "tracePaths": 8959,
+  "wallSegments": {
+    "Existing Wall": 3717,
+    "Structural Wall / Column": 151,
+    "Architectural Wall": 499,
+    "Stair": 1457,
+    "Door": 5000,
+    "Window / Glazing": 1774,
+    "Arena / Seating": 3205,
+    "New Partition": 578,
+    "Floor / Surface": 272
+  },
+  "deduplicatedWallTraceEdges": 3982,
+  "structuralFillCandidates": 899,
+  "sourceLabels": 101,
+  "roomPolygonCandidates": 6,
+  "verifiedRoomPolygons": 0,
+  "status": "SOURCE_TRACES_READY_DEVELOPER_PREVIEW_ONLY"
+}

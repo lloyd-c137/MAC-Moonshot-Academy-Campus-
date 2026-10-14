@@ -1,0 +1,1203 @@
+{
+  "roomID": "S209",
+  "candidateID": "ff01-s209-seed-v3",
+  "candidateStatus": "HUMAN_REVIEW_REQUIRED",
+  "reviewPackageStatus": "REVIEW_READY",
+  "sourcePdf": "FF-01 · page rotation normalized · 2384x1684 display points",
+  "sourceCrop": "original-source-crop.png",
+  "structuralEvidenceImage": "vector-raster-evidence.png",
+  "candidateOverlay": "candidate-edge-overlay.png",
+  "geometry": {
+    "areaM2": 19.6,
+    "annotatedAreaM2": 20.0,
+    "areaDeviationPercent": -2.0,
+    "valid": true,
+    "selfIntersection": false,
+    "seedInside": true,
+    "independentIoU": "NOT_MEASURABLE"
+  },
+  "edgeCount": 20,
+  "edges": [
+    {
+      "edgeID": "S209-E01",
+      "startPt": [
+        829.467,
+        616.054
+      ],
+      "endPt": [
+        818.639,
+        621.64
+      ],
+      "lengthPt": 12.184,
+      "orientationDegrees": 152.71,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14424",
+        "P14424"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P14424",
+        "drawingID": "F14424",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.001,
+        "angleDeltaDegrees": 2.9,
+        "overlapFraction": 0.998
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14424",
+        "drawingID": "F14424",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.001,
+        "angleDeltaDegrees": 2.9,
+        "overlapFraction": 0.998
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E02",
+      "startPt": [
+        818.639,
+        621.64
+      ],
+      "endPt": [
+        820.04,
+        624.88
+      ],
+      "lengthPt": 3.53,
+      "orientationDegrees": 66.62,
+      "classification": "CANDIDATE_WALL",
+      "confidence": "LOW_ALIGNMENT_REQUIRES_REVIEW",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P08909"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": null,
+      "nearestAnyEvidence": {
+        "sourcePathID": "P08909",
+        "drawingID": "F08909",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 21.62,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E03",
+      "startPt": [
+        820.04,
+        624.88
+      ],
+      "endPt": [
+        816.08,
+        628.96
+      ],
+      "lengthPt": 5.686,
+      "orientationDegrees": 134.14,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P08906",
+        "P08906"
+      ],
+      "cadLayers": [
+        "A04-建筑剪力墙柱填充",
+        "A04-建筑剪力墙柱填充"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P08906",
+        "drawingID": "F08906",
+        "layer": "A04-建筑剪力墙柱填充",
+        "semantic": "Structural Wall / Column",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P08906",
+        "drawingID": "F08906",
+        "layer": "A04-建筑剪力墙柱填充",
+        "semantic": "Structural Wall / Column",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E04",
+      "startPt": [
+        816.08,
+        628.96
+      ],
+      "endPt": [
+        814.01,
+        626.89
+      ],
+      "lengthPt": 2.927,
+      "orientationDegrees": 45.0,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P08908",
+        "P08908"
+      ],
+      "cadLayers": [
+        "A04-建筑剪力墙柱填充",
+        "A04-建筑剪力墙柱填充"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P08908",
+        "drawingID": "F08908",
+        "layer": "A04-建筑剪力墙柱填充",
+        "semantic": "Structural Wall / Column",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P08908",
+        "drawingID": "F08908",
+        "layer": "A04-建筑剪力墙柱填充",
+        "semantic": "Structural Wall / Column",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E05",
+      "startPt": [
+        814.01,
+        626.89
+      ],
+      "endPt": [
+        797.72,
+        653.56
+      ],
+      "lengthPt": 31.251,
+      "orientationDegrees": 121.42,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14420",
+        "P14420"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P14420",
+        "drawingID": "F14420",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 1.43,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14420",
+        "drawingID": "F14420",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 1.43,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E06",
+      "startPt": [
+        797.72,
+        653.56
+      ],
+      "endPt": [
+        795.756,
+        652.561
+      ],
+      "lengthPt": 2.203,
+      "orientationDegrees": 26.96,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14420",
+        "P14420"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P14420",
+        "drawingID": "F14420",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 2.79,
+        "overlapFraction": 0.877
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14420",
+        "drawingID": "F14420",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 2.79,
+        "overlapFraction": 0.877
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E07",
+      "startPt": [
+        795.756,
+        652.561
+      ],
+      "endPt": [
+        791.165,
+        651.954
+      ],
+      "lengthPt": 4.631,
+      "orientationDegrees": 7.53,
+      "classification": "DOOR_OR_GLAZING",
+      "confidence": "OPENING_EVIDENCE_NOT_WALL",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14426"
+      ],
+      "cadLayers": [
+        "P03-门扇"
+      ],
+      "nearestWallEvidence": null,
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14426",
+        "drawingID": "F14426",
+        "layer": "P03-门扇",
+        "semantic": "Door",
+        "distancePt": 7.272,
+        "angleDeltaDegrees": 22.3,
+        "overlapFraction": 0.503
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall."
+    },
+    {
+      "edgeID": "S209-E08",
+      "startPt": [
+        791.165,
+        651.954
+      ],
+      "endPt": [
+        784.758,
+        655.408
+      ],
+      "lengthPt": 7.279,
+      "orientationDegrees": 151.67,
+      "classification": "DOOR_OR_GLAZING",
+      "confidence": "OPENING_EVIDENCE_NOT_WALL",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14426"
+      ],
+      "cadLayers": [
+        "P03-门扇"
+      ],
+      "nearestWallEvidence": null,
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14426",
+        "drawingID": "F14426",
+        "layer": "P03-门扇",
+        "semantic": "Door",
+        "distancePt": 1.089,
+        "angleDeltaDegrees": 58.16,
+        "overlapFraction": 0.55
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall."
+    },
+    {
+      "edgeID": "S209-E09",
+      "startPt": [
+        784.758,
+        655.408
+      ],
+      "endPt": [
+        796.28,
+        663.64
+      ],
+      "lengthPt": 14.161,
+      "orientationDegrees": 35.54,
+      "classification": "DOOR_OR_GLAZING",
+      "confidence": "OPENING_EVIDENCE_NOT_WALL",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14426"
+      ],
+      "cadLayers": [
+        "P03-门扇"
+      ],
+      "nearestWallEvidence": null,
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14426",
+        "drawingID": "F14426",
+        "layer": "P03-门扇",
+        "semantic": "Door",
+        "distancePt": 0.154,
+        "angleDeltaDegrees": 5.71,
+        "overlapFraction": 0.661
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E10",
+      "startPt": [
+        796.28,
+        663.64
+      ],
+      "endPt": [
+        797.323,
+        666.475
+      ],
+      "lengthPt": 3.021,
+      "orientationDegrees": 69.8,
+      "classification": "CANDIDATE_WALL",
+      "confidence": "LOW_ALIGNMENT_REQUIRES_REVIEW",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14419"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": null,
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14419",
+        "drawingID": "F14419",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 39.83,
+        "overlapFraction": 0.588
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E11",
+      "startPt": [
+        797.323,
+        666.475
+      ],
+      "endPt": [
+        817.308,
+        678.001
+      ],
+      "lengthPt": 23.071,
+      "orientationDegrees": 29.97,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14419",
+        "P14419"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P14419",
+        "drawingID": "F14419",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14419",
+        "drawingID": "F14419",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E12",
+      "startPt": [
+        817.308,
+        678.001
+      ],
+      "endPt": [
+        818.542,
+        676.918
+      ],
+      "lengthPt": 1.642,
+      "orientationDegrees": 138.73,
+      "classification": "CANDIDATE_WALL",
+      "confidence": "LOW_ALIGNMENT_REQUIRES_REVIEW",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P08898"
+      ],
+      "cadLayers": [
+        "A04-建筑剪力墙柱填充"
+      ],
+      "nearestWallEvidence": null,
+      "nearestAnyEvidence": {
+        "sourcePathID": "P08898",
+        "drawingID": "F08898",
+        "layer": "A04-建筑剪力墙柱填充",
+        "semantic": "Structural Wall / Column",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 19.44,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E13",
+      "startPt": [
+        818.542,
+        676.918
+      ],
+      "endPt": [
+        822.586,
+        677.661
+      ],
+      "lengthPt": 4.112,
+      "orientationDegrees": 10.41,
+      "classification": "CANDIDATE_WALL",
+      "confidence": "LOW_ALIGNMENT_REQUIRES_REVIEW",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P08898"
+      ],
+      "cadLayers": [
+        "A04-建筑剪力墙柱填充"
+      ],
+      "nearestWallEvidence": null,
+      "nearestAnyEvidence": {
+        "sourcePathID": "P08898",
+        "drawingID": "F08898",
+        "layer": "A04-建筑剪力墙柱填充",
+        "semantic": "Structural Wall / Column",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 19.93,
+        "overlapFraction": 0.971
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E14",
+      "startPt": [
+        822.586,
+        677.661
+      ],
+      "endPt": [
+        836.479,
+        653.599
+      ],
+      "lengthPt": 27.785,
+      "orientationDegrees": 120.0,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14422",
+        "P14422"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P14422",
+        "drawingID": "F14422",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14422",
+        "drawingID": "F14422",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E15",
+      "startPt": [
+        836.479,
+        653.599
+      ],
+      "endPt": [
+        837.811,
+        651.291
+      ],
+      "lengthPt": 2.665,
+      "orientationDegrees": 119.99,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14422",
+        "P14422"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P14422",
+        "drawingID": "F14422",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.01,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14422",
+        "drawingID": "F14422",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.01,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E16",
+      "startPt": [
+        837.811,
+        651.291
+      ],
+      "endPt": [
+        834.8,
+        647.68
+      ],
+      "lengthPt": 4.702,
+      "orientationDegrees": 50.18,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P08913",
+        "P08913"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P08913",
+        "drawingID": "F08913",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 5.18,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P08913",
+        "drawingID": "F08913",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 5.18,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E17",
+      "startPt": [
+        834.8,
+        647.68
+      ],
+      "endPt": [
+        838.76,
+        643.6
+      ],
+      "lengthPt": 5.686,
+      "orientationDegrees": 134.14,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P08911",
+        "P08911"
+      ],
+      "cadLayers": [
+        "A04-建筑剪力墙柱填充",
+        "A04-建筑剪力墙柱填充"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P08911",
+        "drawingID": "F08911",
+        "layer": "A04-建筑剪力墙柱填充",
+        "semantic": "Structural Wall / Column",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P08911",
+        "drawingID": "F08911",
+        "layer": "A04-建筑剪力墙柱填充",
+        "semantic": "Structural Wall / Column",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E18",
+      "startPt": [
+        838.76,
+        643.6
+      ],
+      "endPt": [
+        841.486,
+        646.409
+      ],
+      "lengthPt": 3.914,
+      "orientationDegrees": 45.86,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P08913",
+        "P08913"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P08913",
+        "drawingID": "F08913",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P08913",
+        "drawingID": "F08913",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 0.0,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E19",
+      "startPt": [
+        841.486,
+        646.409
+      ],
+      "endPt": [
+        845.137,
+        645.136
+      ],
+      "lengthPt": 3.867,
+      "orientationDegrees": 160.78,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14422",
+        "P14422"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P14422",
+        "drawingID": "F14422",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 10.76,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14422",
+        "drawingID": "F14422",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 10.76,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    },
+    {
+      "edgeID": "S209-E20",
+      "startPt": [
+        845.137,
+        645.136
+      ],
+      "endPt": [
+        829.467,
+        616.054
+      ],
+      "lengthPt": 33.035,
+      "orientationDegrees": 61.68,
+      "classification": "WALL_ALIGNED_CANDIDATE",
+      "confidence": "SOURCE_WALL_ALIGNMENT_CANDIDATE_NOT_VERIFIED",
+      "reviewStatus": "HUMAN_REVIEW_REQUIRED",
+      "sourcePathIDs": [
+        "P14424",
+        "P14424"
+      ],
+      "cadLayers": [
+        "A05-建筑原有墙体",
+        "A05-建筑原有墙体"
+      ],
+      "nearestWallEvidence": {
+        "sourcePathID": "P14424",
+        "drawingID": "F14424",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 1.55,
+        "overlapFraction": 1.0
+      },
+      "nearestAnyEvidence": {
+        "sourcePathID": "P14424",
+        "drawingID": "F14424",
+        "layer": "A05-建筑原有墙体",
+        "semantic": "Existing Wall",
+        "distancePt": 0.0,
+        "angleDeltaDegrees": 1.55,
+        "overlapFraction": 1.0
+      },
+      "currentReviewStatus": "NOT_REVIEWED",
+      "priorObjection": null
+    }
+  ],
+  "correctionProposals": [
+    {
+      "proposalID": "S209-SNAP-E01",
+      "edgeIDs": [
+        "S209-E01"
+      ],
+      "oldEndpointsPt": [
+        [
+          829.467,
+          616.054
+        ],
+        [
+          818.639,
+          621.64
+        ]
+      ],
+      "newEndpointsPt": [
+        [
+          829.1573161129697,
+          615.5215610363339
+        ],
+        [
+          818.6387206099744,
+          621.639519645219
+        ]
+      ],
+      "sourcePathIDs": [
+        "P14424"
+      ],
+      "cadLayer": "A05-建筑原有墙体",
+      "geometryDeltaMaxPt": 0.616,
+      "areaDeltaM2IllustrativeScale": 0.038,
+      "reason": "Align this boundary edge to a nearby, direction-compatible native structural vector.",
+      "uncertainty": "Candidate only; vector may be a parallel wall face, not the room-side boundary. Reviewer must inspect overlay.",
+      "resultPolygonSourcePt": [
+        [
+          829.157,
+          615.522
+        ],
+        [
+          818.639,
+          621.64
+        ],
+        [
+          820.04,
+          624.88
+        ],
+        [
+          816.08,
+          628.96
+        ],
+        [
+          814.01,
+          626.89
+        ],
+        [
+          797.72,
+          653.56
+        ],
+        [
+          795.756,
+          652.561
+        ],
+        [
+          791.165,
+          651.954
+        ],
+        [
+          784.758,
+          655.408
+        ],
+        [
+          796.28,
+          663.64
+        ],
+        [
+          797.323,
+          666.475
+        ],
+        [
+          817.308,
+          678.001
+        ],
+        [
+          818.542,
+          676.918
+        ],
+        [
+          822.586,
+          677.661
+        ],
+        [
+          836.479,
+          653.599
+        ],
+        [
+          837.811,
+          651.291
+        ],
+        [
+          834.8,
+          647.68
+        ],
+        [
+          838.76,
+          643.6
+        ],
+        [
+          841.486,
+          646.409
+        ],
+        [
+          845.137,
+          645.136
+        ],
+        [
+          829.157,
+          615.522
+        ]
+      ]
+    },
+    {
+      "proposalID": "S209-SNAP-E05",
+      "edgeIDs": [
+        "S209-E05"
+      ],
+      "oldEndpointsPt": [
+        [
+          814.01,
+          626.89
+        ],
+        [
+          797.72,
+          653.56
+        ]
+      ],
+      "newEndpointsPt": [
+        [
+          813.335760759936,
+          626.5009015839278
+        ],
+        [
+          797.7201183083419,
+          653.560068274858
+        ]
+      ],
+      "sourcePathIDs": [
+        "P14420"
+      ],
+      "cadLayer": "A05-建筑原有墙体",
+      "geometryDeltaMaxPt": 0.778,
+      "areaDeltaM2IllustrativeScale": 0.133,
+      "reason": "Align this boundary edge to a nearby, direction-compatible native structural vector.",
+      "uncertainty": "Candidate only; vector may be a parallel wall face, not the room-side boundary. Reviewer must inspect overlay.",
+      "resultPolygonSourcePt": [
+        [
+          829.467,
+          616.054
+        ],
+        [
+          818.639,
+          621.64
+        ],
+        [
+          820.04,
+          624.88
+        ],
+        [
+          816.08,
+          628.96
+        ],
+        [
+          813.336,
+          626.501
+        ],
+        [
+          797.72,
+          653.56
+        ],
+        [
+          795.756,
+          652.561
+        ],
+        [
+          791.165,
+          651.954
+        ],
+        [
+          784.758,
+          655.408
+        ],
+        [
+          796.28,
+          663.64
+        ],
+        [
+          797.323,
+          666.475
+        ],
+        [
+          817.308,
+          678.001
+        ],
+        [
+          818.542,
+          676.918
+        ],
+        [
+          822.586,
+          677.661
+        ],
+        [
+          836.479,
+          653.599
+        ],
+        [
+          837.811,
+          651.291
+        ],
+        [
+          834.8,
+          647.68
+        ],
+        [
+          838.76,
+          643.6
+        ],
+        [
+          841.486,
+          646.409
+        ],
+        [
+          845.137,
+          645.136
+        ],
+        [
+          829.467,
+          616.054
+        ]
+      ]
+    },
+    {
+      "proposalID": "S209-SNAP-E06",
+      "edgeIDs": [
+        "S209-E06"
+      ],
+      "oldEndpointsPt": [
+        [
+          797.72,
+          653.56
+        ],
+        [
+          795.756,
+          652.561
+        ]
+      ],
+      "newEndpointsPt": [
+        [
+          797.719981539142,
+          653.5600323050594
+        ],
+        [
+          796.04,
+          652.6
+        ]
+      ],
+      "sourcePathIDs": [
+        "P14420"
+      ],
+      "cadLayer": "A05-建筑原有墙体",
+      "geometryDeltaMaxPt": 0.287,
+      "areaDeltaM2IllustrativeScale": 0.001,
+      "reason": "Align this boundary edge to a nearby, direction-compatible native structural vector.",
+      "uncertainty": "Candidate only; vector may be a parallel wall face, not the room-side boundary. Reviewer must inspect overlay.",
+      "resultPolygonSourcePt": [
+        [
+          829.467,
+          616.054
+        ],
+        [
+          818.639,
+          621.64
+        ],
+        [
+          820.04,
+          624.88
+        ],
+        [
+          816.08,
+          628.96
+        ],
+        [
+          814.01,
+          626.89
+        ],
+        [
+          797.72,
+          653.56
+        ],
+        [
+          796.04,
+          652.6
+        ],
+        [
+          791.165,
+          651.954
+        ],
+        [
+          784.758,
+          655.408
+        ],
+        [
+          796.28,
+          663.64
+        ],
+        [
+          797.323,
+          666.475
+        ],
+        [
+          817.308,
+          678.001
+        ],
+        [
+          818.542,
+          676.918
+        ],
+        [
+          822.586,
+          677.661
+        ],
+        [
+          836.479,
+          653.599
+        ],
+        [
+          837.811,
+          651.291
+        ],
+        [
+          834.8,
+          647.68
+        ],
+        [
+          838.76,
+          643.6
+        ],
+        [
+          841.486,
+          646.409
+        ],
+        [
+          845.137,
+          645.136
+        ],
+        [
+          829.467,
+          616.054
+        ]
+      ]
+    }
+  ],
+  "candidateSharedBoundaries": [],
+  "candidateOverlaps": [],
+  "outstandingIssues": [
+    "Candidate is machine-generated and requires human verification.",
+    "Door and glazing paths were used only as temporary segmentation barriers; no physical wall or navigable opening is asserted.",
+    "3 contour edges need review; edge evidence is listed individually."
+  ],
+  "verificationRecord": null,
+  "verificationNote": "REVIEW_READY describes a complete machine-generated review packet. It does not mean a person reviewed or verified this room."
+}

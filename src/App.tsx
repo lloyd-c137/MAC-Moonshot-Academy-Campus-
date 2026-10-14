@@ -7,13 +7,16 @@ import { FindMySpotModal } from './components/ui/FindMySpotModal';
 import { NavigationPanel } from './components/ui/NavigationPanel';
 import { AddMomentModal } from './components/ui/AddMomentModal';
 import { GeometryReviewDrawer } from './components/ui/GeometryReviewDrawer';
+import { GeometryReviewEditor } from './components/dev/GeometryReviewEditor';
+import { GeometryReviewSession } from './components/dev/GeometryReviewSession';
+import { BuildingPreviewV6 } from './components/dev/BuildingPreviewV6';
 import { CAMPUS_SPACES } from './data/floorplanData';
 import { CAMPUS_EVENTS } from './data/mockEvents';
 import { getStoredMoments, toggleLikeMoment } from './data/mockMoments';
 import { CampusSpace, MapLayerMode, NavigationRoute, CampusMoment } from './types/campus';
 import { Thermometer, Droplets, Cloud, Layers, Info } from 'lucide-react';
 
-export default function App() {
+function CampusApp() {
   const [layerMode, setLayerMode] = useState<MapLayerMode>('explore');
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
   const [hoveredSpaceId, setHoveredSpaceId] = useState<string | null>(null);
@@ -28,6 +31,7 @@ export default function App() {
   const [reviewMode, setReviewMode] = useState(false);
   const [showNavGraph, setShowNavGraph] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
+  const [showSourceOverlay, setShowSourceOverlay] = useState(false);
 
   // Dynamic moments loaded from local storage & defaults
   const [moments, setMoments] = useState<CampusMoment[]>(() => getStoredMoments());
@@ -78,6 +82,19 @@ export default function App() {
     setSelectedSpaceId(spaceId);
     setIsNavPanelOpen(true);
   };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (isAddMomentOpen) setIsAddMomentOpen(false);
+      else if (isFindSpotOpen) setIsFindSpotOpen(false);
+      else if (isNavPanelOpen) setIsNavPanelOpen(false);
+      else if (reviewMode) setReviewMode(false);
+      else setSelectedSpaceId(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isAddMomentOpen, isFindSpotOpen, isNavPanelOpen, reviewMode]);
 
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-neutral-100 font-sans">
@@ -132,6 +149,8 @@ export default function App() {
           reviewMode={reviewMode}
           showNavGraph={showNavGraph}
           showGrid={showGrid}
+          showSourceOverlay={showSourceOverlay}
+          hasSelectedSpace={selectedSpaceId !== null}
           onSelectSpace={handleSelectSpace}
           onHoverSpace={setHoveredSpaceId}
         />
@@ -207,9 +226,11 @@ export default function App() {
         isOpen={reviewMode}
         showNavGraph={showNavGraph}
         showGrid={showGrid}
+        showSourceOverlay={showSourceOverlay}
         onClose={() => setReviewMode(false)}
         onToggleNavGraph={() => setShowNavGraph(!showNavGraph)}
         onToggleGrid={() => setShowGrid(!showGrid)}
+        onToggleSourceOverlay={() => setShowSourceOverlay(!showSourceOverlay)}
       />
 
       {/* 7. Bottom Ergonomic Discover Dock */}
@@ -236,4 +257,10 @@ export default function App() {
       />
     </main>
   );
+}
+
+export default function App() {
+  if (import.meta.env.DEV && window.location.pathname === '/dev/building-preview') return <BuildingPreviewV6 />;
+  if (import.meta.env.DEV && window.location.pathname === '/dev/geometry-review') return new URLSearchParams(window.location.search).get('mode') === 'edit' ? <GeometryReviewEditor /> : <GeometryReviewSession />;
+  return <CampusApp />;
 }

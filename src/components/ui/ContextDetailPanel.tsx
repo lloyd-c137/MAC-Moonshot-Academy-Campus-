@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   X,
+  ChevronDown,
+  ChevronUp,
   Navigation,
   Sparkles,
   Thermometer,
@@ -67,6 +69,8 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
   onLikeMoment,
 }) => {
   const [timeTab, setTimeTab] = useState<'now' | 'past' | 'next'>('now');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  useEffect(() => setIsCollapsed(false), [space?.id]);
 
   if (!space) return null;
 
@@ -92,7 +96,7 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
   const currentOccupancy = occupancyLabels[space.occupancy] || occupancyLabels.unknown;
 
   return (
-    <aside className="absolute top-16 right-6 bottom-6 z-20 w-96 max-w-[calc(100vw-3rem)] bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-2xl shadow-xl flex flex-col overflow-hidden transition-all">
+    <aside className={`absolute top-16 right-6 ${isCollapsed ? 'bottom-auto' : 'bottom-6'} z-20 w-96 max-w-[calc(100vw-3rem)] bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-2xl shadow-xl flex flex-col overflow-hidden transition-all`}>
       {/* Header */}
       <div className="p-5 border-b border-neutral-200/70">
         <div className="flex items-start justify-between gap-3">
@@ -102,7 +106,7 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
               <span aria-hidden="true">·</span>
               <span>{space.series} 系列空间</span>
               <span aria-hidden="true">·</span>
-              <span>FF-01 图纸已验证</span>
+              <span>定位锚点来自 FF-01</span>
             </div>
             <h2 className="text-lg font-bold text-neutral-900 tracking-tight leading-snug">
               {space.name}
@@ -111,15 +115,18 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
               <p className="text-xs text-neutral-400 mt-0.5">{space.englishName}</p>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setIsCollapsed(!isCollapsed)} aria-expanded={!isCollapsed} aria-label={isCollapsed ? '展开房间详情' : '收起房间详情'} className="p-1 text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg transition-colors">
+              {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </button>
+            <button onClick={onClose} aria-label="关闭房间详情" className="p-1 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Status Strip (Unboxed Clean Metadata) */}
+        {!isCollapsed && <>
         <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5">
             <span className="text-neutral-500">准入:</span>
@@ -139,8 +146,10 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
             </div>
           )}
         </div>
+        </>}
       </div>
 
+      {!isCollapsed && <>
       {/* Time Machine Tabs: Past / Now / Next */}
       <div className="flex items-center p-1 mx-5 mt-3 bg-neutral-100 rounded-lg">
         <button
@@ -183,7 +192,7 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-neutral-800">环境微气候</span>
                 <span className="text-[11px] text-neutral-400">
-                  {space.environment.sensorHealth === 'live' ? '实时传感器流' : '校准模拟读数'} · {space.environment.lastUpdated}
+                  演示环境数据（模拟样例） · {space.environment.lastUpdated}
                 </span>
               </div>
 
@@ -370,6 +379,7 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
           <MessageSquare className="w-4 h-4" />
         </button>
       </div>
+      </>}
     </aside>
   );
 };

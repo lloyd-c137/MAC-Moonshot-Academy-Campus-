@@ -1,4 +1,5 @@
 import { CampusSpace, Point2D } from '../types/campus';
+import { SOURCE_LABEL_ANCHORS } from './sourceAnchors';
 
 // Helper to create a rect polygon
 function makeRect(x: number, y: number, w: number, h: number): Point2D[] {
@@ -62,7 +63,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'busy',
     description: 'MAC 标志性核心活动中心，八面莲花多边形环抱式建筑结构，用于大型集会、赛事、球赛与全校仪式。',
     tags: ['Active', 'Sports', 'Ceremony', 'Landmark'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
 
   // ========================================================
@@ -98,7 +99,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '严禁交谈的高专注个人学习空间，探月学子备考与深度思考的首选角落。',
     tags: ['Quiet Study', 'Individual Work', 'Silence Preferred'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S405',
@@ -130,7 +131,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '第二间绝对安静学习室，当前空位充裕，环境清凉干爽。',
     tags: ['Quiet Study', 'Individual Work', 'Silence Preferred'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S403',
@@ -162,7 +163,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '小型研习与手工共创工坊，支持快速头脑风暴与团队小型工作站搭建。',
     tags: ['Workshop', 'Team Work', 'Creative'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S202',
@@ -194,7 +195,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '专为深度交流、导师面对面沟通以及学生小团队读书复盘打造的温馨空间。',
     tags: ['Conversation', 'Small Group Discussion', 'Open Chat'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S203',
@@ -226,7 +227,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '上善书院常驻研讨与交流据点，承载书院自治、日常集会与社群陪伴。',
     tags: ['College', 'Community', 'Discussion'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S204',
@@ -258,7 +259,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '复朴书院空间，追求朴实自律的学习氛围。',
     tags: ['College', 'Community', 'Study'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S205',
@@ -290,7 +291,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '无极书院研讨交流中心，思想撞击与社团研讨氛围活跃。',
     tags: ['College', 'Community', 'Creative'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S104',
@@ -322,7 +323,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '赤子书院专属空间，洋溢朝气与朋辈互助文化。',
     tags: ['College', 'Community', 'Discussion'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S100',
@@ -354,7 +355,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '环绕莲花球场北侧的 208m² 大开间学术阅览室，书香浓郁，视野开阔。',
     tags: ['Reading', 'Quiet Work', 'Study'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S101',
@@ -386,7 +387,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '播客录制、人声配音及校园电台专用高品质隔音录音室（需向指导老师预约权限）。',
     tags: ['Recording', 'Podcast', 'Audio Studio'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'S407',
@@ -418,7 +419,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '馆藏丰富的人文社科与科技图书书库，连接北侧环廊。',
     tags: ['Books', 'Academic', 'Quiet'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
 
   // ========================================================
@@ -454,7 +455,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '象征探月精神的标志性开放创新研学工坊。鼓励每一个学生跨出勇于尝试的“一小步”。',
     tags: ['One Small Step', 'Creative', 'Project Based', 'Featured'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M103',
@@ -486,7 +487,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'busy',
     description: '校园规模最大的硬件与造物工坊，配备全套工具，同学们在这里把灵感转变为实物。',
     tags: ['Maker', 'Hardware', 'Prototyping', 'FabLab'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M102',
@@ -518,7 +519,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '视觉传达、工业设计及空间建筑思维的孵化营地，光线充沛，设计氛围浓厚。',
     tags: ['Design', 'Visual Arts', 'Creative'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M100',
@@ -550,7 +551,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '西区核心教学团队与高中导师联合办公空间，含 M100-1 与 M100-2 独立会议室。',
     tags: ['Faculty', 'Office', 'Advisors'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M124',
@@ -582,7 +583,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'busy',
     description: '探月高级物理与跨学科科学实验室，配备专业通风柜与数字传感采集仪。',
     tags: ['Lab', 'Physics', 'Science', 'Ventilated'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M126',
@@ -614,7 +615,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '科学探索实验室 2 号，当前为开放自主探究状态。',
     tags: ['Lab', 'Biology', 'Science'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M127',
@@ -646,7 +647,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '科学探索实验室 3 号，支持环境与地理科学观测。',
     tags: ['Lab', 'Science', 'Optics'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M128',
@@ -678,7 +679,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '高中部合唱、器乐合奏与现代乐队排练教室，声学质感出众。',
     tags: ['Music', 'Performance', 'Acoustic'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M129',
@@ -710,7 +711,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '计算机科学、算法竞赛及 AI 编程工坊，温控与通风极佳。',
     tags: ['Computing', 'Coding', 'Digital Tech'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M116',
@@ -742,7 +743,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '全校医疗急救与日常健康照护站（保护师生医疗隐私，不公示实时人数）。',
     tags: ['Health', 'First Aid', 'Nurse', 'Private'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M117',
@@ -774,7 +775,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '卫生防疫应急隔离观察室（隐私保护区域）。',
     tags: ['Health', 'Medical', 'Private'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M114',
@@ -806,7 +807,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '为探月高中生提供全球大学申请规划、文书辅导与选课咨询的专业支持中心。',
     tags: ['Counseling', 'College Guidance', 'Planning'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'M118',
@@ -838,7 +839,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '高频学术教学研讨教室，支持大班制课与小组拆分探究。',
     tags: ['Classroom', 'Academic', 'Flexible'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
 
   // ========================================================
@@ -874,7 +875,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'very_busy',
     description: '全校师生主要的营养膳食与社交聚餐大厅（509.8m²），午餐与下午茶时段格外热闹。',
     tags: ['Dining', 'Food', 'Social', 'Crowded'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'A115',
@@ -906,7 +907,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '主餐厅东侧的轻食小憩区，环境相对安静，适合用餐后交流。',
     tags: ['Dining', 'Cafe', 'Relax'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'A217',
@@ -938,7 +939,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'busy',
     description: '承载讲座、音乐展演、全校辩论赛及戏剧排演的 186m² 现代化多功能礼堂。',
     tags: ['Auditorium', 'Performance', 'Showcase', 'Event Venue'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'THEATER-01',
@@ -970,7 +971,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '氛围沉浸的黑匣子实验小剧场，学生话剧社、电影之夜与创意演出常驻地。',
     tags: ['Theater', 'Drama', 'Cinema', 'Creative'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'A111',
@@ -1002,7 +1003,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '小学部科创启蒙探究教室（小学部专属教学区，访客需预约）。',
     tags: ['STEAM', 'Primary School', 'Restricted', 'Kids Lab'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'A112',
@@ -1034,7 +1035,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '东翼艺术创作工作室，陶艺、国画与综合材料探索工坊。',
     tags: ['Art', 'Ceramics', 'Painting', 'Studio'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'A221',
@@ -1066,7 +1067,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '小学部专属儿童绘本与启蒙图书馆（低年级专属友好空间）。',
     tags: ['Primary Library', 'Picture Books', 'Restricted'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'A222',
@@ -1098,7 +1099,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '生活美育与美食烹饪体验教室，支持烘焙社团及跨学科饮食文化课程。',
     tags: ['Cooking', 'Baking', 'Life Skills'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'A226',
@@ -1130,7 +1131,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '东翼生物科学探究实验室，空气流通洁净。',
     tags: ['Biology', 'Lab', 'Science'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'A227',
@@ -1162,7 +1163,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '专业无机与有机化学实验平台（包含试剂保管规程与通风监控）。',
     tags: ['Chemistry', 'Lab', 'Safety', 'Ventilated'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
 
   // ========================================================
@@ -1198,7 +1199,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '西侧主要人流步行入口，直通 M 楼各创作空间与中央莲花球场西环廊。',
     tags: ['Entrance', 'Lobby', 'Navigation Hub'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'ENTRANCE-EAST',
@@ -1230,7 +1231,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '东侧人流与家校迎宾入口大厅，宽敞明亮，衔接艺术与幼小部走廊。',
     tags: ['Entrance', 'Lobby', 'Navigation Hub'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'ENTRANCE-SOUTH',
@@ -1262,7 +1263,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'busy',
     description: '371m² 标志性南向主门厅，全校最开阔的室内外集散缓冲与仪式入口。',
     tags: ['Main Entrance', 'Grand Lobby', 'Navigation Hub'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'INNOVATION-01',
@@ -1294,7 +1295,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'moderate',
     description: '紧邻南入口的开放式创客快闪路演区，学生创业与科研项目孵化地。',
     tags: ['Innovation', 'Showcase', 'Open Space'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'COURTYARD-01',
@@ -1326,7 +1327,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '145m² 露天绿色中庭天井，天然采光与新鲜空气对流枢纽，课间休憩漫步佳处。',
     tags: ['Courtyard', 'Greenery', 'Fresh Air', 'Relax'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'COURTYARD-02',
@@ -1358,7 +1359,7 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '152.7m² 阳光花园中庭，毗邻小剧场与多功能厅，生机盎然。',
     tags: ['Courtyard', 'Garden', 'Sunny Spot', 'Fresh Air'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
   {
     id: 'TEA-ROOM-01',
@@ -1390,6 +1391,24 @@ export const CAMPUS_SPACES: CampusSpace[] = [
     pulse: 'quiet',
     description: '雅致恬静的中式茶歇空间，用于教师小叙与长者访客接待。',
     tags: ['Tea Room', 'Peaceful', 'Quiet', 'Tradition'],
-    isVerifiedInPlan: true,
+    isVerifiedInPlan: false,
   },
 ];
+
+// Text anchors come from room-ID glyph positions in FF-01. They are useful for
+// search focus, but do not verify the hand-authored room boundaries or doors.
+for (const space of CAMPUS_SPACES) {
+  const anchor = SOURCE_LABEL_ANCHORS[space.id];
+  if (anchor) {
+    const dx = anchor.x - space.center.x;
+    const dy = anchor.y - space.center.y;
+    space.center = anchor;
+    space.polygon = space.polygon.map((point) => ({ x: point.x + dx, y: point.y + dy }));
+    space.doorPoint = { x: space.doorPoint.x + dx, y: space.doorPoint.y + dy };
+    space.locationProvenance = 'derived';
+  } else {
+    space.locationProvenance = 'unverified';
+  }
+  space.geometryProvenance = 'illustrative';
+  space.isVerifiedInPlan = false;
+}

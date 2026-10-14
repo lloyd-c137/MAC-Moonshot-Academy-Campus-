@@ -6,6 +6,13 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
+    "validate:spatial": "python3 scripts/validate_spatial.py",
+    "validate:review": "python3 scripts/validate_pilot_review.py && python3 scripts/validate_review_v5.py",
+    "recover:pilot-review": "python3 scripts/build_pilot_review_packages.py",
+    "recover:ff01-pilots": "python3 scripts/recover_ff01_pilots.py",
+    "recover:ff01-hybrid": "python3 scripts/recover_ff01_hybrid.py",
+    "rebuild:architecture-v6": "python3 scripts/build_architecture_v6.py",
+    "validate:architecture-v6": "python3 scripts/validate_architecture_v6.py",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"

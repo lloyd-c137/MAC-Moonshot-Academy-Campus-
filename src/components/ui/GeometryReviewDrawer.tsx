@@ -1,22 +1,24 @@
 import React from 'react';
-import { X, CheckCircle, AlertTriangle, Layers, Grid, Compass, FileText, ExternalLink } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, Layers, Grid, Compass, FileText } from 'lucide-react';
 
 interface GeometryReviewDrawerProps {
   isOpen: boolean;
   showNavGraph: boolean;
   showGrid: boolean;
+  showSourceOverlay: boolean;
   onClose: () => void;
   onToggleNavGraph: () => void;
   onToggleGrid: () => void;
+  onToggleSourceOverlay: () => void;
 }
 
 export const GeometryReviewDrawer: React.FC<GeometryReviewDrawerProps> = ({
   isOpen,
-  showNavGraph,
-  showGrid,
+  showSourceOverlay,
   onClose,
   onToggleNavGraph,
   onToggleGrid,
+  onToggleSourceOverlay,
 }) => {
   if (!isOpen) return null;
 
@@ -73,11 +75,11 @@ export const GeometryReviewDrawer: React.FC<GeometryReviewDrawerProps> = ({
                 <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
                 <div>
                   <div className="font-semibold">FF-01 总平面布置层</div>
-                  <div className="text-[11px] text-emerald-700">图纸事实已提取并完全重建</div>
+                  <div className="text-[11px] text-emerald-700">单层图纸已读取；房间锚点已提取，边界待校准</div>
                 </div>
               </div>
               <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-emerald-200/60 font-semibold">
-                ACTIVE
+                PARTIAL
               </span>
             </div>
 
@@ -98,19 +100,20 @@ export const GeometryReviewDrawer: React.FC<GeometryReviewDrawerProps> = ({
 
         {/* Geometric Overlay Toggles */}
         <div>
-          <h3 className="font-semibold text-neutral-800 mb-2">3D 视图校验图层叠加</h3>
+          <h3 className="font-semibold text-neutral-800 mb-2">图纸源数据与空间状态</h3>
           <div className="space-y-2">
             <label className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-neutral-100 rounded-xl border border-neutral-200 cursor-pointer transition-colors">
               <div className="flex items-center gap-2.5">
                 <Grid className="w-4 h-4 text-neutral-600" />
                 <div>
-                  <div className="font-medium text-neutral-800">1-18 轴 & A-Q 轴网线</div>
-                  <div className="text-[11px] text-neutral-400">8.4m 建筑承重柱网参考基准</div>
+                  <div className="font-medium text-neutral-800">轴网尺寸链校验</div>
+                  <div className="text-[11px] text-neutral-400">总尺寸比例已核对；外墙轮廓尚未描线</div>
                 </div>
               </div>
               <input
                 type="checkbox"
-                checked={showGrid}
+                checked
+                disabled
                 onChange={onToggleGrid}
                 className="w-4 h-4 accent-neutral-900 rounded"
               />
@@ -120,16 +123,27 @@ export const GeometryReviewDrawer: React.FC<GeometryReviewDrawerProps> = ({
               <div className="flex items-center gap-2.5">
                 <Compass className="w-4 h-4 text-neutral-600" />
                 <div>
-                  <div className="font-medium text-neutral-800">无阻挡室内导航路网 (Topology)</div>
-                  <div className="text-[11px] text-neutral-400">验证走廊节点与出入口无穿墙连线</div>
+                  <div className="font-medium text-neutral-800">室内导航暂停</div>
+                  <div className="text-[11px] text-neutral-400">门洞和可通行区域尚未确认，暂不展示路线</div>
                 </div>
               </div>
               <input
                 type="checkbox"
-                checked={showNavGraph}
+                checked={false}
+                disabled
                 onChange={onToggleNavGraph}
                 className="w-4 h-4 accent-neutral-900 rounded"
               />
+            </label>
+            <label className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-neutral-100 rounded-xl border border-neutral-200 cursor-pointer transition-colors">
+              <div className="flex items-center gap-2.5">
+                <FileText className="w-4 h-4 text-neutral-600" />
+                <div>
+                  <div className="font-medium text-neutral-800">FF-01 原始图纸底图</div>
+                  <div className="text-[11px] text-neutral-400">全页原图固定显示；尚未生成可比较的重建墙线</div>
+                </div>
+              </div>
+              <input type="checkbox" checked disabled onChange={onToggleSourceOverlay} className="w-4 h-4 accent-neutral-900 rounded" />
             </label>
           </div>
         </div>
@@ -138,21 +152,18 @@ export const GeometryReviewDrawer: React.FC<GeometryReviewDrawerProps> = ({
         <div>
           <h3 className="font-semibold text-neutral-800 mb-2">空间审计核验清单</h3>
           <ul className="space-y-1.5 text-[11px] text-neutral-600">
+            <li className="flex items-start gap-2"><AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" /><span>莲花球场在源图中为矩形场地、两侧看台和不规则环状空间；当前 3D 尺寸尚未与图纸配准。</span></li>
             <li className="flex items-start gap-2">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>中央莲花球场：八面多边形轮廓、看台阶梯与中央比赛场地真实几何保留。</span>
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              <span>房间编号锚点来自 PDF 文字位置；房间多边形、墙段及门洞目前仍为示意几何。</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>西侧 M 系列：一小步空间 M104、创客空间 M103、设计工作室 M102 及实验室群组定位精准。</span>
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              <span>墙体高度为示意值；当前房间边界和通道未完成 CAD 线段追踪。</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>环形 S 系列：赤子书院、上善书院、绝对安静自习室 S404/S405 与对话空间 S202。</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>东侧 A 系列：509.8m² 大餐厅 A114、A217 多功能厅、黑匣子小剧场及中庭天井花园。</span>
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              <span>路网仍未验证连通性与穿墙情况，导航功能现已暂停。</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
@@ -164,7 +175,7 @@ export const GeometryReviewDrawer: React.FC<GeometryReviewDrawerProps> = ({
 
       {/* Footer */}
       <div className="p-4 bg-neutral-50 border-t border-neutral-200/80 flex items-center justify-between text-xs text-neutral-500">
-        <span>数据可信级别: Verified From Architectural Plan</span>
+        <span>编号锚点: Derived · 边界: Illustrative</span>
         <button
           onClick={onClose}
           className="px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-200 rounded-lg text-neutral-700 font-medium transition-colors"

@@ -15,9 +15,9 @@ export interface RecommendationQuery {
 }
 
 export function recommendCampusSpots(query: RecommendationQuery): SpotRecommendation[] {
-  // Only evaluate physically verified spaces that are open
+  // Recommendations require a source-room label anchor; boundaries remain illustrative.
   const openSpaces = CAMPUS_SPACES.filter(
-    (s) => s.access === 'open' && s.isVerifiedInPlan && !s.environment.isPrivateRoom
+    (s) => s.access === 'open' && s.locationProvenance === 'derived' && !s.environment.isPrivateRoom
   );
 
   const results: SpotRecommendation[] = [];

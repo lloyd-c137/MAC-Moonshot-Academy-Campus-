@@ -12,7 +12,7 @@ interface FindMySpotModalProps {
 const PRESET_QUERIES: { label: string; intent: RecommendationQuery['intent']; desc: string }[] = [
   { label: '寻找安静自习角落', intent: 'quiet', desc: '绝对安静自习室与专注学习区域' },
   { label: '三五好友小组研讨', intent: 'group', desc: '允许交流且配备白板的讨论室与书院' },
-  { label: '找个温度偏凉爽的房间', intent: 'cool', desc: '实时温度在 22°C 左右的清爽环境' },
+  { label: '找个温度偏凉爽的房间', intent: 'cool', desc: '演示环境数据中温度约 22°C 的清爽空间' },
   { label: '新风与通风极佳的空间', intent: 'ventilated', desc: 'CO₂ 低于 550ppm 或天然露天中庭' },
   { label: '一个人静心阅读', intent: 'read', desc: '学术大阅览室与静谧阅读书架' },
   { label: '动手做实验与造物', intent: 'maker', desc: '配备仪器与原型的创客工坊与实验室' },
@@ -103,6 +103,9 @@ export const FindMySpotModal: React.FC<FindMySpotModalProps> = ({ isOpen, onClos
           <div className="text-xs font-medium text-neutral-500 pb-1">
             为你匹配到 {results.length} 个开放且符合物理条件的校园空间：
           </div>
+          <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            地图定位锚点取自 FF-01 房间编号；房间边界仍为示意轮廓，尚未逐间校准。
+          </p>
 
           {results.map((item, idx) => (
             <div

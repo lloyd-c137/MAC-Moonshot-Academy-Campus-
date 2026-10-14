@@ -1,0 +1,15 @@
+{
+  "result": "PASS_SOURCE_TRACE_INTEGRITY_ONLY",
+  "sourcePdfHashMatchesCache": true,
+  "sourcePdfHashRecomputed": true,
+  "sourcePaths": 33355,
+  "provenanceBearingSegments": 16502,
+  "deduplicatedWallTraceEdges": 3982,
+  "structuralFillCandidates": 899,
+  "roomLabelOccurrences": 101,
+  "pilotCandidates": 6,
+  "verifiedRoomPolygons": 0,
+  "buildingFootprint": "UNRESOLVED_REQUIRES_TRACING",
+  "corridors": "NOT_GENERATED",
+  "note": "This validates source provenance and non-overclaim invariants, not architectural accuracy or room verification."
+}

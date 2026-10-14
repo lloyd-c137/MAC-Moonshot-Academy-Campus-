@@ -15,7 +15,7 @@ export const BottomDiscoverDock: React.FC<BottomDiscoverDockProps> = ({
   onSelectSpace,
   onOpenFindSpot,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [activeTab, setActiveTab] = useState<'happening' | 'pulse' | 'spots'>('happening');
 
   const happeningNowEvents = events.filter((e) => e.status === 'happening_now');

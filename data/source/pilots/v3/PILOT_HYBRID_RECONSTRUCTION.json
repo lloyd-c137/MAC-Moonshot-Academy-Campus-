@@ -1,0 +1,2620 @@
+{
+  "schemaVersion": 3,
+  "sourcePdfSha256": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+  "coordinateRegistration": [
+    {
+      "roomID": "M102",
+      "sourceLabelAnchorPt": [
+        733.76,
+        1154.56
+      ],
+      "pdfWordBBoxPt": [
+        733.76,
+        1149.3365,
+        743.4871,
+        1155.4175
+      ],
+      "anchorInsideIndependentWordBBox": true,
+      "anchorToPdfWordCenterPt": 5.331,
+      "displayFramePt": [
+        0.0,
+        0.0,
+        2384.0,
+        1684.0
+      ],
+      "mediaBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "cropBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "rotation": 270,
+      "status": "COORDINATE_FRAME_CONSISTENT"
+    },
+    {
+      "roomID": "M103",
+      "sourceLabelAnchorPt": [
+        664.16,
+        1154.56
+      ],
+      "pdfWordBBoxPt": [
+        664.16,
+        1149.3365,
+        673.8871,
+        1155.4175
+      ],
+      "anchorInsideIndependentWordBBox": true,
+      "anchorToPdfWordCenterPt": 5.331,
+      "displayFramePt": [
+        0.0,
+        0.0,
+        2384.0,
+        1684.0
+      ],
+      "mediaBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "cropBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "rotation": 270,
+      "status": "COORDINATE_FRAME_CONSISTENT"
+    },
+    {
+      "roomID": "M104",
+      "sourceLabelAnchorPt": [
+        651.3835,
+        1261.817
+      ],
+      "pdfWordBBoxPt": [
+        646.52,
+        1258.7765,
+        656.2471,
+        1264.8574
+      ],
+      "anchorInsideIndependentWordBBox": true,
+      "anchorToPdfWordCenterPt": 0.0001,
+      "displayFramePt": [
+        0.0,
+        0.0,
+        2384.0,
+        1684.0
+      ],
+      "mediaBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "cropBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "rotation": 270,
+      "status": "COORDINATE_FRAME_CONSISTENT"
+    },
+    {
+      "roomID": "S208",
+      "sourceLabelAnchorPt": [
+        966.3835,
+        572.777
+      ],
+      "pdfWordBBoxPt": [
+        961.52,
+        569.7366,
+        971.2471,
+        575.8175
+      ],
+      "anchorInsideIndependentWordBBox": true,
+      "anchorToPdfWordCenterPt": 0.0001,
+      "displayFramePt": [
+        0.0,
+        0.0,
+        2384.0,
+        1684.0
+      ],
+      "mediaBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "cropBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "rotation": 270,
+      "status": "COORDINATE_FRAME_CONSISTENT"
+    },
+    {
+      "roomID": "S209",
+      "sourceLabelAnchorPt": [
+        812.1835,
+        649.217
+      ],
+      "pdfWordBBoxPt": [
+        807.3201,
+        646.1765,
+        817.0471,
+        652.2574
+      ],
+      "anchorInsideIndependentWordBBox": true,
+      "anchorToPdfWordCenterPt": 0.0001,
+      "displayFramePt": [
+        0.0,
+        0.0,
+        2384.0,
+        1684.0
+      ],
+      "mediaBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "cropBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "rotation": 270,
+      "status": "COORDINATE_FRAME_CONSISTENT"
+    },
+    {
+      "roomID": "S210",
+      "sourceLabelAnchorPt": [
+        777.6235,
+        703.937
+      ],
+      "pdfWordBBoxPt": [
+        772.76,
+        700.8965,
+        782.4871,
+        706.9774
+      ],
+      "anchorInsideIndependentWordBBox": true,
+      "anchorToPdfWordCenterPt": 0.0001,
+      "displayFramePt": [
+        0.0,
+        0.0,
+        2384.0,
+        1684.0
+      ],
+      "mediaBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "cropBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "rotation": 270,
+      "status": "COORDINATE_FRAME_CONSISTENT"
+    }
+  ],
+  "rootCause": {
+    "coordinateDiagnosis": {
+      "status": "VERIFIED_CONSISTENT",
+      "pageRotation": 270,
+      "mediaBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "cropBoxRawPt": [
+        0.0,
+        0.0,
+        1684.0,
+        2384.0
+      ],
+      "displayFramePt": [
+        0.0,
+        0.0,
+        2384.0,
+        1684.0
+      ],
+      "pageRotationMatrix": [
+        0,
+        -1,
+        1,
+        0,
+        0,
+        1684
+      ],
+      "pathJoinCount": 33355,
+      "labelBoxCount": 6,
+      "note": "PyMuPDF rotation_matrix-normalized vector paths and room word boxes are compared in the same top-left display frame; editor source image is mapped to the same 2384x1684 viewBox."
+    },
+    "previousPolygonizer": {
+      "wallOnly": {
+        "lineSegmentCount": 10780,
+        "faceCount": 2647,
+        "filledPathCount": 921,
+        "filledPathsImplicitlyOpen": 0,
+        "rooms": {
+          "M102": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 29.023,
+            "nearestFaceAreaPt2": 21.78,
+            "nearestFaceBBoxPt": [
+              705.1,
+              1129.1,
+              711.7,
+              1135.7
+            ]
+          },
+          "M103": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 30.729,
+            "nearestFaceAreaPt2": 21.78,
+            "nearestFaceBBoxPt": [
+              633.3,
+              1129.1,
+              639.9,
+              1135.7
+            ]
+          },
+          "M104": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 22.308,
+            "nearestFaceAreaPt2": 15.3,
+            "nearestFaceBBoxPt": [
+              653.4,
+              1237.8,
+              661.9,
+              1239.6
+            ]
+          },
+          "S208": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 9.614,
+            "nearestFaceAreaPt2": 20.8,
+            "nearestFaceBBoxPt": [
+              971.1,
+              561.5,
+              990.0,
+              564.4
+            ]
+          },
+          "S209": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 10.37,
+            "nearestFaceAreaPt2": 61.65,
+            "nearestFaceBBoxPt": [
+              796.0,
+              624.9,
+              813.4,
+              653.6
+            ]
+          },
+          "S210": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 7.83,
+            "nearestFaceAreaPt2": 89.7,
+            "nearestFaceBBoxPt": [
+              764.4,
+              665.7,
+              790.1,
+              708.4
+            ]
+          }
+        }
+      },
+      "wallDoorGlazing": {
+        "lineSegmentCount": 17908,
+        "faceCount": 4017,
+        "filledPathCount": 927,
+        "filledPathsImplicitlyOpen": 0,
+        "rooms": {
+          "M102": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 22.56,
+            "nearestFaceAreaPt2": 329.57,
+            "nearestFaceBBoxPt": [
+              705.6,
+              1135.7,
+              711.2,
+              1201.0
+            ]
+          },
+          "M103": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 30.729,
+            "nearestFaceAreaPt2": 21.78,
+            "nearestFaceBBoxPt": [
+              633.3,
+              1129.1,
+              639.9,
+              1135.7
+            ]
+          },
+          "M104": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 3.416,
+            "nearestFaceAreaPt2": 241.71,
+            "nearestFaceBBoxPt": [
+              654.8,
+              1248.9,
+              660.4,
+              1292.6
+            ]
+          },
+          "S208": {
+            "containingFaceAreasPt2": [
+              1945.31
+            ],
+            "nearestFaceDistancePt": 0.0,
+            "nearestFaceAreaPt2": 1945.31,
+            "nearestFaceBBoxPt": [
+              940.8,
+              550.1,
+              990.0,
+              609.3
+            ]
+          },
+          "S209": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 10.37,
+            "nearestFaceAreaPt2": 61.65,
+            "nearestFaceBBoxPt": [
+              796.0,
+              624.9,
+              813.4,
+              653.6
+            ]
+          },
+          "S210": {
+            "containingFaceAreasPt2": [],
+            "nearestFaceDistancePt": 7.83,
+            "nearestFaceAreaPt2": 89.7,
+            "nearestFaceBBoxPt": [
+              764.4,
+              665.7,
+              790.1,
+              708.4
+            ]
+          }
+        }
+      },
+      "causes": [
+        "The prior wall filter excluded Door and Window/Glazing layers. These vectors form segmentation boundaries in multiple pilots; S208 closes only when glazing vectors enter the linework.",
+        "Door apertures/folding partitions leave the wall-only line network open. Global polygonize requires closed cycles and cannot infer room semantics from seed points.",
+        "Filled wall drawings were treated as linework; rasterization now honors filled subpaths as barrier evidence.",
+        "The old crop for Pilot A clipped context around M103; seed-centered expansion is now adaptive."
+      ],
+      "limits": [
+        "Door leaf vectors are not verified door openings.",
+        "Candidate polygons still need independent human source review; no candidate is VERIFIED."
+      ]
+    }
+  },
+  "candidateCount": 6,
+  "independentlyVerifiedCount": 0,
+  "pilots": [
+    {
+      "roomID": "M102",
+      "candidateID": "ff01-m102-seed-v3",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "method": "room-seeded raster connected-component segmentation over wall+door+glazing layer masks; vector-snapped contour",
+      "sourceLabelAnchorPt": [
+        733.76,
+        1154.56
+      ],
+      "sourceLabelBBoxPt": [
+        733.76,
+        1149.3365,
+        743.4871,
+        1155.4175
+      ],
+      "cropBBoxPt": [
+        613.76,
+        1034.56,
+        853.76,
+        1274.56
+      ],
+      "coordinateFrame": "FF-01 page rotation 270 normalized display points; 2384x1684 pt",
+      "polygonSourcePt": [
+        [
+          739.128,
+          1106.923
+        ],
+        [
+          712.23,
+          1132.53
+        ],
+        [
+          711.2,
+          1136.56
+        ],
+        [
+          712.26,
+          1208.56
+        ],
+        [
+          737.26,
+          1208.56
+        ],
+        [
+          738.203,
+          1202.345
+        ],
+        [
+          742.304,
+          1204.168
+        ],
+        [
+          744.312,
+          1207.039
+        ],
+        [
+          747.115,
+          1204.034
+        ],
+        [
+          751.76,
+          1202.32
+        ],
+        [
+          752.76,
+          1208.56
+        ],
+        [
+          784.76,
+          1208.56
+        ],
+        [
+          784.52,
+          1201.06
+        ],
+        [
+          786.26,
+          1201.0
+        ],
+        [
+          786.8,
+          1135.06
+        ],
+        [
+          739.128,
+          1106.923
+        ]
+      ],
+      "polygonWorldMetersIllustrativeScale": [
+        [
+          29.359,
+          84.8999
+        ],
+        [
+          26.5123,
+          87.6099
+        ],
+        [
+          26.4033,
+          88.0364
+        ],
+        [
+          26.5155,
+          95.6564
+        ],
+        [
+          29.1613,
+          95.6564
+        ],
+        [
+          29.2611,
+          94.9986
+        ],
+        [
+          29.6951,
+          95.1916
+        ],
+        [
+          29.9076,
+          95.4955
+        ],
+        [
+          30.2043,
+          95.1774
+        ],
+        [
+          30.6959,
+          94.996
+        ],
+        [
+          30.8017,
+          95.6564
+        ],
+        [
+          34.1884,
+          95.6564
+        ],
+        [
+          34.163,
+          94.8626
+        ],
+        [
+          34.3471,
+          94.8563
+        ],
+        [
+          34.4043,
+          87.8776
+        ],
+        [
+          29.359,
+          84.8999
+        ]
+      ],
+      "areaPt2": 6500.76,
+      "areaM2IllustrativeScale": 72.81,
+      "textWordCountInExclusionMask": 30,
+      "expectedAreaM2FromNearbyText": 131.0,
+      "polygonValid": true,
+      "seedInside": true,
+      "boundaryVectorSupportFraction": 1.0,
+      "sourcePathIDs": [
+        "P08172",
+        "P08212",
+        "P08755",
+        "P09216",
+        "P09302",
+        "P16150",
+        "P16151",
+        "P30608",
+        "P30609",
+        "P30610",
+        "P30611"
+      ],
+      "barrierSourceClasses": [
+        "wall",
+        "door candidate",
+        "glazing candidate"
+      ],
+      "virtualCloseWidthPt": 0,
+      "virtualClosurePixelCount": 0,
+      "virtualClosuresArePhysicalWalls": false,
+      "touchesSearchCropEdge": false,
+      "unresolvedEdges": [
+        {
+          "startPt": [
+            738.76,
+            1107.56
+          ],
+          "endPt": [
+            712.76,
+            1133.06
+          ],
+          "lengthPt": 36.418,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P08212",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            711.76,
+            1136.56
+          ],
+          "endPt": [
+            712.26,
+            1208.56
+          ],
+          "lengthPt": 72.002,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P08172",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            737.26,
+            1208.56
+          ],
+          "endPt": [
+            738.26,
+            1202.06
+          ],
+          "lengthPt": 6.576,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P30610",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            738.26,
+            1202.06
+          ],
+          "endPt": [
+            742.76,
+            1203.56
+          ],
+          "lengthPt": 4.743,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P30611",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            742.76,
+            1203.56
+          ],
+          "endPt": [
+            744.26,
+            1207.06
+          ],
+          "lengthPt": 3.808,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P30611",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            744.26,
+            1207.06
+          ],
+          "endPt": [
+            746.76,
+            1203.56
+          ],
+          "lengthPt": 4.301,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P30611",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            746.76,
+            1203.56
+          ],
+          "endPt": [
+            751.76,
+            1202.06
+          ],
+          "lengthPt": 5.22,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P30611",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            751.76,
+            1202.06
+          ],
+          "endPt": [
+            752.76,
+            1208.56
+          ],
+          "lengthPt": 6.576,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P30609",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        }
+      ],
+      "unresolvedEdgeCount": 8,
+      "virtualBoundaryTypes": [
+        "Door"
+      ],
+      "searchAttempts": [
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 0,
+          "areaPt2": 6408.2,
+          "touchesCropEdge": false
+        }
+      ],
+      "independentIoU": "NOT_MEASURABLE: no independently reviewed reference polygon",
+      "reviewDecision": null,
+      "visualEvidence": {
+        "sourceCrop": "m102-source-300dpi.png",
+        "wallMask": "m102-wall-mask-300dpi.png",
+        "doorEvidenceMask": "m102-door-evidence-300dpi.png",
+        "glazingEvidenceMask": "m102-glazing-evidence-300dpi.png",
+        "textFurnitureExclusionMask": "m102-text-furniture-exclusion-300dpi.png",
+        "vectorRasterOverlay": "m102-vector-raster-overlay.png",
+        "segmentationVectorSnap": "m102-segmentation-vector-snap.png"
+      },
+      "issues": [
+        "Candidate is machine-generated and requires human verification.",
+        "Door and glazing paths were used only as temporary segmentation barriers; no physical wall or navigable opening is asserted.",
+        "8 contour edges need review; edge evidence is listed individually.",
+        "Candidate area differs from nearby source annotation by more than 15%; do not infer accuracy from area alone."
+      ]
+    },
+    {
+      "roomID": "M103",
+      "candidateID": "ff01-m103-seed-v3",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "method": "room-seeded raster connected-component segmentation over wall+door+glazing layer masks; vector-snapped contour",
+      "sourceLabelAnchorPt": [
+        664.16,
+        1154.56
+      ],
+      "sourceLabelBBoxPt": [
+        664.16,
+        1149.3365,
+        673.8871,
+        1155.4175
+      ],
+      "cropBBoxPt": [
+        484.16,
+        974.56,
+        844.16,
+        1334.56
+      ],
+      "coordinateFrame": "FF-01 page rotation 270 normalized display points; 2384x1684 pt",
+      "polygonSourcePt": [
+        [
+          633.66,
+          976.96
+        ],
+        [
+          633.32,
+          1049.8
+        ],
+        [
+          639.92,
+          1049.8
+        ],
+        [
+          639.92,
+          1056.4
+        ],
+        [
+          632.36,
+          1057.56
+        ],
+        [
+          633.32,
+          1129.12
+        ],
+        [
+          639.92,
+          1129.12
+        ],
+        [
+          639.92,
+          1135.72
+        ],
+        [
+          632.36,
+          1136.56
+        ],
+        [
+          633.32,
+          1201.0
+        ],
+        [
+          639.92,
+          1201.0
+        ],
+        [
+          639.92,
+          1202.06
+        ],
+        [
+          666.16,
+          1202.32
+        ],
+        [
+          667.16,
+          1208.56
+        ],
+        [
+          704.66,
+          1208.56
+        ],
+        [
+          705.08,
+          1129.12
+        ],
+        [
+          708.22,
+          1128.62
+        ],
+        [
+          729.72,
+          1107.12
+        ],
+        [
+          729.742,
+          1094.513
+        ],
+        [
+          697.788,
+          1039.197
+        ],
+        [
+          696.114,
+          1036.298
+        ],
+        [
+          695.66,
+          1028.06
+        ],
+        [
+          690.652,
+          1026.776
+        ],
+        [
+          662.792,
+          978.484
+        ],
+        [
+          633.66,
+          976.96
+        ]
+      ],
+      "polygonWorldMetersIllustrativeScale": [
+        [
+          18.197,
+          71.1454
+        ],
+        [
+          18.161,
+          78.8543
+        ],
+        [
+          18.8595,
+          78.8543
+        ],
+        [
+          18.8595,
+          79.5528
+        ],
+        [
+          18.0594,
+          79.6756
+        ],
+        [
+          18.161,
+          87.249
+        ],
+        [
+          18.8595,
+          87.249
+        ],
+        [
+          18.8595,
+          87.9475
+        ],
+        [
+          18.0594,
+          88.0364
+        ],
+        [
+          18.161,
+          94.8563
+        ],
+        [
+          18.8595,
+          94.8563
+        ],
+        [
+          18.8595,
+          94.9685
+        ],
+        [
+          21.6366,
+          94.996
+        ],
+        [
+          21.7424,
+          95.6564
+        ],
+        [
+          25.7111,
+          95.6564
+        ],
+        [
+          25.7556,
+          87.249
+        ],
+        [
+          26.0879,
+          87.1961
+        ],
+        [
+          28.3633,
+          84.9207
+        ],
+        [
+          28.3657,
+          83.5864
+        ],
+        [
+          24.9839,
+          77.7322
+        ],
+        [
+          24.8067,
+          77.4253
+        ],
+        [
+          24.7586,
+          76.5535
+        ],
+        [
+          24.2287,
+          76.4176
+        ],
+        [
+          21.2801,
+          71.3067
+        ],
+        [
+          18.197,
+          71.1454
+        ]
+      ],
+      "areaPt2": 15862.81,
+      "areaM2IllustrativeScale": 177.67,
+      "textWordCountInExclusionMask": 65,
+      "expectedAreaM2FromNearbyText": 196.3,
+      "polygonValid": true,
+      "seedInside": true,
+      "boundaryVectorSupportFraction": 0.8169,
+      "sourcePathIDs": [
+        "P04659",
+        "P08171",
+        "P08225",
+        "P08662",
+        "P08748",
+        "P08754",
+        "P08757",
+        "P09148",
+        "P09266",
+        "P09302",
+        "P15022",
+        "P16150",
+        "P17042",
+        "P17043",
+        "P17112",
+        "P17114"
+      ],
+      "barrierSourceClasses": [
+        "wall",
+        "door candidate",
+        "glazing candidate"
+      ],
+      "virtualCloseWidthPt": 12,
+      "virtualClosurePixelCount": 30145,
+      "virtualClosuresArePhysicalWalls": false,
+      "touchesSearchCropEdge": false,
+      "unresolvedEdges": [
+        {
+          "startPt": [
+            633.16,
+            1136.56
+          ],
+          "endPt": [
+            633.16,
+            1200.56
+          ],
+          "lengthPt": 64.0,
+          "reason": "Raster closure edge is not aligned to a compatible native vector within 2.5 pt.",
+          "sourcePathID": null,
+          "layerSemantic": "Raster closure / unresolved",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            641.16,
+            1202.06
+          ],
+          "endPt": [
+            666.16,
+            1202.06
+          ],
+          "lengthPt": 25.0,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P17114",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            666.16,
+            1202.06
+          ],
+          "endPt": [
+            667.16,
+            1208.56
+          ],
+          "lengthPt": 6.576,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P17112",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            704.66,
+            1208.56
+          ],
+          "endPt": [
+            704.66,
+            1129.06
+          ],
+          "lengthPt": 79.5,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P08171",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            708.16,
+            1128.56
+          ],
+          "endPt": [
+            729.66,
+            1107.06
+          ],
+          "lengthPt": 30.406,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P08225",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            729.66,
+            1107.06
+          ],
+          "endPt": [
+            729.66,
+            1094.56
+          ],
+          "lengthPt": 12.5,
+          "reason": "Raster closure edge is not aligned to a compatible native vector within 2.5 pt.",
+          "sourcePathID": null,
+          "layerSemantic": "Raster closure / unresolved",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            695.66,
+            1036.56
+          ],
+          "endPt": [
+            695.66,
+            1028.06
+          ],
+          "lengthPt": 8.5,
+          "reason": "Raster closure edge is not aligned to a compatible native vector within 2.5 pt.",
+          "sourcePathID": null,
+          "layerSemantic": "Raster closure / unresolved",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            662.66,
+            978.56
+          ],
+          "endPt": [
+            633.66,
+            978.06
+          ],
+          "lengthPt": 29.004,
+          "reason": "Raster closure edge is not aligned to a compatible native vector within 2.5 pt.",
+          "sourcePathID": null,
+          "layerSemantic": "Raster closure / unresolved",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        }
+      ],
+      "unresolvedEdgeCount": 8,
+      "virtualBoundaryTypes": [
+        "Door"
+      ],
+      "searchAttempts": [
+        {
+          "radiusPt": 180,
+          "virtualClosePt": 0,
+          "areaPt2": 16087.2,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 180,
+          "virtualClosePt": 4,
+          "areaPt2": 16060.8,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 180,
+          "virtualClosePt": 8,
+          "areaPt2": 15944.0,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 180,
+          "virtualClosePt": 12,
+          "areaPt2": 15786.2,
+          "touchesCropEdge": false
+        }
+      ],
+      "independentIoU": "NOT_MEASURABLE: no independently reviewed reference polygon",
+      "reviewDecision": null,
+      "visualEvidence": {
+        "sourceCrop": "m103-source-300dpi.png",
+        "wallMask": "m103-wall-mask-300dpi.png",
+        "doorEvidenceMask": "m103-door-evidence-300dpi.png",
+        "glazingEvidenceMask": "m103-glazing-evidence-300dpi.png",
+        "textFurnitureExclusionMask": "m103-text-furniture-exclusion-300dpi.png",
+        "vectorRasterOverlay": "m103-vector-raster-overlay.png",
+        "segmentationVectorSnap": "m103-segmentation-vector-snap.png"
+      },
+      "issues": [
+        "Candidate is machine-generated and requires human verification.",
+        "Door and glazing paths were used only as temporary segmentation barriers; no physical wall or navigable opening is asserted.",
+        "8 contour edges need review; edge evidence is listed individually."
+      ]
+    },
+    {
+      "roomID": "M104",
+      "candidateID": "ff01-m104-seed-v3",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "method": "room-seeded raster connected-component segmentation over wall+door+glazing layer masks; vector-snapped contour",
+      "sourceLabelAnchorPt": [
+        651.3835,
+        1261.817
+      ],
+      "sourceLabelBBoxPt": [
+        646.52,
+        1258.7765,
+        656.2471,
+        1264.8574
+      ],
+      "cropBBoxPt": [
+        531.384,
+        1141.817,
+        771.384,
+        1381.817
+      ],
+      "coordinateFrame": "FF-01 page rotation 270 normalized display points; 2384x1684 pt",
+      "polygonSourcePt": [
+        [
+          625.76,
+          1210.817
+        ],
+        [
+          553.884,
+          1210.36
+        ],
+        [
+          552.92,
+          1215.16
+        ],
+        [
+          548.24,
+          1216.317
+        ],
+        [
+          549.384,
+          1287.88
+        ],
+        [
+          552.92,
+          1287.88
+        ],
+        [
+          555.32,
+          1317.52
+        ],
+        [
+          610.384,
+          1317.16
+        ],
+        [
+          610.384,
+          1287.317
+        ],
+        [
+          654.8,
+          1287.317
+        ],
+        [
+          654.8,
+          1250.317
+        ],
+        [
+          647.24,
+          1247.32
+        ],
+        [
+          643.106,
+          1240.289
+        ],
+        [
+          610.384,
+          1239.64
+        ],
+        [
+          610.384,
+          1237.84
+        ],
+        [
+          625.384,
+          1237.84
+        ],
+        [
+          625.76,
+          1210.817
+        ]
+      ],
+      "polygonWorldMetersIllustrativeScale": [
+        [
+          17.3609,
+          95.8953
+        ],
+        [
+          9.754,
+          95.8469
+        ],
+        [
+          9.652,
+          96.3549
+        ],
+        [
+          9.1567,
+          96.4773
+        ],
+        [
+          9.2777,
+          104.0511
+        ],
+        [
+          9.652,
+          104.0511
+        ],
+        [
+          9.906,
+          107.188
+        ],
+        [
+          15.7336,
+          107.1499
+        ],
+        [
+          15.7336,
+          103.9915
+        ],
+        [
+          20.4343,
+          103.9915
+        ],
+        [
+          20.4343,
+          100.0757
+        ],
+        [
+          19.6342,
+          99.7585
+        ],
+        [
+          19.1967,
+          99.0144
+        ],
+        [
+          15.7336,
+          98.9457
+        ],
+        [
+          15.7336,
+          98.7552
+        ],
+        [
+          17.3211,
+          98.7552
+        ],
+        [
+          17.3609,
+          95.8953
+        ]
+      ],
+      "areaPt2": 8828.16,
+      "areaM2IllustrativeScale": 98.88,
+      "textWordCountInExclusionMask": 26,
+      "expectedAreaM2FromNearbyText": 62.6,
+      "polygonValid": true,
+      "seedInside": true,
+      "boundaryVectorSupportFraction": 0.8085,
+      "sourcePathIDs": [
+        "P03608",
+        "P03614",
+        "P08190",
+        "P08210",
+        "P11681",
+        "P14380",
+        "P14879",
+        "P15466",
+        "P16154",
+        "P17104",
+        "P17105"
+      ],
+      "barrierSourceClasses": [
+        "wall",
+        "door candidate",
+        "glazing candidate"
+      ],
+      "virtualCloseWidthPt": 24,
+      "virtualClosurePixelCount": 33491,
+      "virtualClosuresArePhysicalWalls": false,
+      "touchesSearchCropEdge": false,
+      "unresolvedEdges": [
+        {
+          "startPt": [
+            553.8835,
+            1287.817
+          ],
+          "endPt": [
+            553.8835,
+            1316.817
+          ],
+          "lengthPt": 29.0,
+          "reason": "Raster closure edge is not aligned to a compatible native vector within 2.5 pt.",
+          "sourcePathID": null,
+          "layerSemantic": "Raster closure / unresolved",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            610.3835,
+            1316.817
+          ],
+          "endPt": [
+            610.3835,
+            1287.317
+          ],
+          "lengthPt": 29.5,
+          "reason": "Raster closure edge is not aligned to a compatible native vector within 2.5 pt.",
+          "sourcePathID": null,
+          "layerSemantic": "Raster closure / unresolved",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            654.8835,
+            1287.317
+          ],
+          "endPt": [
+            654.8835,
+            1250.317
+          ],
+          "lengthPt": 37.0,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P08190",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            654.8835,
+            1250.317
+          ],
+          "endPt": [
+            646.8835,
+            1247.817
+          ],
+          "lengthPt": 8.382,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P17104",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            646.8835,
+            1247.817
+          ],
+          "endPt": [
+            642.8835,
+            1240.317
+          ],
+          "lengthPt": 8.5,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P17105",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            625.3835,
+            1237.817
+          ],
+          "endPt": [
+            625.3835,
+            1210.817
+          ],
+          "lengthPt": 27.0,
+          "reason": "Raster closure edge is not aligned to a compatible native vector within 2.5 pt.",
+          "sourcePathID": null,
+          "layerSemantic": "Raster closure / unresolved",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        }
+      ],
+      "unresolvedEdgeCount": 6,
+      "virtualBoundaryTypes": [
+        "Door"
+      ],
+      "searchAttempts": [
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 0,
+          "areaPt2": 29229.8,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 4,
+          "areaPt2": 28980.8,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 8,
+          "areaPt2": 14966.2,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 12,
+          "areaPt2": 14795.5,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 16,
+          "areaPt2": 14669.8,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 20,
+          "areaPt2": 14650.2,
+          "touchesCropEdge": true
+        },
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 24,
+          "areaPt2": 8591.8,
+          "touchesCropEdge": false
+        }
+      ],
+      "independentIoU": "NOT_MEASURABLE: no independently reviewed reference polygon",
+      "reviewDecision": null,
+      "visualEvidence": {
+        "sourceCrop": "m104-source-300dpi.png",
+        "wallMask": "m104-wall-mask-300dpi.png",
+        "doorEvidenceMask": "m104-door-evidence-300dpi.png",
+        "glazingEvidenceMask": "m104-glazing-evidence-300dpi.png",
+        "textFurnitureExclusionMask": "m104-text-furniture-exclusion-300dpi.png",
+        "vectorRasterOverlay": "m104-vector-raster-overlay.png",
+        "segmentationVectorSnap": "m104-segmentation-vector-snap.png"
+      },
+      "issues": [
+        "Candidate is machine-generated and requires human verification.",
+        "Door and glazing paths were used only as temporary segmentation barriers; no physical wall or navigable opening is asserted.",
+        "6 contour edges need review; edge evidence is listed individually.",
+        "Candidate area differs from nearby source annotation by more than 15%; do not infer accuracy from area alone."
+      ]
+    },
+    {
+      "roomID": "S208",
+      "candidateID": "ff01-s208-seed-v3",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "method": "room-seeded raster connected-component segmentation over wall+door+glazing layer masks; vector-snapped contour",
+      "sourceLabelAnchorPt": [
+        966.3835,
+        572.777
+      ],
+      "sourceLabelBBoxPt": [
+        961.52,
+        569.7366,
+        971.2471,
+        575.8175
+      ],
+      "cropBBoxPt": [
+        846.384,
+        452.777,
+        1086.383,
+        692.777
+      ],
+      "coordinateFrame": "FF-01 page rotation 270 normalized display points; 2384x1684 pt",
+      "polygonSourcePt": [
+        [
+          946.884,
+          550.12
+        ],
+        [
+          946.28,
+          553.72
+        ],
+        [
+          944.776,
+          555.306
+        ],
+        [
+          951.204,
+          579.325
+        ],
+        [
+          953.12,
+          579.28
+        ],
+        [
+          954.25,
+          583.56
+        ],
+        [
+          953.172,
+          586.833
+        ],
+        [
+          958.98,
+          608.751
+        ],
+        [
+          989.384,
+          609.28
+        ],
+        [
+          989.96,
+          586.777
+        ],
+        [
+          986.24,
+          585.64
+        ],
+        [
+          986.24,
+          580.0
+        ],
+        [
+          989.384,
+          580.0
+        ],
+        [
+          989.384,
+          564.4
+        ],
+        [
+          971.12,
+          564.4
+        ],
+        [
+          971.12,
+          561.777
+        ],
+        [
+          965.88,
+          559.28
+        ],
+        [
+          962.684,
+          553.22
+        ],
+        [
+          970.884,
+          552.4
+        ],
+        [
+          971.12,
+          550.777
+        ],
+        [
+          946.884,
+          550.12
+        ]
+      ],
+      "polygonWorldMetersIllustrativeScale": [
+        [
+          51.3465,
+          25.9715
+        ],
+        [
+          51.2826,
+          26.3525
+        ],
+        [
+          51.1234,
+          26.5203
+        ],
+        [
+          51.8037,
+          29.0624
+        ],
+        [
+          52.0065,
+          29.0576
+        ],
+        [
+          52.1261,
+          29.5106
+        ],
+        [
+          52.012,
+          29.857
+        ],
+        [
+          52.6267,
+          32.1767
+        ],
+        [
+          55.8444,
+          32.2326
+        ],
+        [
+          55.9054,
+          29.851
+        ],
+        [
+          55.5117,
+          29.7307
+        ],
+        [
+          55.5117,
+          29.1338
+        ],
+        [
+          55.8444,
+          29.1338
+        ],
+        [
+          55.8444,
+          27.4828
+        ],
+        [
+          53.9115,
+          27.4828
+        ],
+        [
+          53.9115,
+          27.2052
+        ],
+        [
+          53.357,
+          26.941
+        ],
+        [
+          53.0187,
+          26.2996
+        ],
+        [
+          53.8865,
+          26.2128
+        ],
+        [
+          53.9115,
+          26.041
+        ],
+        [
+          51.3465,
+          25.9715
+        ]
+      ],
+      "areaPt2": 1890.64,
+      "areaM2IllustrativeScale": 21.18,
+      "textWordCountInExclusionMask": 28,
+      "expectedAreaM2FromNearbyText": 29.2,
+      "polygonValid": true,
+      "seedInside": true,
+      "boundaryVectorSupportFraction": 1.0,
+      "sourcePathIDs": [
+        "P03208",
+        "P03210",
+        "P03211",
+        "P03212",
+        "P03214",
+        "P03215",
+        "P03887",
+        "P08871",
+        "P08890",
+        "P08893",
+        "P08894",
+        "P08895",
+        "P08897",
+        "P12685",
+        "P14820",
+        "P14826"
+      ],
+      "barrierSourceClasses": [
+        "wall",
+        "door candidate",
+        "glazing candidate"
+      ],
+      "virtualCloseWidthPt": 0,
+      "virtualClosurePixelCount": 0,
+      "virtualClosuresArePhysicalWalls": false,
+      "touchesSearchCropEdge": false,
+      "unresolvedEdges": [
+        {
+          "startPt": [
+            958.8835,
+            608.777
+          ],
+          "endPt": [
+            989.3835,
+            609.277
+          ],
+          "lengthPt": 30.504,
+          "reason": "Boundary coincides with Window / Glazing candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P12685",
+          "layerSemantic": "Window / Glazing",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            970.8835,
+            561.777
+          ],
+          "endPt": [
+            965.3835,
+            559.777
+          ],
+          "lengthPt": 5.852,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P03211",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            965.3835,
+            559.777
+          ],
+          "endPt": [
+            961.8835,
+            553.277
+          ],
+          "lengthPt": 7.382,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P03211",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            961.8835,
+            553.277
+          ],
+          "endPt": [
+            970.8835,
+            552.277
+          ],
+          "lengthPt": 9.055,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P03212",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        }
+      ],
+      "unresolvedEdgeCount": 4,
+      "virtualBoundaryTypes": [
+        "Door",
+        "Window / Glazing"
+      ],
+      "searchAttempts": [
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 0,
+          "areaPt2": 1833.2,
+          "touchesCropEdge": false
+        }
+      ],
+      "independentIoU": "NOT_MEASURABLE: no independently reviewed reference polygon",
+      "reviewDecision": null,
+      "visualEvidence": {
+        "sourceCrop": "s208-source-300dpi.png",
+        "wallMask": "s208-wall-mask-300dpi.png",
+        "doorEvidenceMask": "s208-door-evidence-300dpi.png",
+        "glazingEvidenceMask": "s208-glazing-evidence-300dpi.png",
+        "textFurnitureExclusionMask": "s208-text-furniture-exclusion-300dpi.png",
+        "vectorRasterOverlay": "s208-vector-raster-overlay.png",
+        "segmentationVectorSnap": "s208-segmentation-vector-snap.png"
+      },
+      "issues": [
+        "Candidate is machine-generated and requires human verification.",
+        "Door and glazing paths were used only as temporary segmentation barriers; no physical wall or navigable opening is asserted.",
+        "4 contour edges need review; edge evidence is listed individually.",
+        "Candidate area differs from nearby source annotation by more than 15%; do not infer accuracy from area alone."
+      ]
+    },
+    {
+      "roomID": "S209",
+      "candidateID": "ff01-s209-seed-v3",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "method": "room-seeded raster connected-component segmentation over wall+door+glazing layer masks; vector-snapped contour",
+      "sourceLabelAnchorPt": [
+        812.1835,
+        649.217
+      ],
+      "sourceLabelBBoxPt": [
+        807.3201,
+        646.1765,
+        817.0471,
+        652.2574
+      ],
+      "cropBBoxPt": [
+        692.183,
+        529.217,
+        932.183,
+        769.217
+      ],
+      "coordinateFrame": "FF-01 page rotation 270 normalized display points; 2384x1684 pt",
+      "polygonSourcePt": [
+        [
+          829.467,
+          616.054
+        ],
+        [
+          818.639,
+          621.64
+        ],
+        [
+          820.04,
+          624.88
+        ],
+        [
+          816.08,
+          628.96
+        ],
+        [
+          814.01,
+          626.89
+        ],
+        [
+          797.72,
+          653.56
+        ],
+        [
+          795.756,
+          652.561
+        ],
+        [
+          791.165,
+          651.954
+        ],
+        [
+          784.758,
+          655.408
+        ],
+        [
+          796.28,
+          663.64
+        ],
+        [
+          797.323,
+          666.475
+        ],
+        [
+          817.308,
+          678.001
+        ],
+        [
+          818.542,
+          676.918
+        ],
+        [
+          822.586,
+          677.661
+        ],
+        [
+          836.479,
+          653.599
+        ],
+        [
+          837.811,
+          651.291
+        ],
+        [
+          834.8,
+          647.68
+        ],
+        [
+          838.76,
+          643.6
+        ],
+        [
+          841.486,
+          646.409
+        ],
+        [
+          845.137,
+          645.136
+        ],
+        [
+          829.467,
+          616.054
+        ]
+      ],
+      "polygonWorldMetersIllustrativeScale": [
+        [
+          38.9199,
+          32.9495
+        ],
+        [
+          37.7739,
+          33.5407
+        ],
+        [
+          37.9222,
+          33.8836
+        ],
+        [
+          37.5031,
+          34.3154
+        ],
+        [
+          37.2841,
+          34.0964
+        ],
+        [
+          35.56,
+          36.9189
+        ],
+        [
+          35.3521,
+          36.8132
+        ],
+        [
+          34.8662,
+          36.7489
+        ],
+        [
+          34.1882,
+          37.1144
+        ],
+        [
+          35.4076,
+          37.9857
+        ],
+        [
+          35.518,
+          38.2858
+        ],
+        [
+          37.633,
+          39.5056
+        ],
+        [
+          37.7636,
+          39.391
+        ],
+        [
+          38.1917,
+          39.4696
+        ],
+        [
+          39.6619,
+          36.923
+        ],
+        [
+          39.803,
+          36.6787
+        ],
+        [
+          39.4843,
+          36.2966
+        ],
+        [
+          39.9034,
+          35.8648
+        ],
+        [
+          40.1919,
+          36.162
+        ],
+        [
+          40.5783,
+          36.0274
+        ],
+        [
+          38.9199,
+          32.9495
+        ]
+      ],
+      "areaPt2": 1750.03,
+      "areaM2IllustrativeScale": 19.6,
+      "textWordCountInExclusionMask": 33,
+      "expectedAreaM2FromNearbyText": 20.0,
+      "polygonValid": true,
+      "seedInside": true,
+      "boundaryVectorSupportFraction": 1.0,
+      "sourcePathIDs": [
+        "P08898",
+        "P08908",
+        "P08909",
+        "P08911",
+        "P08912",
+        "P08913",
+        "P14419",
+        "P14420",
+        "P14422",
+        "P14424",
+        "P14425",
+        "P14426"
+      ],
+      "barrierSourceClasses": [
+        "wall",
+        "door candidate",
+        "glazing candidate"
+      ],
+      "virtualCloseWidthPt": 0,
+      "virtualClosurePixelCount": 0,
+      "virtualClosuresArePhysicalWalls": false,
+      "touchesSearchCropEdge": false,
+      "unresolvedEdges": [
+        {
+          "startPt": [
+            795.6835,
+            652.717
+          ],
+          "endPt": [
+            791.1835,
+            652.217
+          ],
+          "lengthPt": 4.528,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P14425",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            791.1835,
+            652.217
+          ],
+          "endPt": [
+            785.1835,
+            655.717
+          ],
+          "lengthPt": 6.946,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P14425",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            785.1835,
+            655.717
+          ],
+          "endPt": [
+            796.6835,
+            663.217
+          ],
+          "lengthPt": 13.73,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P14426",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        }
+      ],
+      "unresolvedEdgeCount": 3,
+      "virtualBoundaryTypes": [
+        "Door"
+      ],
+      "searchAttempts": [
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 0,
+          "areaPt2": 1711.0,
+          "touchesCropEdge": false
+        }
+      ],
+      "independentIoU": "NOT_MEASURABLE: no independently reviewed reference polygon",
+      "reviewDecision": null,
+      "visualEvidence": {
+        "sourceCrop": "s209-source-300dpi.png",
+        "wallMask": "s209-wall-mask-300dpi.png",
+        "doorEvidenceMask": "s209-door-evidence-300dpi.png",
+        "glazingEvidenceMask": "s209-glazing-evidence-300dpi.png",
+        "textFurnitureExclusionMask": "s209-text-furniture-exclusion-300dpi.png",
+        "vectorRasterOverlay": "s209-vector-raster-overlay.png",
+        "segmentationVectorSnap": "s209-segmentation-vector-snap.png"
+      },
+      "issues": [
+        "Candidate is machine-generated and requires human verification.",
+        "Door and glazing paths were used only as temporary segmentation barriers; no physical wall or navigable opening is asserted.",
+        "3 contour edges need review; edge evidence is listed individually."
+      ]
+    },
+    {
+      "roomID": "S210",
+      "candidateID": "ff01-s210-seed-v3",
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "method": "room-seeded raster connected-component segmentation over wall+door+glazing layer masks; vector-snapped contour",
+      "sourceLabelAnchorPt": [
+        777.6235,
+        703.937
+      ],
+      "sourceLabelBBoxPt": [
+        772.76,
+        700.8965,
+        782.4871,
+        706.9774
+      ],
+      "cropBBoxPt": [
+        657.624,
+        583.937,
+        897.624,
+        823.937
+      ],
+      "coordinateFrame": "FF-01 page rotation 270 normalized display points; 2384x1684 pt",
+      "polygonSourcePt": [
+        [
+          791.215,
+          667.281
+        ],
+        [
+          766.487,
+          707.569
+        ],
+        [
+          769.28,
+          710.32
+        ],
+        [
+          766.52,
+          715.24
+        ],
+        [
+          764.385,
+          713.99
+        ],
+        [
+          761.829,
+          715.777
+        ],
+        [
+          766.76,
+          719.2
+        ],
+        [
+          763.64,
+          722.08
+        ],
+        [
+          760.188,
+          722.726
+        ],
+        [
+          759.68,
+          731.44
+        ],
+        [
+          753.896,
+          729.515
+        ],
+        [
+          743.443,
+          747.542
+        ],
+        [
+          746.36,
+          749.68
+        ],
+        [
+          746.102,
+          750.67
+        ],
+        [
+          744.92,
+          755.2
+        ],
+        [
+          742.242,
+          754.491
+        ],
+        [
+          742.124,
+          795.16
+        ],
+        [
+          745.04,
+          795.16
+        ],
+        [
+          746.124,
+          796.96
+        ],
+        [
+          771.08,
+          796.437
+        ],
+        [
+          771.08,
+          795.16
+        ],
+        [
+          774.8,
+          794.937
+        ],
+        [
+          774.8,
+          763.437
+        ],
+        [
+          770.36,
+          762.04
+        ],
+        [
+          770.893,
+          760.154
+        ],
+        [
+          771.965,
+          756.532
+        ],
+        [
+          776.83,
+          756.765
+        ],
+        [
+          791.757,
+          731.014
+        ],
+        [
+          789.019,
+          728.233
+        ],
+        [
+          791.589,
+          723.709
+        ],
+        [
+          795.228,
+          724.997
+        ],
+        [
+          818.625,
+          684.438
+        ],
+        [
+          815.96,
+          681.52
+        ],
+        [
+          815.368,
+          679.013
+        ],
+        [
+          795.39,
+          667.475
+        ],
+        [
+          793.4,
+          668.56
+        ],
+        [
+          791.215,
+          667.281
+        ]
+      ],
+      "polygonWorldMetersIllustrativeScale": [
+        [
+          34.8715,
+          38.371
+        ],
+        [
+          32.2545,
+          42.6348
+        ],
+        [
+          32.5501,
+          42.926
+        ],
+        [
+          32.258,
+          43.4467
+        ],
+        [
+          32.032,
+          43.3144
+        ],
+        [
+          31.7615,
+          43.5036
+        ],
+        [
+          32.2834,
+          43.8658
+        ],
+        [
+          31.9532,
+          44.1706
+        ],
+        [
+          31.5879,
+          44.239
+        ],
+        [
+          31.5341,
+          45.1612
+        ],
+        [
+          30.922,
+          44.9575
+        ],
+        [
+          29.8157,
+          46.8654
+        ],
+        [
+          30.1244,
+          47.0916
+        ],
+        [
+          30.0971,
+          47.1964
+        ],
+        [
+          29.972,
+          47.6758
+        ],
+        [
+          29.6885,
+          47.6008
+        ],
+        [
+          29.676,
+          51.9049
+        ],
+        [
+          29.9847,
+          51.9049
+        ],
+        [
+          30.0994,
+          52.0954
+        ],
+        [
+          32.7406,
+          52.04
+        ],
+        [
+          32.7406,
+          51.9049
+        ],
+        [
+          33.1343,
+          51.8813
+        ],
+        [
+          33.1343,
+          48.5475
+        ],
+        [
+          32.6644,
+          48.3997
+        ],
+        [
+          32.7208,
+          48.2001
+        ],
+        [
+          32.8342,
+          47.8168
+        ],
+        [
+          33.3491,
+          47.8415
+        ],
+        [
+          34.9289,
+          45.1161
+        ],
+        [
+          34.6391,
+          44.8218
+        ],
+        [
+          34.9111,
+          44.343
+        ],
+        [
+          35.2962,
+          44.4793
+        ],
+        [
+          37.7724,
+          40.1868
+        ],
+        [
+          37.4904,
+          39.878
+        ],
+        [
+          37.4278,
+          39.6127
+        ],
+        [
+          35.3134,
+          38.3916
+        ],
+        [
+          35.1028,
+          38.5064
+        ],
+        [
+          34.8715,
+          38.371
+        ]
+      ],
+      "areaPt2": 4299.37,
+      "areaM2IllustrativeScale": 48.16,
+      "textWordCountInExclusionMask": 22,
+      "expectedAreaM2FromNearbyText": 50.9,
+      "polygonValid": true,
+      "seedInside": true,
+      "boundaryVectorSupportFraction": 1.0,
+      "sourcePathIDs": [
+        "P06865",
+        "P06867",
+        "P06869",
+        "P06870",
+        "P08226",
+        "P08898",
+        "P08900",
+        "P08901",
+        "P08902",
+        "P08904",
+        "P08905",
+        "P08915",
+        "P08917",
+        "P08924",
+        "P08925",
+        "P08927",
+        "P08929",
+        "P12643",
+        "P12644",
+        "P12646",
+        "P14418",
+        "P14434",
+        "P14440"
+      ],
+      "barrierSourceClasses": [
+        "wall",
+        "door candidate",
+        "glazing candidate"
+      ],
+      "virtualCloseWidthPt": 0,
+      "virtualClosurePixelCount": 0,
+      "virtualClosuresArePhysicalWalls": false,
+      "touchesSearchCropEdge": false,
+      "unresolvedEdges": [
+        {
+          "startPt": [
+            762.1235,
+            715.937
+          ],
+          "endPt": [
+            767.6235,
+            719.937
+          ],
+          "lengthPt": 6.801,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P06865",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            767.6235,
+            719.937
+          ],
+          "endPt": [
+            764.1235,
+            722.937
+          ],
+          "lengthPt": 4.61,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P06867",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            764.1235,
+            722.937
+          ],
+          "endPt": [
+            760.1235,
+            723.437
+          ],
+          "lengthPt": 4.031,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P06867",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            760.1235,
+            723.437
+          ],
+          "endPt": [
+            760.6235,
+            731.937
+          ],
+          "lengthPt": 8.515,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P06867",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        },
+        {
+          "startPt": [
+            760.6235,
+            731.937
+          ],
+          "endPt": [
+            754.6235,
+            729.937
+          ],
+          "lengthPt": 6.325,
+          "reason": "Boundary coincides with Door candidate; segmentation closure is virtual, not a physical wall.",
+          "sourcePathID": "P06869",
+          "layerSemantic": "Door",
+          "status": "HUMAN_REVIEW_REQUIRED"
+        }
+      ],
+      "unresolvedEdgeCount": 5,
+      "virtualBoundaryTypes": [
+        "Door"
+      ],
+      "searchAttempts": [
+        {
+          "radiusPt": 120,
+          "virtualClosePt": 0,
+          "areaPt2": 4176.0,
+          "touchesCropEdge": false
+        }
+      ],
+      "independentIoU": "NOT_MEASURABLE: no independently reviewed reference polygon",
+      "reviewDecision": null,
+      "visualEvidence": {
+        "sourceCrop": "s210-source-300dpi.png",
+        "wallMask": "s210-wall-mask-300dpi.png",
+        "doorEvidenceMask": "s210-door-evidence-300dpi.png",
+        "glazingEvidenceMask": "s210-glazing-evidence-300dpi.png",
+        "textFurnitureExclusionMask": "s210-text-furniture-exclusion-300dpi.png",
+        "vectorRasterOverlay": "s210-vector-raster-overlay.png",
+        "segmentationVectorSnap": "s210-segmentation-vector-snap.png"
+      },
+      "issues": [
+        "Candidate is machine-generated and requires human verification.",
+        "Door and glazing paths were used only as temporary segmentation barriers; no physical wall or navigable opening is asserted.",
+        "5 contour edges need review; edge evidence is listed individually."
+      ]
+    }
+  ]
+}
