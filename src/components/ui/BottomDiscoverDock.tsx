@@ -1,232 +1,149 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Sparkles, Clock, MapPin, Activity, Flame, Volume2 } from 'lucide-react';
-import { CampusEvent, CampusSpace } from '../../types/campus';
+import React, { useMemo, useState } from 'react';
+import { ChevronUp, Clock, Sparkles } from 'lucide-react';
+import type { CampusEvent, CampusSpace } from '../../types/campus';
+import { displayCode, displayName, formatTime } from './format';
 
 interface BottomDiscoverDockProps {
   events: CampusEvent[];
   spaces: CampusSpace[];
+  compact: boolean;
   onSelectSpace: (spaceId: string) => void;
   onOpenFindSpot: () => void;
 }
 
-export const BottomDiscoverDock: React.FC<BottomDiscoverDockProps> = ({
-  events,
-  spaces,
-  onSelectSpace,
-  onOpenFindSpot,
-}) => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const [activeTab, setActiveTab] = useState<'happening' | 'pulse' | 'spots'>('happening');
+type View = 'happening' | 'pulse' | 'spots';
 
-  const happeningNowEvents = events.filter((e) => e.status === 'happening_now');
-  const upcomingEvents = events.filter((e) => e.status === 'upcoming').slice(0, 3);
+const PICKS: Array<{ id: string; why: string }> = [
+  { id: 'M104', why: '开放研学工坊，适合一个人开始一件新事' },
+  { id: 'M103', why: '激光切割和 3D 打印都在这里' },
+  { id: 'S404', why: '全校最安静的自习室' },
+  { id: 'S202', why: '可以大声讨论的小组空间' },
+  { id: 'COURTYARD-02', why: '课间晒太阳的南苑中庭' },
+];
 
-  // Identify busiest and quietest spots for pulse
-  const busySpots = spaces.filter((s) => s.pulse === 'busy' || s.pulse === 'very_busy').slice(0, 3);
-  const quietSpots = spaces.filter((s) => s.category === 'quiet_study' || s.pulse === 'quiet').slice(0, 3);
+/** "此刻在校园": a capsule that opens into what is happening, how busy places are, and where to go. */
+export const BottomDiscoverDock: React.FC<BottomDiscoverDockProps> = ({ events, spaces, compact, onSelectSpace, onOpenFindSpot }) => {
+  const [open, setOpen] = useState(false);
+  const [view, setView] = useState<View>('happening');
+  const byId = useMemo(() => new Map(spaces.map((s) => [s.id, s])), [spaces]);
+
+  const live = events.filter((e) => e.status === 'happening_now');
+  const upcoming = events.filter((e) => e.status === 'upcoming').slice(0, 4);
+  const busy = spaces.filter((s) => s.pulse === 'busy' || s.pulse === 'very_busy').slice(0, 4);
+  const quiet = spaces.filter((s) => s.pulse === 'quiet' && s.environment.sensorHealth !== 'offline').slice(0, 4);
+  const picks = PICKS.map((p) => ({ ...p, space: byId.get(p.id) })).filter((p) => p.space);
+
+  const go = (spaceId: string) => { onSelectSpace(spaceId); setOpen(false); };
+  const isOpen = open && !compact;
 
   return (
-    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-[94vw] max-w-[840px] pointer-events-auto transition-transform duration-300 ease-out">
-      {/* Dock Container */}
-      <div className="bg-white/90 backdrop-blur-md border border-neutral-200/90 rounded-2xl shadow-xl overflow-hidden">
-        {/* Dock Top Handle Strip */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200/60 bg-neutral-50/50">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-neutral-800">校园动态与发现</span>
-            <span aria-hidden="true" className="text-neutral-300">·</span>
-            {/* Tab switchers */}
-            <div className="flex items-center gap-1 text-xs">
-              <button
-                onClick={() => {
-                  setActiveTab('happening');
-                  setIsCollapsed(false);
-                }}
-                className={`px-2 py-0.5 rounded-md font-medium transition-colors ${
-                  activeTab === 'happening'
-                    ? 'bg-neutral-200/80 text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-800'
-                }`}
-              >
-                正在发生 ({happeningNowEvents.length})
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('pulse');
-                  setIsCollapsed(false);
-                }}
-                className={`px-2 py-0.5 rounded-md font-medium transition-colors ${
-                  activeTab === 'pulse'
-                    ? 'bg-neutral-200/80 text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-800'
-                }`}
-              >
-                人流脉动
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('spots');
-                  setIsCollapsed(false);
-                }}
-                className={`px-2 py-0.5 rounded-md font-medium transition-colors ${
-                  activeTab === 'spots'
-                    ? 'bg-neutral-200/80 text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-800'
-                }`}
-              >
-                好去处
-              </button>
+    <div
+      className={`pointer-events-none absolute bottom-6 z-20 flex justify-center transition-[left,right] duration-500 ease-[var(--ease-orbit)]
+        left-4 right-4 md:left-[6.5rem] md:right-[5.5rem] ${compact ? 'lg:right-[27rem] max-lg:hidden' : ''}`}
+    >
+      <section
+        aria-label="此刻在校园"
+        className={`glass pointer-events-auto overflow-hidden transition-[width,border-radius] duration-500 ease-[var(--ease-orbit)] ${isOpen ? 'w-full max-w-[720px] rounded-[var(--radius-sheet)]' : 'max-w-full rounded-full'}`}
+      >
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={isOpen}
+          className="flex h-12 w-full items-center gap-3 pl-4 pr-3 text-left"
+        >
+          <span className="flex shrink-0 items-center gap-2 text-[13px] font-semibold text-ink">
+            <span className="live-dot h-2 w-2 rounded-full bg-flare" />
+            此刻在校园
+          </span>
+          {!isOpen && (
+            <span className="min-w-0 truncate text-[13px] text-ink-soft max-sm:hidden">
+              {live.length} 场活动正在进行{live[0] ? `，${live[0].title}` : ''}
+            </span>
+          )}
+          <ChevronUp className={`ml-auto h-4 w-4 shrink-0 text-dust transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {isOpen && (
+          <div className="animate-fade border-t hairline">
+            <div className="flex gap-5 px-5 pt-3" role="tablist">
+              {([['happening', '正在发生'], ['pulse', '热闹与安静'], ['spots', '值得一去']] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  role="tab"
+                  aria-selected={view === id}
+                  onClick={() => setView(id)}
+                  className={`relative pb-2 text-[13px] font-medium ${view === id ? 'text-ink' : 'text-crater hover:text-ink'}`}
+                >
+                  {label}
+                  {view === id && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-flare" />}
+                </button>
+              ))}
+            </div>
+
+            <div className="scroll-quiet max-h-[min(46vh,360px)] overflow-y-auto p-3">
+              {view === 'happening' && (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {[...live, ...upcoming].map((e) => {
+                    const isLive = e.status === 'happening_now';
+                    return (
+                      <button key={e.id} onClick={() => go(e.spaceId)} className="group rounded-[var(--radius-tile)] p-3.5 text-left transition-colors hover:bg-white">
+                        <span className={`flex items-center gap-1.5 text-[11px] font-semibold ${isLive ? 'text-ember' : 'text-crater'}`}>
+                          {isLive ? <span className="h-1.5 w-1.5 rounded-full bg-flare" /> : <Clock className="h-3 w-3" />}
+                          {isLive ? '进行中' : `${formatTime(e.startTime)} 开始`}
+                        </span>
+                        <span className="mt-1.5 block text-[14px] font-semibold leading-snug text-ink">{e.title}</span>
+                        <span className="mt-1 block truncate text-[12px] text-crater">{byId.get(e.spaceId) ? displayName(byId.get(e.spaceId)!) : e.spaceName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {view === 'pulse' && (
+                <div className="grid gap-x-6 gap-y-4 p-2 sm:grid-cols-2">
+                  {[{ title: '正热闹', rows: busy, tone: 'bg-[#ef9b86]', note: (s: CampusSpace) => `约 ${s.headcountEstimate ?? 0} 人` },
+                    { title: '很安静', rows: quiet, tone: 'bg-[#8ccfb9]', note: (s: CampusSpace) => `CO₂ ${s.environment.co2} ppm` }].map((col) => (
+                    <div key={col.title}>
+                      <p className="flex items-center gap-2 text-[12px] font-semibold text-ink"><span className={`h-2 w-2 rounded-full ${col.tone}`} />{col.title}</p>
+                      <ul className="mt-1.5 divide-y divide-ink/10">
+                        {col.rows.map((s) => (
+                          <li key={s.id}>
+                            <button onClick={() => go(s.id)} className="flex w-full items-center justify-between gap-3 py-2 text-left text-[13px] hover:text-ember">
+                              <span className="truncate"><span className="wordmark mr-2 text-[11px] text-crater">{displayCode(s.id)}</span>{displayName(s)}</span>
+                              <span className="shrink-0 text-[12px] text-crater">{col.note(s)}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                  <p className="text-[11px] text-dust sm:col-span-2">人流与环境为演示数据。</p>
+                </div>
+              )}
+
+              {view === 'spots' && (
+                <div className="p-1">
+                  <ul className="divide-y divide-ink/10">
+                    {picks.map(({ id, why, space }) => (
+                      <li key={id}>
+                        <button onClick={() => go(id)} className="flex w-full items-baseline gap-3 rounded-[10px] px-2 py-2.5 text-left hover:bg-white">
+                          <span className="wordmark w-14 shrink-0 text-[11px] text-crater">{displayCode(id)}</span>
+                          <span className="min-w-0">
+                            <span className="block text-[14px] font-medium text-ink">{displayName(space!)}</span>
+                            <span className="block text-[12px] text-crater">{why}</span>
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={() => { setOpen(false); onOpenFindSpot(); }} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-2.5 text-[13px] font-medium text-white hover:bg-ink-soft">
+                    <Sparkles className="h-4 w-4" />按我的需求找空间
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-neutral-800 px-2 py-0.5 rounded hover:bg-neutral-100 transition-colors"
-          >
-            {isCollapsed ? (
-              <>
-                <ChevronUp className="w-3.5 h-3.5" />
-                <span>展开</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-3.5 h-3.5" />
-                <span>收起</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Expandable Content Area */}
-        {!isCollapsed && (
-          <div className="p-3.5">
-            {activeTab === 'happening' && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                {happeningNowEvents.map((evt) => (
-                  <div
-                    key={evt.id}
-                    onClick={() => onSelectSpace(evt.spaceId)}
-                    className="p-3 bg-neutral-50 hover:bg-neutral-100/90 rounded-xl border border-neutral-200/80 cursor-pointer transition-all hover:shadow-sm group flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] text-neutral-400 mb-1">
-                        <span className="font-semibold text-neutral-800 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          进行中
-                        </span>
-                        <span>{evt.organizer.split(' ')[0]}</span>
-                      </div>
-                      <h4 className="text-xs font-bold text-neutral-900 group-hover:text-amber-800 line-clamp-1">
-                        {evt.title}
-                      </h4>
-                      <p className="text-[11px] text-neutral-500 line-clamp-2 mt-1 leading-snug">
-                        {evt.description}
-                      </p>
-                    </div>
-
-                    <div className="mt-2.5 pt-2 border-t border-neutral-200/50 flex items-center justify-between text-[11px] text-neutral-600">
-                      <span className="font-medium truncate">{evt.spaceName.split(' ')[0]}</span>
-                      <span className="text-amber-700 font-semibold group-hover:translate-x-0.5 transition-transform">
-                        查看空间 →
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'pulse' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                {/* Busiest Hubs */}
-                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80 space-y-2">
-                  <div className="flex items-center gap-1.5 font-semibold text-rose-700 text-xs">
-                    <Flame className="w-3.5 h-3.5" />
-                    <span>活力与活跃热点 (Busy Hubs)</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {busySpots.map((s) => (
-                      <div
-                        key={s.id}
-                        onClick={() => onSelectSpace(s.id)}
-                        className="flex items-center justify-between p-1.5 hover:bg-white rounded-lg cursor-pointer transition-colors"
-                      >
-                        <span className="font-medium text-neutral-800">{s.name}</span>
-                        <span className="font-mono text-[11px] text-neutral-500">
-                          约 {s.headcountEstimate} 人在场
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quiet Spots */}
-                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80 space-y-2">
-                  <div className="flex items-center gap-1.5 font-semibold text-emerald-700 text-xs">
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>静谧研学角落 (Tranquil Corners)</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {quietSpots.map((s) => (
-                      <div
-                        key={s.id}
-                        onClick={() => onSelectSpace(s.id)}
-                        className="flex items-center justify-between p-1.5 hover:bg-white rounded-lg cursor-pointer transition-colors"
-                      >
-                        <span className="font-medium text-neutral-800">{s.name}</span>
-                        <span className="font-mono text-[11px] text-emerald-600">
-                          {s.environment.co2} ppm · 舒适
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'spots' && (
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => onSelectSpace('M104')}
-                    className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-neutral-800 font-medium transition-colors"
-                  >
-                    🚀 M104 一小步空间
-                  </button>
-                  <button
-                    onClick={() => onSelectSpace('M103')}
-                    className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-neutral-800 font-medium transition-colors"
-                  >
-                    🛠️ M103 创客空间
-                  </button>
-                  <button
-                    onClick={() => onSelectSpace('S404')}
-                    className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-neutral-800 font-medium transition-colors"
-                  >
-                    🤫 S404 静音自习
-                  </button>
-                  <button
-                    onClick={() => onSelectSpace('S202')}
-                    className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-neutral-800 font-medium transition-colors"
-                  >
-                    💬 S202 对话空间
-                  </button>
-                  <button
-                    onClick={() => onSelectSpace('COURTYARD-02')}
-                    className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-neutral-800 font-medium transition-colors"
-                  >
-                    🌿 南苑阳光中庭
-                  </button>
-                </div>
-                <button
-                  onClick={onOpenFindSpot}
-                  className="px-3 py-1.5 bg-neutral-900 text-white rounded-lg font-semibold hover:bg-neutral-800 transition-colors whitespace-nowrap"
-                >
-                  更多智能推荐 →
-                </button>
-              </div>
-            )}
-          </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };

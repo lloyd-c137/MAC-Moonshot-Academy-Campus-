@@ -19,7 +19,7 @@ type CameraCallbacks = {
   onHoverRaycast?: (ndc: THREE.Vector2) => void;
 };
 
-const MIN_ZOOM = 0.5;
+const MIN_ZOOM = 0.28;
 const MAX_ZOOM = 8;
 const PLAN_POLAR = 0;
 
@@ -106,9 +106,18 @@ export class CampusCameraController {
 
   private cancelTransition() {
     if (!this.transitioning) return;
+    const end = this.transitionEnd;
+    // An interrupted 2D/2.5D switch completes its tilt immediately so the camera
+    // never stays stranded between modes; pan / zoom keep their current values.
+    if (end && end.viewMode !== this.state.viewMode) {
+      this.state.viewMode = end.viewMode;
+      this.state.polar = end.polar;
+      this.state.azimuth = end.azimuth;
+    }
     this.transitioning = false;
     this.transitionStart = null;
     this.transitionEnd = null;
+    this.updateCameraTransform();
   }
 
   private onPointerDown = (event: PointerEvent) => {
@@ -280,6 +289,11 @@ export class CampusCameraController {
     });
   }
 
+  /** The view mode the camera is in or currently animating towards. */
+  public get targetViewMode(): ViewMode {
+    return this.transitionEnd?.viewMode ?? this.state.viewMode;
+  }
+
   public toggleViewMode() {
     this.setViewMode((this.transitionEnd?.viewMode ?? this.state.viewMode) === 'explore' ? 'plan' : 'explore');
   }
@@ -299,12 +313,41 @@ export class CampusCameraController {
     this.startTransition({ ...this.state, target: new THREE.Vector3(x, 0, z), zoom: Math.min(MAX_ZOOM, this.state.zoom * 1.5) });
   }
 
+  private fitBounds: { minX: number; minZ: number; maxX: number; maxZ: number } | null = null;
+
+  /** Fit the view to a world-space rectangle (e.g. the building footprint) instead of the full drawing sheet. */
+  public setFitBounds(bounds: { minX: number; minZ: number; maxX: number; maxZ: number }) {
+    this.fitBounds = bounds;
+  }
+
   public fitToPlan() {
-    const fitZoom = Math.min(
-      (this.camera.right - this.camera.left) / SPATIAL_PLAN.sourcePageWorldWidth,
-      (this.camera.top - this.camera.bottom) / SPATIAL_PLAN.sourcePageWorldHeight,
-    ) * 0.92;
-    this.startTransition({ ...this.state, target: new THREE.Vector3(), zoom: THREE.MathUtils.clamp(fitZoom, MIN_ZOOM, MAX_ZOOM) });
+    const b = this.fitBounds;
+    const viewW = this.camera.right - this.camera.left;
+    const viewH = this.camera.top - this.camera.bottom;
+    if (!b) {
+      const fitZoom = Math.min(viewW / SPATIAL_PLAN.sourcePageWorldWidth, viewH / SPATIAL_PLAN.sourcePageWorldHeight) * 0.92;
+      this.startTransition({ ...this.state, target: new THREE.Vector3(), zoom: THREE.MathUtils.clamp(fitZoom, MIN_ZOOM, MAX_ZOOM) });
+      return;
+    }
+    const mode = this.transitionEnd?.viewMode ?? this.state.viewMode;
+    const polar = this.transitionEnd?.polar ?? this.state.polar;
+    const azimuth = this.transitionEnd?.azimuth ?? this.state.azimuth;
+    const w = b.maxX - b.minX;
+    const d = b.maxZ - b.minZ;
+    // Screen-space extent of the rotated rectangle under the current azimuth / tilt.
+    const c = Math.abs(Math.cos(azimuth));
+    const s = Math.abs(Math.sin(azimuth));
+    const across = w * c + d * s;
+    const deep = (w * s + d * c) * (mode === 'plan' ? 1 : Math.cos(polar));
+    const fitZoom = Math.min(viewW / across, viewH / deep) * 0.86;
+    this.startTransition({
+      ...this.state,
+      target: new THREE.Vector3((b.minX + b.maxX) / 2, 0, (b.minZ + b.maxZ) / 2),
+      zoom: THREE.MathUtils.clamp(fitZoom, MIN_ZOOM, MAX_ZOOM),
+      viewMode: mode,
+      polar,
+      azimuth,
+    });
   }
 
   public resetView() {

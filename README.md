@@ -1,6 +1,21 @@
-# MAC — Moonshot Academy Campus
+# Moonshot Academy Campus
 
 MAC is a campus discovery prototype with room details, search, environmental sample data, events, moments, and map interaction. Spatial fidelity is under active reconstruction from the FF-01 source drawing.
+
+Interface design (tokens, layout, brand assets): [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
+
+## 3D campus map
+
+The main map (`/`) now renders a 3D model of FF-01 generated from the drawing itself: 159 wall bodies extruded from the CAD wall layers (existing walls, new partitions, architectural walls, shear walls / columns, with door openings kept where the CAD lines break), 182 glazing bodies, 93 clickable room floors from the V9 candidates, all 101 room labels with names read from the PDF label text, the Lotus Arena court and 572 seats as stepped tiers, plus furniture / door / stair lines on the floor. It supports 2.5D and 2D views, search-to-focus, room selection, layer colouring and a toggleable FF-01 overlay for comparison (图纸对照 → 叠加 FF-01 原始图纸).
+
+Heights are illustrative (2.8 m walls; no section drawing), the outer slab is a derived closing of the wall union, and no room is DRAWING_VERIFIED. Indoor routing stays disabled.
+
+```sh
+npm run rebuild:campus-3d -- --pdf "/path/to/FF-01.pdf"   # writes public/ff01-campus-3d.json + src/data/sourceRooms.ts
+npm run validate:campus-3d
+```
+
+See [`docs/CAMPUS_3D_MODEL.md`](docs/CAMPUS_3D_MODEL.md).
 
 ## Current spatial status
 

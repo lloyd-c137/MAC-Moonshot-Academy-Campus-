@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { X, Image as ImageIcon, CheckCircle, Info } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Check, ImagePlus, X } from 'lucide-react';
 import { CAMPUS_SPACES } from '../../data/floorplanData';
 import { saveMoment } from '../../data/mockMoments';
-import { CampusMoment } from '../../types/campus';
+import type { CampusMoment } from '../../types/campus';
+import { Dialog } from './Dialog';
+import { displayCode, displayName } from './format';
 
 interface AddMomentModalProps {
   isOpen: boolean;
@@ -11,200 +13,127 @@ interface AddMomentModalProps {
   onMomentAdded: (newMoment: CampusMoment) => void;
 }
 
-export const AddMomentModal: React.FC<AddMomentModalProps> = ({
-  isOpen,
-  defaultSpaceId,
-  onClose,
-  onMomentAdded,
-}) => {
-  const [spaceId, setSpaceId] = useState<string>(defaultSpaceId || 'M104');
+const CATEGORIES: Array<{ id: CampusMoment['category']; label: string }> = [
+  { id: 'memory', label: '一段回忆' },
+  { id: 'student_project', label: '一个作品' },
+  { id: 'daily_snap', label: '日常一刻' },
+  { id: 'event_highlight', label: '活动现场' },
+];
+
+const field = 'w-full rounded-[12px] border hairline bg-white px-3.5 py-2.5 text-[14px] text-ink outline-none transition-shadow placeholder:text-dust focus:ring-2 focus:ring-flare/40';
+
+export const AddMomentModal: React.FC<AddMomentModalProps> = ({ isOpen, defaultSpaceId, onClose, onMomentAdded }) => {
+  const [spaceId, setSpaceId] = useState(defaultSpaceId || 'M104');
   const [author, setAuthor] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<CampusMoment['category']>('memory');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  if (!isOpen) return null;
+  // Each opening starts from the room it was opened for.
+  useEffect(() => {
+    if (!isOpen) return;
+    setSpaceId(defaultSpaceId || 'M104');
+    setContent('');
+    setPreviewUrl(null);
+    setSaved(false);
+  }, [isOpen, defaultSpaceId]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewUrl(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
-
-    const targetSpace = CAMPUS_SPACES.find((s) => s.id === spaceId);
-    const saved = saveMoment({
+    const space = CAMPUS_SPACES.find((s) => s.id === spaceId);
+    const moment = saveMoment({
       spaceId,
-      spaceName: targetSpace?.name || spaceId,
+      spaceName: space ? displayName(space) : spaceId,
       author: author.trim() || '探月学子',
       date: new Date().toISOString().split('T')[0],
       content: content.trim(),
       category,
       imageUrl: previewUrl || undefined,
     });
-
-    setIsSuccess(true);
-    setTimeout(() => {
-      onMomentAdded(saved);
-      setIsSuccess(false);
-      onClose();
-    }, 900);
+    setSaved(true);
+    window.setTimeout(() => { onMomentAdded(moment); onClose(); }, 700);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-neutral-200 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="p-5 border-b border-neutral-200/80 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-neutral-900">
-              为校园空间留下记忆 (Campus Time Capsule)
-            </h2>
-            <p className="text-xs text-neutral-500 mt-0.5">
-              分享你的项目故事、自习灵感或温暖瞬间
-            </p>
+    <Dialog open={isOpen} onClose={onClose} title="留下回忆" description="写下在这里发生的事。回忆只保存在这台设备的浏览器里。" width="max-w-[560px]">
+      <form onSubmit={submit} className="scroll-quiet flex-1 space-y-5 overflow-y-auto px-7 pb-6">
+        <label className="block">
+          <span className="text-[13px] font-medium text-ink">地点</span>
+          <select value={spaceId} onChange={(e) => setSpaceId(e.target.value)} className={`${field} mt-1.5`}>
+            {CAMPUS_SPACES.map((s) => (
+              <option key={s.id} value={s.id}>{displayCode(s.id)}  {displayName(s)}</option>
+            ))}
+          </select>
+        </label>
+
+        <fieldset>
+          <legend className="text-[13px] font-medium text-ink">这是</legend>
+          <div className="mt-1.5 flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setCategory(c.id)}
+                aria-pressed={category === c.id}
+                className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors ${category === c.id ? 'bg-ink text-white' : 'border hairline bg-white/70 text-ink-soft hover:bg-white'}`}
+              >
+                {c.label}
+              </button>
+            ))}
           </div>
+        </fieldset>
+
+        <label className="block">
+          <span className="text-[13px] font-medium text-ink">内容</span>
+          <textarea
+            rows={4}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="那天在这里，我们……"
+            required
+            className={`${field} mt-1.5 resize-none leading-relaxed`}
+          />
+        </label>
+
+        <div className="flex items-end gap-4">
+          <label className="block flex-1">
+            <span className="text-[13px] font-medium text-ink">署名 <span className="font-normal text-dust">可不填</span></span>
+            <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="例如：2026 届 Alex" className={`${field} mt-1.5`} />
+          </label>
+          {previewUrl ? (
+            <div className="relative h-[46px] w-[46px] shrink-0 overflow-hidden rounded-[12px]">
+              <img src={previewUrl} alt="已选图片" className="h-full w-full object-cover" />
+              <button type="button" onClick={() => setPreviewUrl(null)} aria-label="移除图片" className="absolute right-0.5 top-0.5 rounded-full bg-ink/70 p-0.5 text-white"><X className="h-3 w-3" /></button>
+            </div>
+          ) : (
+            <label className="flex h-[46px] shrink-0 cursor-pointer items-center gap-2 rounded-[12px] border border-dashed border-haze px-3.5 text-[13px] text-ink-soft hover:bg-white">
+              <ImagePlus className="h-4 w-4" />添加图片
+              <input type="file" accept="image/*" onChange={onFile} className="sr-only" />
+            </label>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 pt-1">
+          <button type="button" onClick={onClose} className="h-11 rounded-full px-5 text-[14px] font-medium text-ink-soft hover:bg-white">取消</button>
           <button
-            onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+            type="submit"
+            disabled={saved || !content.trim()}
+            className="flex h-11 items-center gap-2 rounded-full bg-flare px-6 text-[14px] font-semibold text-white transition-colors hover:bg-ember disabled:opacity-40"
           >
-            <X className="w-4 h-4" />
+            {saved ? (<><Check className="h-4 w-4" />已保存</>) : '保存回忆'}
           </button>
         </div>
-
-        {/* Local Storage Disclosure Banner */}
-        <div className="px-5 py-2.5 bg-neutral-50 border-b border-neutral-200/60 flex items-center gap-2 text-xs text-neutral-500">
-          <Info className="w-4 h-4 text-neutral-400 shrink-0" />
-          <span>保存范围提示：第一阶段记忆内容持久化在当前浏览器本地存储 (LocalStorage)。</span>
-        </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-neutral-700 mb-1 block">
-              关联空间地点
-            </label>
-            <select
-              value={spaceId}
-              onChange={(e) => setSpaceId(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-neutral-50 border border-neutral-200 rounded-lg outline-none focus:border-neutral-400"
-            >
-              {CAMPUS_SPACES.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.id} {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-neutral-700 mb-1 block">
-                你的称呼 (选填)
-              </label>
-              <input
-                type="text"
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-                placeholder="例如: 2026届 Alex"
-                className="w-full px-3 py-2 text-xs bg-neutral-50 border border-neutral-200 rounded-lg outline-none focus:border-neutral-400"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-neutral-700 mb-1 block">
-                记忆类别
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
-                className="w-full px-3 py-2 text-xs bg-neutral-50 border border-neutral-200 rounded-lg outline-none focus:border-neutral-400"
-              >
-                <option value="memory">校园记忆 (Memory)</option>
-                <option value="student_project">项目造物 (Project)</option>
-                <option value="daily_snap">日常打卡 (Daily)</option>
-                <option value="event_highlight">活动高光 (Event)</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-neutral-700 mb-1 block">
-              故事与短注 (Short Note)
-            </label>
-            <textarea
-              rows={3}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="记录在这个空间发生的事情、讨论的课题或留下的情绪..."
-              required
-              className="w-full px-3 py-2 text-xs bg-neutral-50 border border-neutral-200 rounded-lg outline-none focus:border-neutral-400 resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-neutral-700 mb-1 block">
-              上传图片/作品实拍 (Photo / Video Preview)
-            </label>
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg cursor-pointer transition-colors">
-                <ImageIcon className="w-4 h-4" />
-                <span>选择本地图片</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
-              {previewUrl && (
-                <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-neutral-200">
-                  <img src={previewUrl} alt="预览" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setPreviewUrl(null)}
-                    className="absolute top-0 right-0 p-0.5 bg-black/60 text-white rounded-bl"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-2 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-800 rounded-lg transition-colors"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              disabled={isSuccess || !content.trim()}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
-            >
-              {isSuccess ? (
-                <>
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span>已保存到本地记忆库</span>
-                </>
-              ) : (
-                <span>存入时光胶囊</span>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Dialog>
   );
 };

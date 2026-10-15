@@ -1,5 +1,6 @@
 import { CampusSpace, Point2D } from '../types/campus';
 import { SOURCE_LABEL_ANCHORS } from './sourceAnchors';
+import { SOURCE_ROOMS, SourceRoomKind } from './sourceRooms';
 
 // Helper to create a rect polygon
 function makeRect(x: number, y: number, w: number, h: number): Point2D[] {
@@ -1411,4 +1412,54 @@ for (const space of CAMPUS_SPACES) {
   }
   space.geometryProvenance = 'illustrative';
   space.isVerifiedInPlan = false;
+}
+
+// Every FF-01 room label gets a searchable, selectable space. Rooms that the
+// product content above does not describe carry the drawing name and area only;
+// no sensor, occupancy or event data is invented for them.
+const KIND_TO_CATEGORY: Record<SourceRoomKind, CampusSpace['category']> = {
+  classroom: 'classroom',
+  lab: 'laboratory',
+  creative: 'creative_maker',
+  library: 'library_reading',
+  dining: 'dining',
+  meeting: 'office',
+  hall: 'performance_hall',
+  office: 'office',
+  service: 'circulation',
+  room: 'classroom',
+};
+const OFFLINE_ENVIRONMENT = (): CampusSpace['environment'] => ({
+  temperature: 0, humidity: 0, co2: 0,
+  temperatureTrend: [], humidityTrend: [], co2Trend: [],
+  lastUpdated: '—', sensorHealth: 'offline',
+});
+for (const room of SOURCE_ROOMS) {
+  const drawingSpace = CAMPUS_SPACES.find((space) => space.id === room.id);
+  if (drawingSpace) {
+    drawingSpace.areaM2 ??= room.areaM2Label ?? undefined;
+    continue;
+  }
+  const center = { x: room.labelPlan[0], y: room.labelPlan[1] };
+  CAMPUS_SPACES.push({
+    id: room.id,
+    name: room.name,
+    series: room.series as CampusSpace['series'],
+    category: KIND_TO_CATEGORY[room.kind],
+    areaM2: room.areaM2Label ?? room.areaM2Polygon ?? undefined,
+    center,
+    polygon: [],
+    doorPoint: center,
+    floor: 'FF-01',
+    features: [],
+    access: 'unknown',
+    occupancy: 'unknown',
+    environment: OFFLINE_ENVIRONMENT(),
+    pulse: 'unknown',
+    description: `FF-01 图纸房间 ${room.id}（${room.name}${room.areaM2Label ? ` · 图纸标注 ${room.areaM2Label} m²` : ''}）。该空间暂未接入传感器、预约或活动数据。`,
+    tags: [room.name, room.series + ' 系列'],
+    isVerifiedInPlan: false,
+    geometryProvenance: room.geometryStatus === 'NO_POLYGON_LABEL_ONLY' ? 'unverified' : 'derived',
+    locationProvenance: 'derived',
+  });
 }
