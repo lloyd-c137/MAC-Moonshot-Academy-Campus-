@@ -6,9 +6,14 @@ export function displayName(space: Pick<CampusSpace, 'id' | 'name'>): string {
   return stripped || space.name;
 }
 
-/** Short room code for display ("ARENA-01" → "ARENA"). */
+const ROOM_CODE = /^[MSA]\d{3}(?:-\d)?$/;
+
+/** True for spaces that carry a printed FF-01 room code (M104, S404, A100-1…). */
+export const hasRoomCode = (id: string) => ROOM_CODE.test(id);
+
+/** Room code for display; empty for spaces known only by name (卫生间, 小剧场…). */
 export function displayCode(id: string): string {
-  return id.replace(/-01$/, '');
+  return hasRoomCode(id) ? id : '';
 }
 
 export const formatTime = (iso: string) =>

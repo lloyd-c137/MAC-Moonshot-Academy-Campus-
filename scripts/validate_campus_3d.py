@@ -6,10 +6,11 @@ geometry is architecturally verified; the model must keep saying so.
 """
 from __future__ import annotations
 
-import gzip, json, re, sys
+import gzip, json, math, re, sys
 from pathlib import Path
 
 from shapely.geometry import Polygon
+from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = ROOT / "src/generated/ff01-campus-core.json"
@@ -43,18 +44,44 @@ def main():
 
     v9_ids = [s["sourceRoomID"] for s in v9["spaces"]]
     ids = [r["id"] for r in model["rooms"]]
-    check(ids == v9_ids, f"room inventory equals V9 label inventory ({len(ids)} labels)")
-    v9_poly = {s["sourceRoomID"] for s in v9["spaces"] if s.get("geometry")}
-    with_poly = {r["id"] for r in model["rooms"] if r["polygon"]}
-    check(with_poly == v9_poly, f"room polygons are exactly the V9 candidates ({len(with_poly)})")
-    check(all(r["geometryStatus"] in ("V9_CANDIDATE_UNVERIFIED", "NO_POLYGON_LABEL_ONLY") for r in model["rooms"]), "no room claims verified geometry")
+    check(len(ids) == len(set(ids)), f"room IDs are unique ({len(ids)} spaces)")
+    check(set(v9_ids) <= set(ids), f"every FF-01 room label from V9 is present ({len(v9_ids)})")
+    coded = [r for r in model["rooms"] if r["code"]]
+    check(all(r["code"] == r["id"] for r in coded), f"coded rooms keep their printed code ({len(coded)})")
+    allowed = {"WALL_ENCLOSED_CANDIDATE", "SHARED_SPACE_SPLIT_CANDIDATE", "DASHED_BOUNDARY_CANDIDATE", "REVIEWER_DEFINED_CLOSURE", "NO_POLYGON_LABEL_ONLY"}
+    check(all(r["geometryStatus"] in allowed for r in model["rooms"]), "no room claims verified geometry")
+    with_poly = [r for r in model["rooms"] if r["polygon"]]
+    check(sum(1 for r in coded if r["polygon"]) >= 99, f"coded rooms with a region ({sum(1 for r in coded if r['polygon'])}/{len(coded)})")
+
+    # Regions must not overlap: each piece of floor belongs to one room.
+    from shapely.strtree import STRtree
+    geoms = [poly(r["polygon"]).buffer(0) for r in with_poly]
+    tree = STRtree(geoms)
+    overlaps = []
+    for i, g in enumerate(geoms):
+        for j in tree.query(g):
+            if j > i and g.intersection(geoms[j]).area > 0.5:
+                overlaps.append((with_poly[i]["id"], with_poly[j]["id"], round(g.intersection(geoms[j]).area, 1)))
+    check(not overlaps, f"room regions do not overlap ({overlaps[:5] or 'none'})")
+    # Regions must not cross walls.
+    walls_u = unary_union([poly(w).buffer(0) for w in model["walls"]])
+    crossing = [(r["id"], round(poly(r["polygon"]).buffer(0).intersection(walls_u).area, 1)) for r in with_poly]
+    crossing = [c for c in crossing if c[1] > 1.0]
+    check(not crossing, f"room regions stay inside the walls ({crossing[:5] or 'none'})")
+    # Rooms with a printed area should be close to it (net floor vs. printed gross: allow 35%).
+    off = [(r["id"], r["areaM2Polygon"], r["areaM2Label"]) for r in coded if r["polygon"] and r["areaM2Label"] and abs(math.log(r["areaM2Polygon"] / r["areaM2Label"])) > 0.35]
+    check(len(off) <= 8, f"printed vs. region area within 35% for most rooms; exceptions: {off}")
+    m104 = next(r for r in model["rooms"] if r["id"] == "M104")
+    check(m104["polygon"] and 45 < m104["areaM2Polygon"] < 70, f"M104 covers the whole rounded room ({m104['areaM2Polygon']} m², printed 62.6)")
+    theatre = next((r for r in model["rooms"] if r["name"] == "小剧场"), None)
+    check(bool(theatre and theatre["polygon"]), "小剧场 has a region")
 
     bad = [r["id"] for r in model["rooms"] if r["polygon"] and not poly(r["polygon"]).is_valid]
     check(not bad, f"room polygons are valid ({bad or 'all'})")
-    named = [r for r in model["rooms"] if r["nameSource"] in ("PDF_LABEL_BLOCK", "MANUAL_READING_OF_STACKED_GLYPHS")]
-    check(len(named) >= 95, f"room names read from FF-01 label text ({len(named)}/{len(ids)})")
+    named = [r for r in coded if r["nameSource"] in ("PDF_LABEL_BLOCK", "PDF_FUSED_CODE_AND_NAME")]
+    check(len(named) >= 95, f"room names read from FF-01 label text ({len(named)}/{len(coded)})")
     off_label = [r["id"] for r in model["rooms"] if r["polygon"] and not poly(r["polygon"]).buffer(1.0).contains(Polygon([(r["label"][0]-.01, r["label"][1]-.01), (r["label"][0]+.01, r["label"][1]-.01), (r["label"][0], r["label"][1]+.01)]))]
-    check(len(off_label) <= 5, f"source label lies inside (or within 1 m of) its room polygon; exceptions: {off_label}")
+    check(len(off_label) <= 3, f"source label lies inside (or within 1 m of) its room polygon; exceptions: {off_label}")
 
     fp = poly(model["footprint"]["polygon"])
     minx, minz, maxx, maxz = fp.bounds

@@ -29,6 +29,8 @@ import numpy as np
 from shapely.geometry import LineString, MultiPolygon, Polygon, shape
 from shapely.ops import unary_union
 
+from room_regions import PRODUCT_IDS, RegionFinder, derive_regions, named_spaces, read_text_lines
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data/source"
 GENERATED = ROOT / "src/generated"
@@ -181,9 +183,6 @@ NAME_KINDS = [
     ("service", ("库", "储藏", "机房", "配电", "扩音", "灯光")),
     ("classroom", ("教室", "书院", "语言学习")),
 ]
-# Labels whose characters are stacked one glyph per text line on FF-01; the
-# extractor cannot join them, so the reading is recorded by hand here.
-MANUAL_NAMES = {"S208": "灯光室", "S310": "莲花球场扩音间"}
 AREA_RE = re.compile(r"^(\d+(?:\.\d+)?)\s*(?:m²|m2|㎡)?$")
 CJK_RE = re.compile(r"[一-鿿]")
 
@@ -229,8 +228,6 @@ def read_label_blocks(pdf_path, label_points):
             m = AREA_RE.match(l["t"].replace(" ", ""))
             if m:
                 area = float(m.group(1)); break
-        if not name and rid in MANUAL_NAMES:
-            name, name_source = MANUAL_NAMES[rid], "MANUAL_READING_OF_STACKED_GLYPHS"
         result[rid] = {"name": name, "nameSource": name_source, "areaM2Label": area}
     return result
 
@@ -289,34 +286,72 @@ def main():
     footprint = max(polys(closed), key=lambda p: p.area)
     footprint = Polygon(footprint.exterior).simplify(0.5)
 
-    # ---- rooms
-    label_points = {s["sourceRoomID"]: s["sourceLabelPt"] for s in v9["spaces"]}
+    # ---- rooms: regions derived from the drawing's walls, glass and doors (see room_regions.py)
+    import pymupdf
+    label_points = {s["sourceRoomID"]: tuple(s["sourceLabelPt"]) for s in v9["spaces"]}
     labels = read_label_blocks(pdf_path, label_points)
+    text_lines = read_text_lines(pymupdf.open(pdf_path)[0])
+    extra = named_spaces(text_lines, set(label_points))
+    finder = RegionFinder(drawings, WALL_SEMANTICS, GLAZING_LAYERS, WALL_MERGE_RADIUS_PT, wall_faces, path_polylines)
+    coded, named = derive_regions(finder, label_points, {k: v["areaM2Label"] for k, v in labels.items()}, extra)
+
+    def room_record(rid, name, name_source, kind, series, area_label, region, code):
+        poly = region.polygon
+        lx, lz = world(region.point)
+        px, py = plan(region.point)
+        status = {
+            "WALL_ENCLOSED": "WALL_ENCLOSED_CANDIDATE",
+            "SHARED_SPACE_SPLIT_BY_AREA": "SHARED_SPACE_SPLIT_CANDIDATE",
+            "DRAWING_DASHED_BOUNDARY": "DASHED_BOUNDARY_CANDIDATE",
+            "REVIEWER_DEFINED_CLOSURE": "REVIEWER_DEFINED_CLOSURE",
+            "NO_ENCLOSED_SPACE": "NO_POLYGON_LABEL_ONLY",
+        }[region.method]
+        return {
+            "id": rid, "code": code, "name": name, "nameSource": name_source, "kind": kind, "series": series,
+            "areaM2Label": area_label,
+            "areaM2Polygon": round(poly.area * M_PER_PT ** 2, 1) if poly is not None else None,
+            "label": [r2(lx), r2(lz)], "labelPlan": [round(px, 2), round(py, 2)],
+            "polygon": poly_world(poly, 0.05) if poly is not None else None,
+            "geometryStatus": status if poly is not None else "NO_POLYGON_LABEL_ONLY",
+            "regionMethod": {"barrierVariant": region.variant, "gapClosingPt": region.close_pt, "sharedWith": region.shared_with} if poly is not None else None,
+        }
+
     rooms = []
-    for s in v9["spaces"]:
-        rid = s["sourceRoomID"]
+    for rid in label_points:
         info = labels[rid]
         name = info["name"] or f"房间 {rid}"
-        poly = shape(s["geometry"]) if s.get("geometry") else None
-        lx, lz = world(s["sourceLabelPt"])
-        px, py = plan(s["sourceLabelPt"])
-        rooms.append({
-            "id": rid,
-            "name": name,
-            "nameSource": info["nameSource"],
-            "kind": kind_for(name),
-            "series": rid[0],
-            "areaM2Label": info["areaM2Label"],
-            "areaM2Polygon": round(poly.area * M_PER_PT ** 2, 1) if poly else None,
-            "label": [r2(lx), r2(lz)],
-            "labelPlan": [round(px, 2), round(py, 2)],
-            "polygon": poly_world(poly, 0.05) if poly else None,
-            "geometryStatus": "V9_CANDIDATE_UNVERIFIED" if poly else "NO_POLYGON_LABEL_ONLY",
-        })
-    corridors = []
-    for c in v9["circulation"]["corridors"]:
-        if c.get("geometry"):
-            corridors.append({"id": c["id"], "polygon": poly_world(shape(c["geometry"]), 0.05), "geometryStatus": "V9_CANDIDATE_UNVERIFIED"})
+        rooms.append(room_record(rid, name, info["nameSource"], kind_for(name), rid[0], info["areaM2Label"], coded[rid], rid))
+    for e in extra:  # codes written together with their name, e.g. "M109教室"
+        if e["coded"]:
+            rooms.append(room_record(e["key"], e["name"], "PDF_FUSED_CODE_AND_NAME", kind_for(e["name"]), e["key"][0], e["area"], coded[e["key"]], e["key"]))
+
+    counters = {}
+    PUBLIC_KIND = {"restroom": "restroom", "stair": "stair", "entrance": "public", "garden": "garden", "hall": "hall", "dining": "dining", "meeting": "meeting", "service": "service", "room": "room"}
+    PREFIX = {"restroom": "WC", "stair": "STAIR", "entrance": "HALL", "garden": "GARDEN", "service": "SVC", "meeting": "ROOM", "hall": "HALL", "dining": "ROOM", "room": "ROOM"}
+    for r in sorted(named, key=lambda r: (r.point[1], r.point[0])):
+        name = {"男卫": "男卫生间", "女卫": "女卫生间"}.get(r.name, r.name)
+        rid = PRODUCT_IDS.get(r.name)
+        if rid is None and r.name.startswith("花园"):
+            rid = "COURTYARD-01" if r.point[1] < CENTER[1] else "COURTYARD-02"
+        if rid is None:
+            prefix = PREFIX[r.kind]
+            counters[prefix] = counters.get(prefix, 0) + 1
+            rid = f"{prefix}-{counters[prefix]:02d}"
+        rooms.append(room_record(rid, name, "PDF_ROOM_TEXT", PUBLIC_KIND[r.kind], "SERVICE" if r.kind in ("service", "restroom", "stair") else "PUBLIC", r.area_ref, r, None))
+    # Open public spaces with product pages (entrance halls, 创新区, 茶室) have no enclosing walls;
+    # keep them as located labels so search and selection land on the right spot.
+    from room_regions import Region
+    have = {r["id"] for r in rooms}
+    for e in extra:
+        rid = PRODUCT_IDS.get(e["name"])
+        if rid and rid not in have:
+            rooms.append(room_record(rid, e["name"], "PDF_ROOM_TEXT", "public", "PUBLIC", e["area"], Region(e["key"], e["pt"], None, "NO_ENCLOSED_SPACE"), None))
+            have.add(rid)
+    corridors = []  # corridors are the building floor; no separate candidate polygons
+    # The slab must contain every room region (e.g. A106, whose outer side is a dashed line).
+    room_polys = [r.polygon for r in list(coded.values()) + list(named) if r.polygon is not None]
+    grown = unary_union([footprint] + [p.buffer(0.5) for p in room_polys])
+    footprint = Polygon(max(polys(grown), key=lambda p: p.area).exterior).simplify(0.5)
 
     # ---- arena
     arena = v9["arena"]
@@ -365,17 +400,19 @@ def main():
     DETAIL_OUT.write_text(json.dumps(detail, separators=(",", ":")))
 
     # Static room index for search / detail panel (no geometry).
-    ts_rows = [{k: r[k] for k in ("id", "name", "kind", "series", "areaM2Label", "areaM2Polygon", "labelPlan", "geometryStatus")} for r in rooms]
+    ts_rows = [{k: r[k] for k in ("id", "code", "name", "kind", "series", "areaM2Label", "areaM2Polygon", "labelPlan", "geometryStatus")} for r in rooms]
     ROOMS_TS.write_text(
         "// Generated by scripts/build_campus_3d.py from FF-01; do not hand edit.\n"
-        "export type SourceRoomKind = " + " | ".join(sorted({f"'{k}'" for k, _ in NAME_KINDS} | {"'room'"})) + ";\n"
-        "export interface SourceRoom { id: string; name: string; kind: SourceRoomKind; series: string; areaM2Label: number | null; areaM2Polygon: number | null; labelPlan: [number, number]; geometryStatus: string }\n"
+        "export type SourceRoomKind = " + " | ".join(sorted({f"'{k}'" for k, _ in NAME_KINDS} | {"'room'", "'restroom'", "'stair'", "'public'", "'garden'"})) + ";\n"
+        "export interface SourceRoom { id: string; code: string | null; name: string; kind: SourceRoomKind; series: string; areaM2Label: number | null; areaM2Polygon: number | null; labelPlan: [number, number]; geometryStatus: string }\n"
         f"export const SOURCE_ROOMS: SourceRoom[] = {json.dumps(ts_rows, ensure_ascii=False, indent=1)};\n",
         encoding="utf-8")
     print(json.dumps(out["counts"], ensure_ascii=False))
     print("footprint m²", round(footprint.area * M_PER_PT ** 2), "bounds m", out["bounds"])
     print("seat rows", sorted({s['row'] for s in seats}))
-    print("unnamed", [r["id"] for r in rooms if r["nameSource"] != "PDF_LABEL_BLOCK"], [(r["id"], r["name"]) for r in rooms if r["nameSource"] == "PDF_NEARBY_TEXT_LOW_CONFIDENCE"])
+    print("coded rooms", sum(1 for r in rooms if r["code"]), "named spaces", sum(1 for r in rooms if not r["code"]), "with polygon", sum(1 for r in rooms if r["polygon"]))
+    print("without name", [r["id"] for r in rooms if r["name"].startswith("房间 ")], "low confidence", [(r["id"], r["name"]) for r in rooms if r["nameSource"] == "PDF_NEARBY_TEXT_LOW_CONFIDENCE"])
+    print("label only", [r["id"] for r in rooms if not r["polygon"]])
     print("bytes core", OUT.stat().st_size, "detail", DETAIL_OUT.stat().st_size)
 
 

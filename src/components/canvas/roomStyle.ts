@@ -14,6 +14,10 @@ export const ROOM_KIND_STYLE: Record<RoomKind, { calm: number; strong: number; l
   hall: { calm: 0xe9dbd0, strong: 0xd9b7a4, label: '多功能与活动' },
   office: { calm: 0xdde2e8, strong: 0xb5bdc9, label: '办公与服务' },
   service: { calm: 0xd2d7de, strong: 0xa0a8b4, label: '库房与设备' },
+  restroom: { calm: 0xd4e4ee, strong: 0x8fb9d4, label: '卫生间' },
+  stair: { calm: 0xd3d6dc, strong: 0x9ea4ae, label: '楼梯' },
+  public: { calm: 0xe6e3dc, strong: 0xcfc6b3, label: '门厅与公共区' },
+  garden: { calm: 0xd6e6d0, strong: 0x9fcb8f, label: '中庭花园' },
   room: { calm: 0xdce0e5, strong: 0xc2c8d0, label: '其他房间' },
 };
 

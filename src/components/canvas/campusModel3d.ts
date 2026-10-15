@@ -6,10 +6,12 @@ export type XZ = [number, number];
 export interface PolygonXZ { o: XZ[]; h: XZ[][] }
 export type RoomKind =
   | 'classroom' | 'lab' | 'creative' | 'library' | 'dining' | 'meeting'
-  | 'hall' | 'office' | 'service' | 'room';
+  | 'hall' | 'office' | 'service' | 'room' | 'restroom' | 'stair' | 'public' | 'garden';
 
 export interface CampusModelRoom {
   id: string;
+  /** Room code printed on FF-01 (e.g. "M104"); null for spaces named only in text. */
+  code: string | null;
   name: string;
   nameSource: string;
   kind: RoomKind;

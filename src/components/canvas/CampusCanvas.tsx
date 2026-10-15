@@ -44,7 +44,8 @@ function roomColor(room: CampusModelRoom, mode: MapLayerMode, spaces: Map<string
 function makeLabel(room: CampusModelRoom): CSS2DObject {
   const el = document.createElement('div');
   el.className = 'campus-room-label';
-  el.innerHTML = `<span class="campus-room-label__id">${room.id}</span><span class="campus-room-label__name">${room.name}</span>`;
+  el.innerHTML = (room.code ? `<span class="campus-room-label__id">${room.code}</span>` : '') + `<span class="campus-room-label__name">${room.name}</span>`;
+  if (!room.code) el.classList.add('is-uncoded');
   const object = new CSS2DObject(el);
   object.position.set(room.label[0], 0.4, room.label[1]);
   object.userData.roomId = room.id;
@@ -101,7 +102,8 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     const narrow = (mountRef.current?.clientWidth ?? 1200) < 1024;
     const height = mountRef.current?.clientHeight ?? 800;
     // Wide screens: keep the room left of the side sheet. Phones: lift it above the bottom sheet.
-    controllerRef.current.focusOnPosition(point.x, point.z, 2.4, narrow ? 0 : undefined, narrow ? height * 0.22 : 0);
+    controllerRef.current.focusOnPosition(point.x, point.z, 2.4, // never zooms out (controller keeps a closer zoom)
+      narrow ? 0 : undefined, narrow ? height * 0.22 : 0);
   }, [selectedSpaceId, modelVersion]);
 
   // Selection / hover highlight.
@@ -167,10 +169,8 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(width, height);
-    // Full sharpness at rest; a lighter pixel ratio while the camera is moving.
-    const FULL_DPR = Math.min(window.devicePixelRatio, 2);
-    const MOTION_DPR = Math.min(FULL_DPR, 1.25);
-    renderer.setPixelRatio(FULL_DPR);
+    // A constant pixel ratio: switching it mid-gesture reallocates the canvas and causes a visible hitch.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -181,12 +181,6 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     const wake = () => { if (!frameId) frameId = requestAnimationFrame(frame); };
     const invalidate = () => { needsRender = true; wake(); };
     invalidateRef.current = invalidate;
-    let settleTimer = 0;
-    const markMotion = () => {
-      if (FULL_DPR > MOTION_DPR && renderer.getPixelRatio() !== MOTION_DPR) renderer.setPixelRatio(MOTION_DPR);
-      window.clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(() => { renderer.setPixelRatio(FULL_DPR); invalidate(); }, 180);
-    };
 
     const labelRenderer = new CSS2DRenderer();
     labelRenderer.setSize(width, height);
@@ -254,10 +248,10 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         const mpp = controller.metresPerPixel;
         const metres = [1, 2, 5, 10, 20, 50, 100].filter((m) => m / mpp <= 110).pop() ?? 1;
         setScale((prev) => (prev.metres === metres && Math.abs(prev.px - metres / mpp) < 0.5 ? prev : { metres, px: Math.round(metres / mpp) }));
-        markMotion();
         invalidate();
       },
       onActivity: wake,
+      onDragChange: (dragging) => { renderer.domElement.style.cursor = dragging ? 'grabbing' : 'grab'; },
       onClickRaycast: (ndc) => selectRef.current(pickRoom(ndc)),
       onDoubleClickRaycast: (ndc) => {
         raycaster.setFromCamera(ndc, camera);
@@ -385,7 +379,6 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       window.removeEventListener('resize', handleResize);
       canvasElem.removeEventListener('webglcontextlost', handleContextLost);
       cancelAnimationFrame(frameId);
-      window.clearTimeout(settleTimer);
       controller.dispose();
       controllerRef.current = null;
       sceneRef.current?.dispose();

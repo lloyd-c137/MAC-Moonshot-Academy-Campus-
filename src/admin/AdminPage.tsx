@@ -364,7 +364,7 @@ const RoomsSection: React.FC<{ draft: CampusConfig; update: (p: Partial<CampusCo
           <section className={card}>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="wordmark text-[32px] font-semibold leading-none">{displayCode(base.id)}</div>
+                <div className="wordmark text-[32px] font-semibold leading-none">{displayCode(base.id) || displayName(base)}</div>
                 <p className="mt-2 text-[14px] text-crater">{displayName(base)}</p>
               </div>
               {draft.rooms[selected] && (

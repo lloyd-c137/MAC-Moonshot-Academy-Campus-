@@ -1428,6 +1428,10 @@ const KIND_TO_CATEGORY: Record<SourceRoomKind, CampusSpace['category']> = {
   office: 'office',
   service: 'circulation',
   room: 'classroom',
+  restroom: 'restroom',
+  stair: 'circulation',
+  public: 'entrance',
+  garden: 'courtyard',
 };
 const OFFLINE_ENVIRONMENT = (): CampusSpace['environment'] => ({
   temperature: 0, humidity: 0, co2: 0,
@@ -1437,7 +1441,12 @@ const OFFLINE_ENVIRONMENT = (): CampusSpace['environment'] => ({
 for (const room of SOURCE_ROOMS) {
   const drawingSpace = CAMPUS_SPACES.find((space) => space.id === room.id);
   if (drawingSpace) {
-    drawingSpace.areaM2 ??= room.areaM2Label ?? undefined;
+    drawingSpace.areaM2 ??= room.areaM2Label ?? room.areaM2Polygon ?? undefined;
+    // Product spaces named only in text (小剧场, 门厅, 中庭…) move to their FF-01 position.
+    if (!room.code) {
+      drawingSpace.center = { x: room.labelPlan[0], y: room.labelPlan[1] };
+      drawingSpace.locationProvenance = 'derived';
+    }
     continue;
   }
   const center = { x: room.labelPlan[0], y: room.labelPlan[1] };

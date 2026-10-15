@@ -192,14 +192,16 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
           </div>
         </div>
         <div className="mt-3 flex items-end gap-3">
-          <span className="wordmark text-[44px] font-semibold leading-[0.9] text-ink">{displayCode(space.id)}</span>
+          {displayCode(space.id)
+            ? <span className="wordmark text-[44px] font-semibold leading-[0.9] text-ink">{displayCode(space.id)}</span>
+            : <span className="text-[30px] font-semibold leading-tight text-ink">{displayName(space)}</span>}
           {live && (
             <button onClick={() => setTab('events')} className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-flare-wash px-2.5 py-1 text-[11px] font-semibold text-ember hover:bg-[#ffe9d6]">
               <span className="live-dot h-1.5 w-1.5 rounded-full bg-flare" />活动进行中
             </button>
           )}
         </div>
-        <h2 className="mt-3 text-xl font-semibold leading-snug text-ink">{displayName(space)}</h2>
+        {displayCode(space.id) ? <h2 className="mt-3 text-xl font-semibold leading-snug text-ink">{displayName(space)}</h2> : <h2 className="sr-only">{displayName(space)}</h2>}
 
         {!collapsed && facts.length > 0 && (
           <dl className={`mt-5 grid divide-x divide-ink/10 border-y hairline ${facts.length === 3 ? 'grid-cols-3' : facts.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
