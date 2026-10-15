@@ -1,0 +1,19 @@
+{
+  "model": "data/source/canonical-architecture-v7.json",
+  "publicCopy": "public/ff01-architecture-v7.json",
+  "sourcePdfSha256": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+  "currentPdfHashMatched": true,
+  "sourceLabels": 101,
+  "candidateRoomPolygons": 6,
+  "drawingMatchedSpaces": 0,
+  "drawingVerifiedSpaces": 0,
+  "wallTraceObjects": 4794,
+  "sourceFilledWallFaceCandidates": 899,
+  "explicitPartitionFaceCandidates": 90,
+  "courtBoundaryCandidates": 2,
+  "seatFootprints": 572,
+  "arenaBoundaryTraces": 1781,
+  "corridorPolygons": 0,
+  "buildingFootprint": "UNRESOLVED",
+  "status": "PARTIAL_SOURCE_ALIGNED_CANDIDATE"
+}

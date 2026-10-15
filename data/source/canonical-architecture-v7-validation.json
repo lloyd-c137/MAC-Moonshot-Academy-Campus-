@@ -1,0 +1,19 @@
+{
+  "result": "PASS_V7_SOURCE_GEOMETRY_INTEGRITY",
+  "pdfHashMatched": true,
+  "sourcePathReferences": 8162,
+  "uniqueSourcePathIDs": 5400,
+  "coordinateRoundTripMaxErrorPt": 2.3437142008433856e-13,
+  "validCandidatePolygons": 1563,
+  "sourceLabelCount": 101,
+  "candidateRoomPolygons": 6,
+  "drawingMatchedSpaces": 0,
+  "drawingVerifiedSpaces": 0,
+  "wallTraceObjects": 4794,
+  "wallFaceCandidates": 989,
+  "courtBoundaryCandidates": 2,
+  "seatFootprints": 572,
+  "corridorPolygons": 0,
+  "buildingFootprintStatus": "UNRESOLVED",
+  "note": "Integrity checks do not certify semantic completeness or independent architectural accuracy."
+}

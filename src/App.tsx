@@ -10,6 +10,7 @@ import { GeometryReviewDrawer } from './components/ui/GeometryReviewDrawer';
 import { GeometryReviewEditor } from './components/dev/GeometryReviewEditor';
 import { GeometryReviewSession } from './components/dev/GeometryReviewSession';
 import { BuildingPreviewV6 } from './components/dev/BuildingPreviewV6';
+import { BuildingPreviewV7 } from './components/dev/BuildingPreviewV7';
 import { CAMPUS_SPACES } from './data/floorplanData';
 import { CAMPUS_EVENTS } from './data/mockEvents';
 import { getStoredMoments, toggleLikeMoment } from './data/mockMoments';
@@ -261,6 +262,7 @@ function CampusApp() {
 
 export default function App() {
   if (import.meta.env.DEV && window.location.pathname === '/dev/building-preview') return <BuildingPreviewV6 />;
+  if (import.meta.env.DEV && window.location.pathname === '/dev/building-preview-v7') return <BuildingPreviewV7 />;
   if (import.meta.env.DEV && window.location.pathname === '/dev/geometry-review') return new URLSearchParams(window.location.search).get('mode') === 'edit' ? <GeometryReviewEditor /> : <GeometryReviewSession />;
   return <CampusApp />;
 }

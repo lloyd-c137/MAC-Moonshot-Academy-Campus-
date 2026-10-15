@@ -15,3 +15,4 @@ output/playwright/*
 !output/playwright/architecture-preview-v6-1536x864.png
 !output/playwright/architecture-preview-v6-plan-1536x864.png
 !output/playwright/architecture-preview-v6-rotated.png
+!output/playwright/architecture-v7-*.png
