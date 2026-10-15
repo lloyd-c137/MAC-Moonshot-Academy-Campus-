@@ -18,6 +18,8 @@ jobs:
   build-and-deploy:
     name: Build and deploy Pages site
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -32,15 +34,15 @@ jobs:
         run: bun run build
 
       - name: Explain missing Cloudflare credential
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' }}
+        if: ${{ env.CLOUDFLARE_API_TOKEN == '' }}
         run: |
           echo 'Cloudflare deployment was not run. Add the CLOUDFLARE_API_TOKEN repository secret to enable deployment.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Deploy to the existing Cloudflare Pages project
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
           accountId: 23eaec5f0fa05be152e061ee451a5fd8
           command: pages deploy dist --project-name=mac --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
