@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "coordinateSystem": "FF01_NORMALIZED_PDF_DISPLAY_PT_V1",
+  "sourcePdfSha256": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+  "authoredObjects": [
+    {
+      "id": "FF01-CORRIDOR-M-WEST-01",
+      "type": "corridor",
+      "sourceRoomIDs": ["M104", "M105", "M106"],
+      "coordinatesPdfDisplayPt": [[548.2,1294.5],[707.0,1294.5],[707.0,1317.2],[548.2,1317.2],[548.2,1294.5]],
+      "sourcePathIDs": ["P08188","P08189","P15462","P14871","P14879","P04056","P04057","P04058","P06401","P06402","P16154","P16155"],
+      "sourceLayers": ["A05-建筑原有墙体","A07-新建隔墙"],
+      "authoringMethod": "SOURCE_GUIDED_BOUNDARY_TRACE",
+      "geometryStatus": "CANDIDATE",
+      "verificationLevel": "UNVERIFIED",
+      "unresolvedBoundaries": [
+        {"edge":0,"reason":"A05/A07 structural vectors support this boundary, but the traced line may follow a wall face rather than the clear walkable edge; review exact wall thickness and door interruptions."},
+        {"edge":1,"reason":"A source door leaf is adjacent to this termination; confirm the actual opening width and whether the passage continues east. No passability is asserted."},
+        {"edge":2,"reason":"A07 partition traces support this boundary with gaps and discontinuities; confirm the door jambs and room-side face before topology use."},
+        {"edge":3,"reason":"A05 wall trace supports the west edge; verify the connection at the wall junction and whether this segment terminates here."}
+      ]
+    }
+  ],
+  "recoverySeeds": [
+    {"roomID":"M105","closePt":[4,6,8],"cropRadiusPt":110},
+    {"roomID":"M106","closePt":[4,6,8,10],"cropRadiusPt":110},
+    {"roomID":"M107","closePt":[4,6,8,10],"cropRadiusPt":120}
+  ],
+  "recoveryScope": {
+    "attemptAllUnmodeledLabels": true,
+    "defaultCropRadiusPt": 95,
+    "defaultClosePt": [4,6,8,10,12],
+    "minimumVectorAlignedBoundaryRatio": 0.70,
+    "minimumAreaM2": 5,
+    "maximumAreaM2": 600,
+    "areaAnnotationUsedForAcceptance": false
+  },
+  "footprintTrace": {
+    "strategy": "OPEN_SOURCE_PERIMETER_SEGMENTS",
+    "note": "Do not close with dimension-grid bounds. Preserve exterior evidence as segments where continuous perimeter cannot be proven."
+  }
+}

@@ -10,6 +10,12 @@ The PDF contains 126 CAD layers, including source-named existing walls, new part
 
 **Current status: PARTIAL. Do not treat the map as a completed digital twin or verified indoor navigation system.** See [`docs/SPATIAL_FIDELITY_AUDIT.md`](docs/SPATIAL_FIDELITY_AUDIT.md), [`docs/PILOT_FAILURE_ROOT_CAUSE.md`](docs/PILOT_FAILURE_ROOT_CAUSE.md), [`docs/PILOT_BOUNDARY_ERROR_AUDIT.md`](docs/PILOT_BOUNDARY_ERROR_AUDIT.md), [`docs/PILOT_GEOMETRY_VALIDATION.md`](docs/PILOT_GEOMETRY_VALIDATION.md), and [`docs/UPDATED_UNRESOLVED_GEOMETRY.md`](docs/UPDATED_UNRESOLVED_GEOMETRY.md).
 
+### V8 PDF-guided digitization
+
+V8 adds an independent candidate model built from source-seeded raster regions snapped and audited against FF-01 native vectors. It currently accounts for all 101 room-label occurrences and contains 88 source-aligned room polygon candidates, one M-west corridor candidate, two court-boundary candidates, six seat-footprint clusters (572 source seats), and 1,746 open exterior trace segments. The 13 remaining labels, exterior closure gaps, corridor openings, and ring-corridor limits remain unresolved. All candidate geometry is UNVERIFIED; the V8 work does not change the production campus map or enable indoor navigation.
+
+Run `npm run rebuild:architecture-v8` and `npm run validate:architecture-v8`. Start `npm run dev` and open `/dev/building-preview-v8` for the development-only source overlay and orthographic 2.5D candidate preview. See [`docs/ARCHITECTURE_RECONSTRUCTION_V8.md`](docs/ARCHITECTURE_RECONSTRUCTION_V8.md) and [`docs/V8_UNRESOLVED_GEOMETRY.md`](docs/V8_UNRESOLVED_GEOMETRY.md).
+
 V6 adds a source-provenance full-sheet evidence model and a development-only architectural trace preview. Run `npm run rebuild:architecture-v6` and `npm run validate:architecture-v6`, then visit `/dev/building-preview` while Vite is running. The preview can inspect source wall, partition, structural-fill, door, stair, and arena/seating traces over the FF-01 sheet, with an illustrative 2.5D extrusion. This is not a complete or verified building model: footprint and corridor polygons remain unresolved, all six room candidates remain unverified, and door paths do not establish passable openings. Details and limits are in [`docs/ARCHITECTURE_RECONSTRUCTION_V6.md`](docs/ARCHITECTURE_RECONSTRUCTION_V6.md).
 
 ## Run the app
