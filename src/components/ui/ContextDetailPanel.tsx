@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useState } from 'react';
-import { ChevronDown, Clock, Heart, Navigation, PenLine, Users, X } from 'lucide-react';
+import { ChevronDown, CircleAlert, Clock, Heart, Link2, Navigation, PenLine, Users, X } from 'lucide-react';
 import type { CampusEvent, CampusMoment, CampusSpace } from '../../types/campus';
 import { displayCode, displayName, formatTime as time } from './format';
 
@@ -11,6 +11,9 @@ interface ContextDetailPanelProps {
   onNavigateTo: (spaceId: string) => void;
   onOpenAddMoment: (spaceId: string) => void;
   onLikeMoment: (momentId: string) => void;
+  likedIds?: Set<string>;
+  tabRequest?: { tab: 'now' | 'past' | 'next'; nonce: number } | null;
+  onShare?: (spaceId: string) => void;
 }
 
 const CATEGORY_LABEL: Partial<Record<CampusSpace['category'], string>> = {
@@ -34,41 +37,83 @@ const OCCUPANCY: Record<CampusSpace['occupancy'], { text: string; tone: string }
 
 
 /** 24-hour trend with a soft area fill; the current value is the last point. */
-const Trend: React.FC<{ data: number[]; color: string; label: string }> = ({ data, color, label }) => {
+const HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * Small trend line. Demo series are evenly spaced. Sensor series are averaged into
+ * 24 hourly bins ending now: hours with data are joined by a solid line, and missing
+ * hours are bridged with a faint dashed line so reporting gaps stay visible.
+ */
+const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: string }> = ({ data, times, color, label }) => {
   const id = useId();
   if (data.length < 2) return null;
   const w = 132, h = 34;
-  const min = Math.min(...data), max = Math.max(...data), range = max - min || 1;
-  const pts = data.map((v, i) => [(i / (data.length - 1)) * w, h - 3 - ((v - min) / range) * (h - 8)] as const);
-  const line = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
-  const [lx, ly] = pts[pts.length - 1];
+  const timed = !!times && times.length === data.length;
+
+  // [x-position 0..1, value, bin index]
+  let points: Array<[number, number, number]>;
+  if (timed) {
+    const end = Math.max(Date.now(), times![times!.length - 1]);
+    const start = end - 24 * HOUR_MS;
+    const sums = new Array(24).fill(0), counts = new Array(24).fill(0);
+    data.forEach((v, i) => {
+      const bin = Math.floor((times![i] - start) / HOUR_MS);
+      if (bin >= 0 && bin < 24) { sums[bin] += v; counts[bin] += 1; }
+    });
+    points = [];
+    for (let b = 0; b < 24; b += 1) if (counts[b]) points.push([(b + 0.5) / 24, sums[b] / counts[b], b]);
+    if (points.length === 0) return null;
+  } else {
+    points = data.map((v, i) => [i / (data.length - 1), v, i]);
+  }
+  const values = points.map((p) => p[1]);
+  const min = Math.min(...values), max = Math.max(...values), range = max - min || 1;
+  const xy = points.map(([x, v, b]) => [x * w, h - 3 - ((v - min) / range) * (h - 8), b] as const);
+  const solid: string[] = [];
+  const dashed: string[] = [];
+  for (let i = 1; i < xy.length; i += 1) {
+    const seg = `M${xy[i - 1][0].toFixed(1)},${xy[i - 1][1].toFixed(1)}L${xy[i][0].toFixed(1)},${xy[i][1].toFixed(1)}`;
+    (timed && xy[i][2] - xy[i - 1][2] > 1 ? dashed : solid).push(seg);
+  }
+  const [lx, ly] = xy[xy.length - 1];
+  const fmt = (n: number) => Number(n.toFixed(1));
+
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`${label}过去 24 小时在 ${min} 到 ${max} 之间`} className="overflow-visible">
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`${label}${timed ? '过去 24 小时每小时平均' : ''}在 ${fmt(min)} 到 ${fmt(max)} 之间`} className="overflow-visible">
+      <title>{`${timed ? '每小时平均，' : ''}最低 ${fmt(min)}，最高 ${fmt(max)}${timed ? `，${points.length}/24 小时有数据` : ''}`}</title>
       <defs>
         <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor={color} stopOpacity="0.28" />
+          <stop offset="0" stopColor={color} stopOpacity="0.22" />
           <stop offset="1" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <polygon points={`0,${h} ${line} ${w},${h}`} fill={`url(#${id})`} />
-      <polyline points={line} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      {timed && <line x1="0" x2={w} y1={h - 0.5} y2={h - 0.5} stroke="#18202e" strokeOpacity="0.1" />}
+      {!timed && <polygon points={`0,${h} ${xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')} ${w},${h}`} fill={`url(#${id})`} />}
+      {dashed.length > 0 && <path d={dashed.join('')} fill="none" stroke={color} strokeOpacity="0.45" strokeWidth="1.2" strokeDasharray="2 3" />}
+      {solid.length > 0 && <path d={solid.join('')} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />}
+      {timed && xy.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="1.5" fill={color} />)}
       <circle cx={lx} cy={ly} r="2.6" fill="#fff" stroke={color} strokeWidth="1.6" />
     </svg>
   );
 };
 
 export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
-  space, events, moments, onClose, onNavigateTo, onOpenAddMoment, onLikeMoment,
+  space, events, moments, onClose, onNavigateTo, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare,
 }) => {
   const [tab, setTab] = useState<'now' | 'past' | 'next'>('now');
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => { setCollapsed(false); setTab('now'); }, [space?.id]);
+  useEffect(() => { if (tabRequest) { setCollapsed(false); setTab(tabRequest.tab); } }, [tabRequest]);
   if (!space) return null;
 
   const spaceEvents = events.filter((e) => e.spaceId === space.id && e.status !== 'past');
   const spaceMoments = moments.filter((m) => m.spaceId === space.id);
   const env = space.environment;
   const hasSensors = env.sensorHealth !== 'offline';
+  const isSensor = env.source === 'sensor';
+  const capturedAt = env.capturedAt
+    ? new Date(env.capturedAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' })
+    : null;
   const live = spaceEvents.find((e) => e.status === 'happening_now');
   const facts = [
     { label: '准入', value: ACCESS[space.access].text, tone: ACCESS[space.access].tone },
@@ -94,6 +139,11 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
         <div className="flex items-center justify-between text-[12px] text-crater">
           <span>{[CATEGORY_LABEL[space.category], SERIES_LABEL[space.series]].filter(Boolean).join('，')}</span>
           <div className="-mr-2 flex items-center">
+            {onShare && (
+              <button onClick={() => onShare(space.id)} aria-label="复制这个房间的链接" title="复制链接" className="rounded-full p-1.5 text-dust transition-colors hover:bg-white hover:text-ink active:scale-90">
+                <Link2 className="h-4 w-4" />
+              </button>
+            )}
             <button onClick={() => setCollapsed((c) => !c)} aria-expanded={!collapsed} aria-label={collapsed ? '展开详情' : '收起详情'} className="rounded-full p-1.5 text-dust transition-colors hover:bg-white hover:text-ink">
               <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? '' : 'rotate-180'}`} />
             </button>
@@ -159,10 +209,24 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
                 )}
 
                 <section>
-                  <div className="flex items-baseline justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <h3 className="text-[13px] font-semibold text-ink">环境</h3>
-                    {hasSensors && <span className="text-[11px] text-dust">演示数据，{env.lastUpdated}更新</span>}
+                    {isSensor ? (
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                        env.sensorHealth === 'live' ? 'bg-calm/10 text-calm' : env.sensorHealth === 'stale' ? 'bg-flare-wash text-ember' : 'bg-regolith text-crater'
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${env.sensorHealth === 'live' ? 'live-dot bg-calm' : env.sensorHealth === 'stale' ? 'bg-flare' : 'bg-dust'}`} />
+                        {env.sensorHealth === 'live' ? `实时，${env.lastUpdated}` : env.sensorHealth === 'stale' ? `未更新，${env.lastUpdated}` : '传感器离线'}
+                      </span>
+                    ) : hasSensors ? (
+                      <span className="text-[11px] text-dust">演示数据</span>
+                    ) : null}
                   </div>
+                  {isSensor && env.sensorNote && (
+                    <p className="mt-2 flex items-start gap-2 rounded-[10px] bg-flare-wash/70 px-3 py-2 text-[12px] leading-relaxed text-ember">
+                      <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />{env.sensorNote}
+                    </p>
+                  )}
                   {hasSensors ? (
                     <ul className="mt-2 divide-y divide-ink/10">
                       {[
@@ -177,12 +241,17 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
                               {m.value}<span className="ml-0.5 text-[12px] font-medium text-crater">{m.unit}</span>
                             </div>
                           </div>
-                          <Trend data={m.data} color={m.color} label={m.label} />
+                          <Trend data={m.data} times={env.trendTimes} color={m.color} label={m.label} />
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-2 text-[13px] text-crater">这个房间还没有接入传感器。</p>
+                    <p className="mt-2 text-[13px] text-crater">{isSensor ? '暂时读不到这个房间的传感器数据。' : '这个房间还没有接入传感器。'}</p>
+                  )}
+                  {isSensor && hasSensors && (
+                    <p className="mt-1 text-[11px] text-dust">
+                      设备 {env.sensorId ?? '未知'}{capturedAt ? `，读数时间 ${capturedAt}` : ''}，趋势为过去 24 小时每小时平均，虚线表示没有数据
+                    </p>
                   )}
                 </section>
 
@@ -221,15 +290,20 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
               ) : (
                 <ul className="space-y-5">
                   {spaceMoments.map((m) => (
-                    <li key={m.id} className="border-b hairline pb-5 last:border-0">
+                    <li key={m.id} className={`border-b hairline pb-5 last:border-0 ${m.timeAgo === '刚刚' ? 'animate-rise' : ''}`}>
                       <div className="flex items-baseline justify-between text-[12px]">
                         <span className="font-semibold text-ink">{m.author}</span>
                         <span className="text-dust">{m.timeAgo}</span>
                       </div>
                       {m.imageUrl && <img src={m.imageUrl} alt="" className="mt-3 aspect-[4/3] w-full rounded-[12px] object-cover" />}
                       <p className="mt-2 text-[14px] leading-[1.75] text-ink-soft">{m.content}</p>
-                      <button onClick={() => onLikeMoment(m.id)} className="mt-2 inline-flex items-center gap-1.5 text-[12px] text-crater transition-colors hover:text-ember" aria-label={`喜欢，当前 ${m.likes}`}>
-                        <Heart className="h-3.5 w-3.5" />{m.likes}
+                      <button
+                        onClick={() => onLikeMoment(m.id)}
+                        aria-pressed={likedIds?.has(m.id) ?? false}
+                        aria-label={`${likedIds?.has(m.id) ? '取消喜欢' : '喜欢'}，当前 ${m.likes}`}
+                        className={`mt-2 inline-flex items-center gap-1.5 text-[12px] transition-colors active:scale-90 ${likedIds?.has(m.id) ? 'text-ember' : 'text-crater hover:text-ember'}`}
+                      >
+                        <Heart className={`h-3.5 w-3.5 transition-transform duration-200 ${likedIds?.has(m.id) ? 'scale-110 fill-flare text-flare' : ''}`} />{m.likes}
                       </button>
                     </li>
                   ))}

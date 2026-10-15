@@ -39,6 +39,13 @@ export interface EnvironmentalReading {
   co2Trend: number[];
   lastUpdated: string;
   sensorHealth: 'live' | 'stale' | 'offline' | 'mock';
+  /** Where the values come from: a bound real sensor, or the built-in demo sample. */
+  source?: 'sensor' | 'demo';
+  /** Capture time (epoch ms) for each trend point when the series comes from a sensor. */
+  trendTimes?: number[];
+  capturedAt?: number;
+  /** Sensor-side status: why values are missing or old. */
+  sensorNote?: string;
   sensorId?: string;
   isPrivateRoom?: boolean; // If true, do not expose exact headcounts for privacy (nurse, counseling, etc.)
 }

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "sensorApi": {
+    "baseUrl": "https://map.georgehan0514.top",
+    "refreshSeconds": 60,
+    "staleMinutes": 10,
+    "historyHours": 24
+  },
+  "sensors": [
+    { "id": "m104-m1", "roomId": "M104", "locationId": "M1", "enabled": true, "note": "ESP32-S3 环境传感器" }
+  ],
+  "rooms": {},
+  "display": { "showDemoEnvironment": true }
+}

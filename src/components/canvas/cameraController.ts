@@ -298,15 +298,43 @@ export class CampusCameraController {
     this.setViewMode((this.transitionEnd?.viewMode ?? this.state.viewMode) === 'explore' ? 'plan' : 'explore');
   }
 
-  public focusOnPosition(x: number, z: number, zoom = 1.45, safeOffsetPx?: number) {
+  /**
+   * Fly to a point. `safeOffsetPx` keeps it clear of a side panel (shifts the point left);
+   * `liftPx` keeps it clear of a bottom sheet (shifts the point up the screen).
+   */
+  public focusOnPosition(x: number, z: number, zoom = 1.45, safeOffsetPx?: number, liftPx = 0) {
     this.cancelTransition();
     const rect = this.domElement.getBoundingClientRect();
     const panelOffset = safeOffsetPx ?? Math.min(204, Math.max(0, (rect.width - 48) / 2));
     this.camera.updateMatrixWorld();
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    right.y = 0;
+    right.normalize();
     const unitsPerPixel = (this.camera.top - this.camera.bottom) / (rect.height * zoom);
     const target = new THREE.Vector3(x, 0, z).addScaledVector(right, panelOffset * unitsPerPixel);
+    if (liftPx) {
+      // Screen-up on the ground plane points away from the camera; ground is foreshortened by cos(polar).
+      const away = new THREE.Vector3(-Math.sin(this.state.azimuth), 0, -Math.cos(this.state.azimuth));
+      target.addScaledVector(away, -(liftPx * unitsPerPixel) / Math.max(0.3, Math.cos(this.state.polar)));
+    }
     this.startTransition({ ...this.state, target, zoom: THREE.MathUtils.clamp(zoom, MIN_ZOOM, MAX_ZOOM) });
+  }
+
+  /** Rotate so north points up, keeping the current tilt, target and zoom. */
+  public faceNorth() {
+    const end = this.transitionEnd ?? this.state;
+    if (Math.abs(end.azimuth % (Math.PI * 2)) < 1e-3) return;
+    // Take the short way round.
+    const turns = Math.round(this.state.azimuth / (Math.PI * 2));
+    this.state.azimuth -= turns * Math.PI * 2;
+    if (end.viewMode === 'explore') this.exploreAzimuth = 0;
+    this.startTransition({ ...end, target: end.target.clone(), azimuth: 0 });
+  }
+
+  /** World metres covered by one CSS pixel horizontally at the current zoom. */
+  public get metresPerPixel(): number {
+    const rect = this.domElement.getBoundingClientRect();
+    return (this.camera.top - this.camera.bottom) / (Math.max(1, rect.height) * this.state.zoom);
   }
 
   public zoomToPosition(x: number, z: number) {

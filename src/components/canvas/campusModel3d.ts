@@ -51,21 +51,21 @@ export async function loadCampusModel(signal?: AbortSignal): Promise<CampusModel
  * so categories separate clearly. Orange is never used here: it marks selection and life.
  */
 export const ROOM_KIND_STYLE: Record<RoomKind, { calm: number; strong: number; label: string }> = {
-  classroom: { calm: 0xdfe6ee, strong: 0x9dbad6, label: '教室与书院' },
-  lab: { calm: 0xd6e7e6, strong: 0x86c2bb, label: '实验与科创' },
-  creative: { calm: 0xebe3ef, strong: 0xc4a6d2, label: '艺术与创作' },
-  library: { calm: 0xe2e4f2, strong: 0xa8afe0, label: '图书与阅读' },
-  dining: { calm: 0xefe9da, strong: 0xe2c983, label: '餐厅' },
-  meeting: { calm: 0xe2ebdd, strong: 0xa5cd96, label: '会议与研讨' },
-  hall: { calm: 0xebe5df, strong: 0xd9b7a4, label: '多功能与活动' },
-  office: { calm: 0xe5e8ec, strong: 0xb5bdc9, label: '办公与服务' },
-  service: { calm: 0xdadee4, strong: 0xa0a8b4, label: '库房与设备' },
-  room: { calm: 0xe2e5e9, strong: 0xc2c8d0, label: '其他房间' },
+  classroom: { calm: 0xd6e1ec, strong: 0x9dbad6, label: '教室与书院' },
+  lab: { calm: 0xcbe3e0, strong: 0x86c2bb, label: '实验与科创' },
+  creative: { calm: 0xe5daed, strong: 0xc4a6d2, label: '艺术与创作' },
+  library: { calm: 0xd9dcf1, strong: 0xa8afe0, label: '图书与阅读' },
+  dining: { calm: 0xede2c6, strong: 0xe2c983, label: '餐厅' },
+  meeting: { calm: 0xd8e7d1, strong: 0xa5cd96, label: '会议与研讨' },
+  hall: { calm: 0xe9dbd0, strong: 0xd9b7a4, label: '多功能与活动' },
+  office: { calm: 0xdde2e8, strong: 0xb5bdc9, label: '办公与服务' },
+  service: { calm: 0xd2d7de, strong: 0xa0a8b4, label: '库房与设备' },
+  room: { calm: 0xdce0e5, strong: 0xc2c8d0, label: '其他房间' },
 };
 
 const COLORS = {
   ground: 0xdde2e7,
-  slab: 0xf2f4f6,
+  slab: 0xf6f7f8,
   slabEdge: 0xc3cad3,
   wallSide: 0xf8f9fb,
   wallCap: 0x2a3342,
@@ -170,6 +170,8 @@ export interface CampusScene {
   setRoomColors: (colorFor: (room: CampusModelRoom) => number) => void;
   setHighlight: (selectedId: string | null, hoveredId: string | null) => void;
   setDetailVisible: (visible: boolean) => void;
+  /** Advances colour transitions; returns true while something is still animating. */
+  tick: (dtMs: number) => boolean;
   dispose: () => void;
 }
 
@@ -290,14 +292,36 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
 
   let selected: string | null = null;
   let hovered: string | null = null;
-  const applyColors = () => {
+  const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const flare = new THREE.Color(COLORS.selected);
+  const hoverTint = new THREE.Color(COLORS.hovered);
+
+  // Selected room outline: a crisp ember edge on top of the orange floor.
+  const outline = new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xd35400, depthTest: false, transparent: true }));
+  outline.renderOrder = 6;
+  outline.visible = false;
+  root.add(outline);
+
+  const targetColor = (id: string, mesh: THREE.Mesh) => {
+    const base = new THREE.Color(mesh.userData.baseColor as number);
+    if (id === selected) return flare.clone();
+    if (id === hovered) return base.lerp(hoverTint, 0.65);
+    return base;
+  };
+  let animating = false;
+  const applyColors = (instant = false) => {
     for (const [id, mesh] of roomMeshes) {
-      const material = mesh.material as THREE.MeshLambertMaterial;
-      const base = new THREE.Color(mesh.userData.baseColor as number);
-      if (id === selected) material.color.setHex(COLORS.selected);
-      else if (id === hovered) material.color.copy(base).lerp(new THREE.Color(COLORS.hovered), 0.65);
-      else material.color.copy(base);
+      mesh.userData.targetColor = targetColor(id, mesh);
+      // Hover and selection answer immediately; layer changes cross-fade.
+      if (instant || reduceMotion || id === selected || id === hovered) (mesh.material as THREE.MeshLambertMaterial).color.copy(mesh.userData.targetColor);
       mesh.position.y = id === selected ? 0.03 : 0;
+    }
+    animating = !instant && !reduceMotion;
+    const room = selected ? roomById.get(selected) : undefined;
+    outline.visible = !!room?.polygon;
+    if (room?.polygon) {
+      outline.geometry.dispose();
+      outline.geometry = new THREE.BufferGeometry().setFromPoints(room.polygon.o.map(([x, z]) => new THREE.Vector3(x, 0.08, z)));
     }
   };
 
@@ -309,12 +333,27 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
     wallTopY: H,
     setRoomColors(colorFor) {
       for (const [id, mesh] of roomMeshes) mesh.userData.baseColor = colorFor(roomById.get(id)!);
-      applyColors();
+      applyColors(false);
     },
     setHighlight(selectedId, hoveredId) {
       selected = selectedId;
       hovered = hoveredId;
-      applyColors();
+      applyColors(false);
+    },
+    tick(dtMs) {
+      if (!animating) return false;
+      const k = 1 - Math.exp(-dtMs / 90);
+      let pending = false;
+      for (const mesh of roomMeshes.values()) {
+        const color = (mesh.material as THREE.MeshLambertMaterial).color;
+        const target = mesh.userData.targetColor as THREE.Color | undefined;
+        if (!target) continue;
+        color.lerp(target, k);
+        if (Math.abs(color.r - target.r) + Math.abs(color.g - target.g) + Math.abs(color.b - target.b) > 0.004) pending = true;
+        else color.copy(target);
+      }
+      animating = pending;
+      return true;
     },
     setDetailVisible(visible) {
       detail.visible = visible;

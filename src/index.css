@@ -10,7 +10,7 @@
   --color-ink: #18202e;
   --color-ink-soft: #364052;
   --color-crater: #5e6878;
-  --color-dust: #8a93a1;
+  --color-dust: #6f7886;
   --color-haze: #c9cfd7;
   --color-regolith: #e3e7eb;
   --color-lunar: #f5f6f8;
@@ -40,6 +40,9 @@
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
   }
+  /* Every control answers a press. */
+  button:not(:disabled):active { transform: scale(0.97); }
+  button { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: 150ms; }
   :focus-visible {
     outline: 2px solid var(--color-flare);
     outline-offset: 2px;

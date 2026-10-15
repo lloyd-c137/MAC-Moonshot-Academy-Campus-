@@ -55,6 +55,16 @@ The logo is a set of translucent orange orbits overlapping a white disc, and the
 ![Find a space](evidence/ui/find-a-space-1536x864.png)
 ![Phone](evidence/ui/mobile-room-390x844.png)
 
+## Interaction details
+
+- **Map:** the selected room gets an orange floor plus an ember outline. Hovering tints a room and fades back. Layer changes cross-fade the room colours.
+- **Labels:** placed in priority order (selected, hovered, larger rooms), and any label that would overlap one already placed is hidden.
+- **Compass:** turns with the view; click it to put north back up. The scale bar snaps to 1–100 m.
+- **Links:** `?room=M104` opens a room directly. The share button copies the link, and browser Back returns to the previous room.
+- **Search:** focusing the empty box shows live activities and common places.
+- **Feedback:** saving a memory shows a toast and opens the room's 回忆 tab. Likes toggle. Every button responds to presses.
+- **Phone:** the selected room is lifted above the bottom sheet.
+
 ## Brand assets
 
 - `public/brand/mac-logo.png` (512 px) and `mac-logo-256.png`: the supplied logo. Only the area outside the circle is transparent; the white centre is part of the mark.

@@ -4,6 +4,8 @@ MAC is a campus discovery prototype with room details, search, environmental sam
 
 Interface design (tokens, layout, brand assets): [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
 
+Live sensor data and the admin panel (`/admin`): [`docs/ADMIN_AND_SENSORS.md`](docs/ADMIN_AND_SENSORS.md). M104 reads real temperature, humidity and CO₂ from the campus sensor API (location `M1`).
+
 ## 3D campus map
 
 The main map (`/`) now renders a 3D model of FF-01 generated from the drawing itself: 159 wall bodies extruded from the CAD wall layers (existing walls, new partitions, architectural walls, shear walls / columns, with door openings kept where the CAD lines break), 182 glazing bodies, 93 clickable room floors from the V9 candidates, all 101 room labels with names read from the PDF label text, the Lotus Arena court and 572 seats as stepped tiers, plus furniture / door / stair lines on the floor. It supports 2.5D and 2D views, search-to-focus, room selection, layer colouring and a toggleable FF-01 overlay for comparison (图纸对照 → 叠加 FF-01 原始图纸).

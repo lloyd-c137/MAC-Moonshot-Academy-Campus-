@@ -23,9 +23,21 @@ const CATEGORY_LABEL: Partial<Record<CampusSpace['category'], string>> = {
   entrance: '入口', health_service: '健康服务', restroom: '卫生间', circulation: '设备与库房',
 };
 
+const FAVOURITES = ['A114', 'S407', 'S404', 'M104', 'M103'];
+
+/** Shown when the box is focused but empty: what is on now, then places people often look for. */
+function suggestions(spaces: CampusSpace[], events: CampusEvent[]): Result[] {
+  const live = events.filter((e) => e.status === 'happening_now').slice(0, 3)
+    .map<Result>((e) => ({ kind: 'event', key: `e-${e.id}`, spaceId: e.spaceId, title: e.title, detail: e.spaceName, live: true }));
+  const places = FAVOURITES.map((id) => spaces.find((s) => s.id === id)).filter((s): s is CampusSpace => !!s)
+    .map<Result>((s) => ({ kind: 'space', key: `s-${s.id}`, spaceId: s.id, code: displayCode(s.id), title: displayName(s),
+      detail: s.environment.source === 'sensor' && s.environment.sensorHealth !== 'offline' ? '有传感器数据' : CATEGORY_LABEL[s.category] ?? '' }));
+  return [...live, ...places];
+}
+
 function search(query: string, spaces: CampusSpace[], events: CampusEvent[]): Result[] {
   const q = query.trim().toLowerCase();
-  if (!q) return [];
+  if (!q) return suggestions(spaces, events);
   const spaceHits = spaces
     .filter((s) =>
       s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) ||
@@ -51,7 +63,8 @@ export const TopNav: React.FC<TopNavProps> = ({
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const results = useMemo(() => search(query, spaces, events), [query, spaces, events]);
-  const open = focused && query.trim().length > 0;
+  const open = focused;
+  const isSuggesting = query.trim().length === 0;
 
   useEffect(() => setActive(0), [query]);
 
@@ -121,6 +134,7 @@ export const TopNav: React.FC<TopNavProps> = ({
 
         {open && (
           <div id="campus-search-results" role="listbox" className="glass animate-rise absolute inset-x-0 top-[3.25rem] overflow-hidden rounded-[var(--radius-tile)] py-1.5">
+            {isSuggesting && <p className="px-4 pb-1 pt-1.5 text-[12px] text-crater">正在进行和常去的地方</p>}
             {results.length === 0 ? (
               <p className="px-4 py-5 text-sm text-crater">没有找到“{query.trim()}”。试试房间号，比如 M104，或者“自习”“实验室”。</p>
             ) : (

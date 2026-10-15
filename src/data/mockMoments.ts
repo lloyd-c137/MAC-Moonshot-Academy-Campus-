@@ -88,20 +88,36 @@ export function saveMoment(moment: Omit<CampusMoment, 'id' | 'likes' | 'timeAgo'
   return newMoment;
 }
 
-export function toggleLikeMoment(momentId: string): number {
+const LIKED_KEY = 'mac_campus_liked_v1';
+
+/** Moment IDs this browser has liked. */
+export function getLikedMomentIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(LIKED_KEY);
+    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/** Like or unlike a moment; returns the new count and whether it is now liked. */
+export function toggleLikeMoment(momentId: string): { likes: number; liked: boolean } {
+  const liked = getLikedMomentIds();
+  const nowLiked = !liked.has(momentId);
+  if (nowLiked) liked.add(momentId);
+  else liked.delete(momentId);
   const current = getStoredMoments();
-  let updatedLikes = 0;
+  let likes = 0;
   const updated = current.map((m) => {
-    if (m.id === momentId) {
-      updatedLikes = m.likes + 1;
-      return { ...m, likes: updatedLikes };
-    }
-    return m;
+    if (m.id !== momentId) return m;
+    likes = Math.max(0, m.likes + (nowLiked ? 1 : -1));
+    return { ...m, likes };
   });
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(LIKED_KEY, JSON.stringify([...liked]));
   } catch (e) {
     console.error(e);
   }
-  return updatedLikes;
+  return { likes, liked: nowLiked };
 }

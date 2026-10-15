@@ -192,9 +192,45 @@ function geometryReviewApi(): Plugin {
   };
 }
 
+/**
+ * Dev-only: lets /admin write public/campus-config.json directly.
+ * Restricted to the local machine; production builds have no write endpoint.
+ */
+function campusConfigApi(): Plugin {
+  const file = path.join(process.cwd(), 'public/campus-config.json');
+  return {
+    name: 'campus-config-local-api',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use(async (request, response, next) => {
+        if (!request.url?.startsWith('/api/campus-config')) return next();
+        response.setHeader('Content-Type', 'application/json; charset=utf-8');
+        const remote = request.socket.remoteAddress || '';
+        const isLoopback = remote === '::1' || remote === '127.0.0.1' || remote.startsWith('::ffff:127.');
+        const origin = request.headers.origin;
+        if (!isLoopback || (origin && new URL(origin).host !== request.headers.host)) {
+          response.statusCode = 403; response.end(JSON.stringify({error: '只能在本机开发服务器上写入配置'})); return;
+        }
+        if (request.method === 'GET') { response.end(JSON.stringify({writable: true})); return; }
+        if (request.method !== 'PUT') { response.statusCode = 405; response.end(JSON.stringify({error: 'Use PUT'})); return; }
+        try {
+          let body = '';
+          for await (const chunk of request) body += chunk;
+          const config = JSON.parse(body);
+          if (config?.version !== 1 || !Array.isArray(config.sensors) || typeof config.sensorApi?.baseUrl !== 'string') throw new Error('配置格式不正确');
+          await fs.writeFile(file, JSON.stringify(config, null, 2) + '\n', 'utf8');
+          response.end(JSON.stringify({ok: true, path: 'public/campus-config.json'}));
+        } catch (error: any) {
+          response.statusCode = 400; response.end(JSON.stringify({error: error.message}));
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), geometryReviewApi()],
+    plugins: [react(), tailwindcss(), geometryReviewApi(), campusConfigApi()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
