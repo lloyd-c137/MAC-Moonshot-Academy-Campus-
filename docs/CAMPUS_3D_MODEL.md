@@ -79,7 +79,9 @@ Both are emitted by Vite with content hashes under `/assets/`, so they are cache
 
 | | Before | After |
 |---|---|---|
-| Downloaded before the map is usable (live site, 9 Mbit/s + 150 ms) | 1,129 KB | see the commit message for the measured figure |
+| Downloaded on first visit (live site, 9 Mbit/s + 150 ms latency, headless Chromium) | 1,129 KB | 507 KB |
+| First paint | 1.6–3.0 s | 0.9–1.0 s (startup screen drawn from HTML) |
+| Map interactive | 4.8–5.0 s | 4.4–5.3 s (measured with software WebGL; scene building dominates) |
 | Model data at start-up | 384 KB (one file, no long cache) | ~50 KB core; detail follows when idle |
 | FF-01 drawing texture | 296 KB at every start-up | only when 对照原图 is opened |
 | Logo | 62 KB PNG | 7 KB WebP |
