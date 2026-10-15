@@ -17,6 +17,8 @@
     "validate:architecture-v7": "python3 scripts/validate_architecture_v7.py",
     "rebuild:architecture-v8": "python3 scripts/build_architecture_v8.py",
     "validate:architecture-v8": "python3 scripts/validate_architecture_v8.py",
+    "rebuild:architecture-v9": "python3 scripts/build_architecture_v9.py",
+    "validate:architecture-v9": "python3 scripts/validate_architecture_v9.py",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"

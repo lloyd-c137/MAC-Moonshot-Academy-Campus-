@@ -1,0 +1,69 @@
+{
+  "modelID": "FF01-ARCHITECTURE-V9",
+  "sourcePdfSha256": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+  "sourceHashes": {
+    "V6": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+    "V7": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+    "V8": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+    "V9": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60",
+    "vectors": "28217dcb951ea45b34d2651851f36bcd0af5824d27b5d588b60cdf3672ce3d60"
+  },
+  "gates": {
+    "DATA_INTEGRITY": "PASS",
+    "GEOMETRY_CONSTRUCTION": "PARTIAL",
+    "TOPOLOGY_CONSISTENCY": "PARTIAL",
+    "SOURCE_ALIGNMENT": "PARTIAL",
+    "DRAWING_VERIFICATION": "PENDING"
+  },
+  "metrics": {
+    "sourceLabelOccurrences": 101,
+    "candidateRoomPolygons": 93,
+    "drawingMatched": 0,
+    "drawingVerified": 0,
+    "candidateRoomRoomOverlapPairs": 0,
+    "reportedRoomCorridorConflicts": 1,
+    "topologyNodes": 1036,
+    "topologyRelations": 1109,
+    "topologyRelationTypes": {
+      "BOUNDED_BY": 1070,
+      "ADJACENT_TO": 38,
+      "SPATIAL_CONFLICT": 1
+    },
+    "wallTraceObjects": 932,
+    "mWestWallTraceObjects": 55,
+    "openingCandidates": 345,
+    "formalNavigationEdges": 0,
+    "boundaryEdgeTypes": {
+      "PHYSICAL_WALL_BOUNDARY_CANDIDATE": 839,
+      "DOOR_OPENING_CANDIDATE": 343,
+      "UNSUPPORTED_INFERRED_BOUNDARY": 397,
+      "GLAZING_BOUNDARY_CANDIDATE": 17
+    },
+    "boundaryLengthByEvidenceTypePt": {
+      "UNSUPPORTED_INFERRED_BOUNDARY": 6400.655,
+      "PHYSICAL_WALL_BOUNDARY_CANDIDATE": 17141.728,
+      "GLAZING_BOUNDARY_CANDIDATE": 578.564,
+      "DOOR_OPENING_CANDIDATE": 2503.012
+    },
+    "exteriorSegments": 1746,
+    "exteriorOpenEndpoints": 265,
+    "exteriorGapCandidates": 119,
+    "exteriorClosedComponentsUnclassified": 1,
+    "arenaCourtCandidates": 2,
+    "seatFootprints": 572,
+    "areaLabelsWithCandidates": 94,
+    "ambiguousAreaLabels": 47,
+    "labelsWithoutAreaCandidate": 7
+  },
+  "roomCorridorConflicts": [
+    {
+      "roomID": "M104",
+      "corridorID": "FF01-CORRIDOR-M-WEST-01",
+      "overlapPt2": 1271.281,
+      "overlapM2": 14.239
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "overall": "PASS_DATA_INTEGRITY_PARTIAL_GEOMETRY"
+}

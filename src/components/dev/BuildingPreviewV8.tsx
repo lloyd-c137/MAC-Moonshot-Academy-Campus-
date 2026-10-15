@@ -6,6 +6,7 @@ import type { ArchitectureV7, PdfPoint } from '../../types/architecture';
 import type { ArchitectureV8 } from '../../types/architectureV8';
 import { pdfDisplayPtToWorldXZ } from '../../data/canonicalGeometry';
 import { createArchitecturalSceneV7, disposeArchitecturalLayers } from './architecturalSceneV7';
+import { createArchitecturalSceneV9 } from './architecturalSceneV9';
 
 type Mode = 'plan' | 'explore';
 type Runtime = { scene: THREE.Scene; camera: THREE.OrthographicCamera; controls: MapControls; renderer: THREE.WebGLRenderer; frame: number; source: THREE.Mesh; groups: Record<string, THREE.Group>; transition: number };
@@ -29,14 +30,17 @@ function lineGroup(rows: PdfPoint[][], color: number, y: number, opacity=1) {
   group.add(new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({color,transparent:opacity<1,opacity,depthWrite:false}))); return group;
 }
 
-export function BuildingPreviewV8() {
+type PreviewVersion = 'V8' | 'V9';
+type PreviewProps = { modelUrl?: string; version?: PreviewVersion };
+
+export function BuildingPreviewV8({ modelUrl='/ff01-architecture-v8.json', version='V8' }: PreviewProps) {
   const hostRef=useRef<HTMLDivElement>(null); const runtimeRef=useRef<Runtime|null>(null);
   const [model,setModel]=useState<ArchitectureV8|null>(null); const [error,setError]=useState('');
   const [mode,setMode]=useState<Mode>('explore'); const [sourceVisible,setSourceVisible]=useState(false);
   const [visible,setVisible]=useState({traces:true,wallFaces:true,rooms:true,corridors:true,arena:true,footprint:true});
   const [selected,setSelected]=useState('M105'); const [selectedStatus,setSelectedStatus]=useState('');
 
-  useEffect(()=>{let cancelled=false;fetch('/ff01-architecture-v8.json').then(response=>{if(!response.ok)throw new Error(`HTTP ${response.status}`);return response.json() as Promise<ArchitectureV8>;}).then(data=>{if(!cancelled)setModel(data);}).catch(reason=>setError(String(reason)));return()=>{cancelled=true;};},[]);
+  useEffect(()=>{let cancelled=false;fetch(modelUrl).then(response=>{if(!response.ok)throw new Error(`HTTP ${response.status}`);return response.json() as Promise<ArchitectureV8>;}).then(data=>{if(!cancelled)setModel(data);}).catch(reason=>setError(String(reason)));return()=>{cancelled=true;};},[modelUrl]);
 
   useEffect(()=>{
     const host=hostRef.current;if(!host||!model)return;
@@ -44,7 +48,7 @@ export function BuildingPreviewV8() {
     const scene=new THREE.Scene();scene.background=new THREE.Color('#f2f0e9');
     const camera=new THREE.OrthographicCamera(-viewHeight*width/height/2,viewHeight*width/height/2,viewHeight/2,-viewHeight/2,0.05,1500);
     const adapted={...model,modelID:'FF01-ARCHITECTURE-V7',arena:{courtBoundaries:model.arena.courtBoundaryCandidates,seatFootprints:model.arena.seatFootprintCandidates,standTraces:model.arena.standTraceCandidates,arenaBoundaryTraces:model.arena.boundaryTraceCandidates,ringCorridor:null}} as unknown as ArchitectureV7;
-    const layers=createArchitecturalSceneV7(adapted);
+    const layers=version==='V9'?createArchitecturalSceneV9(model as ArchitectureV8 & {wallNetwork:ArchitectureV8['wallNetwork']&{semanticObjects:never[];semanticFaces:never[]}}):createArchitecturalSceneV7(adapted);
     const groups:Record<string,THREE.Group>={traces:layers.traces,wallFaces:layers.wallFaces,rooms:layers.candidates,corridors:new THREE.Group(),arena:layers.arena,footprint:new THREE.Group()};
     const corridorMaterial=new THREE.MeshBasicMaterial({color:0x3d9bc7,transparent:true,opacity:.62,side:THREE.DoubleSide,depthWrite:false});
     for(const corridor of model.circulation.corridors){
@@ -71,32 +75,39 @@ export function BuildingPreviewV8() {
     const onUp=(event:PointerEvent)=>{if(event.button!==0||!down||Math.hypot(event.clientX-down.x,event.clientY-down.y)>6){down=null;return;}down=null;const rect=renderer.domElement.getBoundingClientRect();const pointer=new THREE.Vector2((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);const ray=new THREE.Raycaster();ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects([layers.candidates],true)[0];const roomID=hit?.object.userData.roomID as string|undefined;if(roomID)setSelected(roomID);};
     const preventContext=(event:MouseEvent)=>event.preventDefault();renderer.domElement.addEventListener('pointerdown',onDown);renderer.domElement.addEventListener('pointerup',onUp);renderer.domElement.addEventListener('contextmenu',preventContext);
     return()=>{cancelAnimationFrame(runtime.frame);if(runtime.transition)cancelAnimationFrame(runtime.transition);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',onDown);renderer.domElement.removeEventListener('pointerup',onUp);renderer.domElement.removeEventListener('contextmenu',preventContext);controls.dispose();texture.dispose();disposeArchitecturalLayers(layers);for(const group of [groups.corridors,groups.footprint])group.traverse(obj=>{if(obj instanceof THREE.Mesh||obj instanceof THREE.LineSegments){obj.geometry.dispose();const mats=Array.isArray(obj.material)?obj.material:[obj.material];mats.forEach(mat=>mat.dispose());}});corridorMaterial.dispose();renderer.dispose();host.replaceChildren();runtimeRef.current=null;};
-  },[model]);
+  },[model,version]);
 
   useEffect(()=>{const runtime=runtimeRef.current;if(!runtime||!model)return;for(const [key,group] of Object.entries(runtime.groups))group.visible=visible[key as keyof typeof visible];runtime.source.visible=sourceVisible;},[visible,sourceVisible,model]);
+  useEffect(()=>{const group=runtimeRef.current?.groups.rooms;if(!group)return;group.traverse(object=>{if(!(object instanceof THREE.Mesh))return;const material=object.material as THREE.MeshBasicMaterial;const active=object.userData.roomID===selected;material.color.set(active?0xea7042:0xf2a64a);material.opacity=active?0.68:0.42;});},[selected,model]);
   useEffect(()=>{const space=model?.spaces.find(item=>item.sourceRoomID===selected);setSelectedStatus(space?.geometry?`${space.geometryStatus} · ${space.areaM2?.toFixed(1)} m² · ${space.verificationLevel}`:'仅有源标签锚点 · 几何未恢复');},[selected,model]);
   useEffect(()=>{const group=runtimeRef.current?.groups.rooms;if(!group)return;group.traverse(object=>{if(!(object instanceof THREE.Mesh)||!object.userData.roomID)return;const material=object.material as THREE.MeshBasicMaterial;const active=object.userData.roomID===selected;material.color.set(active?0xe47d2b:0xf2a64a);material.opacity=active?.82:.42;material.needsUpdate=true;});},[selected,model]);
 
   const setView=(next:Mode)=>{const r=runtimeRef.current;if(!r)return;if(r.transition)cancelAnimationFrame(r.transition);const token=performance.now();const startPos=r.camera.position.clone(),startUp=r.camera.up.clone(),startZoom=r.camera.zoom;const target=r.controls.target.clone();const explorePos=target.clone().add(new THREE.Vector3(20,118,132));const planPos=target.clone().add(new THREE.Vector3(0,205,0));const endPos=next==='plan'?planPos:explorePos;const endUp=next==='plan'?new THREE.Vector3(0,0,-1):new THREE.Vector3(0,1,0);const endZoom=next==='plan'?1.0:.88;r.controls.enableRotate=next==='explore';r.controls.enabled=false;const animate=()=>{const t=Math.min((performance.now()-token)/600,1);const e=t*t*(3-2*t);r.camera.position.copy(startPos).lerp(endPos,e);r.camera.up.copy(startUp).lerp(endUp,e).normalize();r.camera.zoom=startZoom+(endZoom-startZoom)*e;r.camera.lookAt(target);r.camera.updateProjectionMatrix();if(t<1)r.transition=requestAnimationFrame(animate);else{r.transition=0;r.controls.enabled=true;r.controls.update();}};setMode(next);r.transition=requestAnimationFrame(animate);};
   const fit=()=>{const r=runtimeRef.current;if(!r)return;const target=r.controls.target;const pos=mode==='plan'?target.clone().add(new THREE.Vector3(0,205,0)):target.clone().add(new THREE.Vector3(20,118,132));r.camera.position.copy(pos);r.camera.up.copy(mode==='plan'?new THREE.Vector3(0,0,-1):new THREE.Vector3(0,1,0));r.camera.lookAt(target);r.camera.zoom=mode==='plan'?.92:.82;r.camera.updateProjectionMatrix();r.controls.update();};
 
-  const controls:Record<string,string>={traces:'墙体迹线',wallFaces:'源填充墙面候选',rooms:'房间候选',corridors:'走廊候选',arena:'球场与原始座席',footprint:'外墙开边界证据'};
+  const controls:Record<string,string>={traces:version==='V9'?'拓扑关联墙线候选':'墙体迹线',wallFaces:version==='V9'?'源墙面实体候选':'源填充墙面候选',rooms:'房间候选',corridors:'走廊候选',arena:'球场与原始座席',footprint:'外墙开边界证据'};
+  const v9Data=model as (ArchitectureV8 & {topologyGraph?:{relations:Array<{type:string}>;openingCandidates:unknown[]};mWestRegion?:{conflicts:Record<string,{areaM2:number}>};coverage:ArchitectureV8['coverage']&{semanticWallTraceObjects?:number};wallNetwork:ArchitectureV8['wallNetwork']&{semanticFaces?:unknown[]}})|null;
   return <main className="fixed inset-0 flex flex-col bg-[#f2f0e9] text-[#20322d]">
     <header className="z-10 flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-black/10 bg-white/95 px-4 py-2 shadow-sm">
-      <div className="flex items-center gap-3"><a href="/" className="rounded-full border p-2" aria-label="返回 MAC"><ArrowLeft size={16}/></a><div><div className="flex items-center gap-2 text-sm font-semibold"><ScanLine size={16}/>FF-01 · V8 Source-guided Geometry</div><p className="text-[11px] text-neutral-500">SHA-256 {model?.sourceMetadata.sourcePdfSha256.slice(0,12)??'加载中'}… · 候选模型</p></div></div>
+      <div className="flex items-center gap-3"><a href="/" className="rounded-full border p-2" aria-label="返回 MAC"><ArrowLeft size={16}/></a><div><div className="flex items-center gap-2 text-sm font-semibold"><ScanLine size={16}/>FF-01 · V{version.slice(1)} Architectural Topology</div><p className="text-[11px] text-neutral-500">SHA-256 {model?.sourceMetadata.sourcePdfSha256.slice(0,12)??'加载中'}… · 候选模型</p></div></div>
       <div className="flex items-center gap-2"><span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold text-amber-950">Unverified Architectural Preview</span><button data-testid="v8-toggle-view" onClick={()=>setView(mode==='plan'?'explore':'plan')} className="flex items-center gap-1 rounded-lg border bg-white px-3 py-2 text-xs font-medium">{mode==='explore'?<Eye size={14}/>:<Rotate3D size={14}/>} {mode==='explore'?'2D 平面':'2.5D 预览'}</button><button data-testid="v8-fit-map" onClick={fit} className="flex items-center gap-1 rounded-lg border bg-white px-3 py-2 text-xs"><Maximize2 size={14}/> Fit Map</button></div>
     </header>
-    <section className="relative min-h-0 flex-1"><div ref={hostRef} data-testid="v8-canvas" className="absolute inset-0"/>{error&&<div className="absolute inset-0 grid place-items-center bg-white text-sm text-red-700">V8 几何数据加载失败：{error}</div>}
+    <section className="relative min-h-0 flex-1"><div ref={hostRef} data-testid={`v${version.slice(1)}-canvas`} className="absolute inset-0"/>{error&&<div className="absolute inset-0 grid place-items-center bg-white text-sm text-red-700">V{version.slice(1)} 几何数据加载失败：{error}</div>}
       <aside className="absolute left-4 top-4 max-h-[calc(100%-2rem)] w-72 overflow-auto rounded-xl border border-black/10 bg-white/95 p-3 shadow-lg backdrop-blur">
-        <h2 className="text-xs font-semibold">Canonical Geometry V8</h2><p className="mt-1 text-[10px] leading-relaxed text-neutral-600">坐标直接使用 FF-01 归一化 PDF Display Points。平面与立体视图共享同一批几何对象。</p>
+        <h2 className="text-xs font-semibold">Canonical Geometry V{version.slice(1)}</h2><p className="mt-1 text-[10px] leading-relaxed text-neutral-600">坐标直接使用 FF-01 归一化 PDF Display Points。平面与立体视图共享同一批几何对象。</p>
         <button data-testid="v8-source-toggle" onClick={()=>setSourceVisible(v=>!v)} className="mt-2 flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[11px] hover:bg-neutral-100"><span>Source PDF Overlay</span>{sourceVisible?<Eye size={13}/>:<EyeOff size={13}/>}</button>
         <div className="mt-1 space-y-1">{Object.entries(controls).map(([key,label])=><button key={key} data-testid={`v8-layer-${key}`} onClick={()=>setVisible(v=>({...v,[key]:!v[key as keyof typeof v]}))} className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[11px] hover:bg-neutral-100"><span>{label}</span>{visible[key as keyof typeof visible]?<Eye size={13}/>:<EyeOff size={13}/>}</button>)}</div>
         <div className="mt-3 border-t pt-3"><label className="block text-[11px] font-semibold">空间选择</label><select data-testid="v8-room-select" value={selected} onChange={e=>setSelected(e.target.value)} className="mt-1 w-full rounded border px-2 py-1.5 text-xs">{model?.spaces.map(space=><option key={space.spaceID} value={space.sourceRoomID}>{space.sourceRoomID}{space.geometry?' · candidate':' · no polygon'}</option>)}</select><p data-testid="v8-room-status" className="mt-1 text-[10px] font-medium text-amber-900">{selected} · {selectedStatus}</p></div>
-        <div className="mt-3 border-t pt-3 text-[10px] leading-relaxed text-neutral-600" data-testid="v8-coverage">{model?`${model.coverage.candidateRoomPolygons} 个房间 Polygon · ${model.wallNetwork.traceObjects.length.toLocaleString()} 条墙迹线 · ${model.wallNetwork.wallFaceCandidates.length.toLocaleString()} 个填充墙面候选 · ${model.circulation.corridors.length} 段走廊候选 · ${model.arena.seatFootprintCandidates.length} 个座席图元`:'读取模型中'}<br/>建筑外轮廓未闭合 · 图纸 Verified 0 · FIELD Verified 0</div>
-        <p className="mt-2 rounded bg-amber-50 p-2 text-[10px] leading-relaxed text-amber-950">外边界仍为分段迹线；走廊与新增房间均为源图支持的候选，不代表独立核验。未确认门洞不会进入导航。</p>
+        <div className="mt-3 border-t pt-3 text-[10px] leading-relaxed text-neutral-600" data-testid="v8-coverage">{model?(version==='V9'?`${model.coverage.candidateRoomPolygons} 个房间 Polygon · ${v9Data?.coverage.semanticWallTraceObjects?.toLocaleString()??0} 个拓扑关联墙线候选 · ${v9Data?.wallNetwork.semanticFaces?.length.toLocaleString()??0} 个局部填充墙面候选 · ${model.circulation.corridors.length} 段走廊候选 · ${model.arena.seatFootprintCandidates.length} 个座席图元`:`${model.coverage.candidateRoomPolygons} 个房间 Polygon · ${model.wallNetwork.traceObjects.length.toLocaleString()} 条墙迹线 · ${model.wallNetwork.wallFaceCandidates.length.toLocaleString()} 个填充墙面候选 · ${model.circulation.corridors.length} 段走廊候选 · ${model.arena.seatFootprintCandidates.length} 个座席图元`):'读取模型中'}<br/>建筑外轮廓未闭合 · 图纸 Verified 0 · FIELD Verified 0</div>
+        {version==='V9'&&<p className="mt-2 rounded bg-rose-50 p-2 text-[10px] leading-relaxed text-rose-950">V9 拓扑：{v9Data?.topologyGraph?.relations.filter(item=>item.type==='ADJACENT_TO').length??0} 条候选相邻关系 · {v9Data?.topologyGraph?.openingCandidates.length??0} 个开口候选（通行均 UNKNOWN）{Object.values(v9Data?.mWestRegion?.conflicts??{}).length?` · M-West 存在 ${Object.values(v9Data?.mWestRegion?.conflicts??{}).map(item=>`${item.areaM2.toFixed(1)}m²`)[0]} 房间/走廊重叠冲突`:''}</p>}
+        <p className="mt-2 rounded bg-amber-50 p-2 text-[10px] leading-relaxed text-amber-950">外边界仍为分段迹线；墙体、走廊与房间均为源图支持的候选，不代表独立核验。空间相邻不表示可以通行；未确认门洞不会进入导航。</p>
       </aside>
       <div className="absolute bottom-4 right-4 rounded-lg bg-white/90 px-3 py-2 text-[10px] text-neutral-600 shadow">左键平移 · 滚轮光标缩放 · 右键旋转（2.5D）· 点击候选房间</div>
     </section>
-    <footer className="flex min-h-9 items-center justify-between border-t border-black/10 bg-white px-4 text-[10px] text-neutral-500"><span>V8 独立候选层 · V6/V7 与人工审阅历史保留 · 非生产校园地图</span><a className="underline" href="/dev/geometry-review">打开几何审阅器</a></footer>
+    <footer className="flex min-h-9 items-center justify-between border-t border-black/10 bg-white px-4 text-[10px] text-neutral-500"><span>V{version.slice(1)} 拓扑候选层 · V6–V8 与人工审阅历史保留 · 非生产校园地图</span><a className="underline" href="/dev/geometry-review">打开几何审阅器</a></footer>
   </main>;
+}
+
+export function BuildingPreviewV9() {
+  return <BuildingPreviewV8 modelUrl="/ff01-architecture-v9.json" version="V9"/>;
 }
