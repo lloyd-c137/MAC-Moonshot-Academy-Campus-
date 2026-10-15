@@ -13,5 +13,6 @@ The Pages project sets `SKIP_DEPENDENCY_INSTALL=1` and performs the install with
 as part of the build command, so the lockfile is not rewritten or removed. The legacy peer resolution flag accommodates the Vite 8 and esbuild versions already recorded by the project.
 
 Cloudflare Pages builds production deployments from GitHub pushes to `main`.
-The existing `mac` project and `mac.lloydev.site` domain remain in place until
-the new Git-connected deployment is verified and the domain migration is ready.
+The custom domain `mac.lloydev.site` is attached to `mac-github` and its CNAME
+targets `mac-github.pages.dev`. The former Direct Upload project `mac` was
+deleted after the Git-connected deployment and custom domain were verified.
