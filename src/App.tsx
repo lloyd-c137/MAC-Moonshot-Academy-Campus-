@@ -2,10 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CampusCanvas } from './components/canvas/CampusCanvas';
 import { TopNav } from './components/ui/TopNav';
 import { LayerRail } from './components/ui/LayerRail';
-import { ContextDetailPanel } from './components/ui/ContextDetailPanel';
+import { ContextDetailPanel, type DetailTab } from './components/ui/ContextDetailPanel';
 import { BottomDiscoverDock } from './components/ui/BottomDiscoverDock';
 import { FindMySpotModal } from './components/ui/FindMySpotModal';
-import { NavigationPanel } from './components/ui/NavigationPanel';
 import { AddMomentModal } from './components/ui/AddMomentModal';
 import { GeometryReviewDrawer } from './components/ui/GeometryReviewDrawer';
 import { ToastProvider, useToast } from './components/ui/Toast';
@@ -22,9 +21,9 @@ import { useCampusConfig } from './config/campusConfig';
 import { useLiveSensors } from './services/sensorApi';
 import { buildSpaces } from './services/spaceModel';
 import { displayName } from './components/ui/format';
-import type { CampusMoment, MapLayerMode, NavigationRoute } from './types/campus';
+import type { CampusMoment, MapLayerMode } from './types/campus';
 
-type LeftPanel = 'none' | 'route' | 'review';
+type LeftPanel = 'none' | 'review';
 const VALID_IDS = new Set(CAMPUS_SPACES.map((s) => s.id));
 
 const roomFromUrl = () => {
@@ -41,7 +40,6 @@ function CampusApp() {
   const [layerMode, setLayerMode] = useState<MapLayerMode>('explore');
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(roomFromUrl);
   const [hoveredSpaceId, setHoveredSpaceId] = useState<string | null>(null);
-  const [activeRoute, setActiveRoute] = useState<NavigationRoute | null>(null);
   const [leftPanel, setLeftPanel] = useState<LeftPanel>('none');
   const [findOpen, setFindOpen] = useState(false);
   const [momentSpaceId, setMomentSpaceId] = useState<string | null>(null);
@@ -49,7 +47,7 @@ function CampusApp() {
   const [showSourceOverlay, setShowSourceOverlay] = useState(false);
   const [moments, setMoments] = useState<CampusMoment[]>(() => getStoredMoments());
   const [likedIds, setLikedIds] = useState<Set<string>>(() => getLikedMomentIds());
-  const [tabRequest, setTabRequest] = useState<{ tab: 'now' | 'past' | 'next'; nonce: number } | null>(null);
+  const [tabRequest, setTabRequest] = useState<{ tab: DetailTab; nonce: number } | null>(null);
 
   const selectedSpace = useMemo(() => spaces.find((s) => s.id === selectedSpaceId) ?? null, [spaces, selectedSpaceId]);
   const selectSpace = useCallback((id: string | null) => setSelectedSpaceId(id), []);
@@ -94,7 +92,7 @@ function CampusApp() {
   const momentSaved = (moment: CampusMoment) => {
     setMoments((prev) => [moment, ...prev]);
     setSelectedSpaceId(moment.spaceId);
-    setTabRequest({ tab: 'past', nonce: Date.now() });
+    setTabRequest({ tab: 'memories', nonce: Date.now() });
     const space = spaces.find((s) => s.id === moment.spaceId);
     toast(`回忆已保存到 ${space ? displayName(space) : moment.spaceId}`);
   };
@@ -119,7 +117,7 @@ function CampusApp() {
           layerMode={layerMode}
           selectedSpaceId={selectedSpaceId}
           hoveredSpaceId={hoveredSpaceId}
-          activeRoute={activeRoute}
+          activeRoute={null}
           reviewMode={leftPanel === 'review'}
           showNavGraph={false}
           showGrid={showGrid}
@@ -128,28 +126,18 @@ function CampusApp() {
           onSelectSpace={selectSpace}
           onHoverSpace={setHoveredSpaceId}
           spaces={spaces}
+          onOpenReview={() => setLeftPanel('review')}
         />
       </div>
 
       <TopNav
         spaces={spaces}
         events={CAMPUS_EVENTS}
-        reviewMode={leftPanel === 'review'}
         onSelectSpace={selectSpace}
         onOpenFindSpot={() => setFindOpen(true)}
-        onToggleReviewMode={() => setLeftPanel((p) => (p === 'review' ? 'none' : 'review'))}
-        onOpenNavigation={() => setLeftPanel((p) => (p === 'route' ? 'none' : 'route'))}
       />
 
-      <LayerRail layerMode={layerMode} onLayerChange={setLayerMode} hideLegend={leftPanel !== 'none'} />
-
-      <NavigationPanel
-        isOpen={leftPanel === 'route'}
-        selectedDestinationId={selectedSpaceId}
-        onClose={() => { setLeftPanel('none'); setActiveRoute(null); }}
-        onRouteCalculated={setActiveRoute}
-        onShowDestination={(id) => { setSelectedSpaceId(id); setLeftPanel('none'); }}
-      />
+      <LayerRail layerMode={layerMode} onLayerChange={setLayerMode} hideLegend={leftPanel !== 'none'} liveRoomIds={Object.entries(live).filter(([, r]) => r.latest).map(([id]) => id)} />
 
       <GeometryReviewDrawer
         isOpen={leftPanel === 'review'}
@@ -169,7 +157,6 @@ function CampusApp() {
         likedIds={likedIds}
         tabRequest={tabRequest}
         onClose={() => setSelectedSpaceId(null)}
-        onNavigateTo={(id) => { setSelectedSpaceId(id); setLeftPanel('route'); }}
         onOpenAddMoment={(id) => setMomentSpaceId(id)}
         onLikeMoment={likeMoment}
         onShare={shareSpace}

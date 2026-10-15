@@ -1,16 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Navigation, ScanLine, Search, Sparkles, X } from 'lucide-react';
+import { CalendarDays, Search, Sparkles, X } from 'lucide-react';
 import type { CampusEvent, CampusSpace } from '../../types/campus';
 import { displayCode, displayName } from './format';
 
 interface TopNavProps {
   spaces: CampusSpace[];
   events: CampusEvent[];
-  reviewMode: boolean;
   onSelectSpace: (spaceId: string) => void;
   onOpenFindSpot: () => void;
-  onToggleReviewMode: () => void;
-  onOpenNavigation: () => void;
 }
 
 type Result =
@@ -56,7 +53,7 @@ function search(query: string, spaces: CampusSpace[], events: CampusEvent[]): Re
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
-  spaces, events, reviewMode, onSelectSpace, onOpenFindSpot, onToggleReviewMode, onOpenNavigation,
+  spaces, events, onSelectSpace, onOpenFindSpot,
 }) => {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -169,19 +166,6 @@ export const TopNav: React.FC<TopNavProps> = ({
 
       {/* Actions */}
       <div className="pointer-events-auto flex shrink-0 items-center gap-2">
-        <button onClick={onOpenNavigation} className={`glass ${capsuleButton} text-ink-soft hover:text-ink max-lg:hidden`}>
-          <Navigation className="h-4 w-4" />
-          导航
-        </button>
-        <button
-          onClick={onToggleReviewMode}
-          aria-pressed={reviewMode}
-          title="对照 FF-01 原图检查模型"
-          className={`glass grid h-11 w-11 place-items-center rounded-full transition-colors ${reviewMode ? '!bg-ink text-white' : 'text-ink-soft hover:text-ink'}`}
-        >
-          <ScanLine className="h-4 w-4" />
-          <span className="sr-only">图纸对照</span>
-        </button>
         <button
           onClick={onOpenFindSpot}
           className={`${capsuleButton} bg-flare text-white shadow-[0_10px_24px_-10px_rgb(211_84_0/0.8)] hover:bg-ember max-sm:w-11 max-sm:justify-center max-sm:px-0`}

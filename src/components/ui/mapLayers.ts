@@ -5,8 +5,8 @@ export interface LegendStop { color: string; label: string }
 
 /** Map layers as shown in the layer rail. 环境 groups three metrics. */
 export const LAYER_GROUPS = [
-  { id: 'explore', label: '探索', hint: '建筑与房间', icon: Compass, modes: ['explore'] },
-  { id: 'spaces', label: '空间', hint: '按用途着色', icon: LayoutGrid, modes: ['spaces'] },
+  { id: 'explore', label: '总览', hint: '建筑与房间', icon: Compass, modes: ['explore'] },
+  { id: 'spaces', label: '用途', hint: '按房间用途着色', icon: LayoutGrid, modes: ['spaces'] },
   { id: 'environment', label: '环境', hint: '温度、湿度、CO₂', icon: Thermometer, modes: ['temperature', 'humidity', 'co2'] },
   { id: 'pulse', label: '人流', hint: '此刻的热闹程度', icon: Activity, modes: ['pulse'] },
   { id: 'events', label: '活动', hint: '正在和即将发生', icon: CalendarDays, modes: ['events'] },

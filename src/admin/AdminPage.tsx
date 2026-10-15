@@ -161,7 +161,7 @@ const SensorsSection: React.FC<{ draft: CampusConfig; update: (p: Partial<Campus
   };
   const loadDevices = async () => {
     setDeviceError(null);
-    try { setDevices(await fetchDevices(api.baseUrl)); } catch (e) { setDeviceError((e as Error).message || '无法读取设备列表'); setDevices([]); }
+    try { setDevices(await fetchDevices(api.baseUrl)); } catch (e) { setDeviceError(e instanceof TypeError ? '接口没有响应，稍后点“刷新”再试' : (e as Error).message || '接口没有响应'); setDevices([]); }
   };
 
   useEffect(() => { loadDevices(); draft.sensors.forEach((b) => b.locationId && test(b)); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [api.baseUrl]);
@@ -172,41 +172,8 @@ const SensorsSection: React.FC<{ draft: CampusConfig; update: (p: Partial<Campus
     <div className="space-y-8">
       <header>
         <h1 className="text-[28px] font-semibold tracking-tight">传感器接入</h1>
-        <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-crater">把房间和环境传感器的位置编号对应起来。绑定后，地图上这个房间的温度、湿度和 CO₂ 会改用真实读数。</p>
+        <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-crater">绑定后，这个房间在地图上显示传感器的真实读数。</p>
       </header>
-
-      <section className={card}>
-        <h2 className="text-[17px] font-semibold">数据接口</h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <label className="md:col-span-2">
-            <span className={label}>接口地址</span>
-            <input className={`${input} mt-1.5`} value={api.baseUrl} onChange={(e) => update({ sensorApi: { ...api, baseUrl: e.target.value } })} placeholder="https://map.georgehan0514.top" />
-            <span className="mt-1 block text-[12px] text-crater">读取 {api.baseUrl.replace(/\/+$/, '')}/api/readings?location=位置编号&hours={api.historyHours}</span>
-          </label>
-          <label>
-            <span className={label}>数据提供者名称</span>
-            <input className={`${input} mt-1.5`} value={api.providerName ?? ''} onChange={(e) => update({ sensorApi: { ...api, providerName: e.target.value } })} placeholder="georgehan0514.top" />
-          </label>
-          <label>
-            <span className={label}>数据提供者链接</span>
-            <input className={`${input} mt-1.5`} value={api.providerUrl ?? ''} onChange={(e) => update({ sensorApi: { ...api, providerUrl: e.target.value } })} placeholder="https://georgehan0514.top/" />
-            <span className="mt-1 block text-[12px] text-crater">显示在房间环境数据下方，留空则不显示</span>
-          </label>
-          {([
-            ['refreshSeconds', '刷新间隔', '秒', 15],
-            ['staleMinutes', '超过多久算“未更新”', '分钟', 1],
-            ['historyHours', '趋势时长', '小时', 1],
-          ] as const).map(([key, text, unit, min]) => (
-            <label key={key}>
-              <span className={label}>{text}</span>
-              <div className="relative mt-1.5">
-                <input type="number" min={min} className={`${input} pr-14`} value={api[key]} onChange={(e) => update({ sensorApi: { ...api, [key]: Math.max(min, Number(e.target.value) || min) } })} />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-dust">{unit}</span>
-              </div>
-            </label>
-          ))}
-        </div>
-      </section>
 
       <section className={card}>
         <div className="flex items-center justify-between gap-4">
@@ -268,7 +235,7 @@ const SensorsSection: React.FC<{ draft: CampusConfig; update: (p: Partial<Campus
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-[17px] font-semibold">接口上的设备</h2>
-            <p className="mt-1 text-[13px] text-crater">来自 /api/devices。握手超过 5 分钟没有更新会显示为离线。</p>
+            <p className="mt-1 text-[13px] text-crater">5 分钟内没有联系的设备显示为离线。</p>
           </div>
           <button onClick={loadDevices} className="flex h-9 items-center gap-1.5 rounded-full border hairline bg-white px-3 text-[13px] font-medium text-ink-soft hover:text-ink active:scale-95"><RefreshCw className="h-4 w-4" />刷新</button>
         </div>
@@ -304,6 +271,41 @@ const SensorsSection: React.FC<{ draft: CampusConfig; update: (p: Partial<Campus
           </ul>
         )}
       </section>
+      <details className={`${card} group`}>
+        <summary className="flex cursor-pointer list-none items-center justify-between text-[17px] font-semibold">
+          高级设置
+          <span className="text-[13px] font-normal text-crater group-open:hidden">接口地址、刷新间隔、数据来源</span>
+        </summary>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="md:col-span-2">
+            <span className={label}>接口地址</span>
+            <input className={`${input} mt-1.5`} value={api.baseUrl} onChange={(e) => update({ sensorApi: { ...api, baseUrl: e.target.value } })} placeholder="https://map.georgehan0514.top" />
+            <span className="mt-1 block text-[12px] text-crater">读取 {api.baseUrl.replace(/\/+$/, '')}/api/readings?location=位置编号&hours={api.historyHours}</span>
+          </label>
+          <label>
+            <span className={label}>数据提供者名称</span>
+            <input className={`${input} mt-1.5`} value={api.providerName ?? ''} onChange={(e) => update({ sensorApi: { ...api, providerName: e.target.value } })} placeholder="georgehan0514.top" />
+          </label>
+          <label>
+            <span className={label}>数据提供者链接</span>
+            <input className={`${input} mt-1.5`} value={api.providerUrl ?? ''} onChange={(e) => update({ sensorApi: { ...api, providerUrl: e.target.value } })} placeholder="https://georgehan0514.top/" />
+            <span className="mt-1 block text-[12px] text-crater">显示在房间环境数据下方，留空则不显示</span>
+          </label>
+          {([
+            ['refreshSeconds', '刷新间隔', '秒', 15],
+            ['staleMinutes', '超过多久算“未更新”', '分钟', 1],
+            ['historyHours', '趋势时长', '小时', 1],
+          ] as const).map(([key, text, unit, min]) => (
+            <label key={key}>
+              <span className={label}>{text}</span>
+              <div className="relative mt-1.5">
+                <input type="number" min={min} className={`${input} pr-14`} value={api[key]} onChange={(e) => update({ sensorApi: { ...api, [key]: Math.max(min, Number(e.target.value) || min) } })} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-dust">{unit}</span>
+              </div>
+            </label>
+          ))}
+        </div>
+      </details>
     </div>
   );
 };
@@ -446,9 +448,12 @@ const PublishSection: React.FC<{
     <div className="space-y-8">
       <header>
         <h1 className="text-[28px] font-semibold tracking-tight">发布配置</h1>
-        <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-crater">
-          网站是静态部署的，没有服务器保存设置。在这里保存的修改只对这台设备的浏览器生效。要让所有访问者看到，需要把配置文件放进项目的 public/campus-config.json，提交并推送到 main，Cloudflare Pages 会自动重新部署。
-        </p>
+        <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-crater">“保存”只改这台设备。要让所有人看到：</p>
+        <ol className="mt-3 space-y-1.5 text-[14px] text-ink-soft">
+          <li><span className="mr-2 font-semibold text-ink">1</span>点“下载配置文件”（本机开发时可直接点“写入项目文件”）</li>
+          <li><span className="mr-2 font-semibold text-ink">2</span>放到项目的 public/campus-config.json</li>
+          <li><span className="mr-2 font-semibold text-ink">3</span>提交并推送到 main，网站会自动更新</li>
+        </ol>
       </header>
 
       <section className={card}>
@@ -474,10 +479,10 @@ const PublishSection: React.FC<{
         {!devWritable && <p className="mt-3 text-[12px] text-dust">“写入项目文件”只在本机运行 npm run dev 时出现。</p>}
       </section>
 
-      <section className={card}>
-        <h2 className="text-[17px] font-semibold">配置预览</h2>
+      <details className={`${card} group`}>
+        <summary className="cursor-pointer list-none text-[15px] font-medium text-ink-soft hover:text-ink">查看配置内容</summary>
         <pre className="scroll-quiet mt-4 max-h-[420px] overflow-auto rounded-[12px] bg-ink p-4 text-[12px] leading-relaxed text-white/85">{json}</pre>
-      </section>
+      </details>
     </div>
   );
 };

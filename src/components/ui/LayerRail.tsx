@@ -7,12 +7,14 @@ interface LayerRailProps {
   layerMode: MapLayerMode;
   onLayerChange: (mode: MapLayerMode) => void;
   hideLegend?: boolean;
+  /** Rooms with real sensor readings, named in the environment legend. */
+  liveRoomIds?: string[];
 }
 
 const toHex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
 
 /** Left rail for map layers, with the active layer's legend directly beneath it. */
-export const LayerRail: React.FC<LayerRailProps> = ({ layerMode, onLayerChange, hideLegend = false }) => {
+export const LayerRail: React.FC<LayerRailProps> = ({ layerMode, onLayerChange, hideLegend = false, liveRoomIds = [] }) => {
   const activeGroup = LAYER_GROUPS.find((group) => (group.modes as readonly MapLayerMode[]).includes(layerMode)) ?? LAYER_GROUPS[0];
   const legend = LAYER_LEGENDS[layerMode];
   const isEnvironment = activeGroup.id === 'environment';
@@ -80,7 +82,9 @@ export const LayerRail: React.FC<LayerRailProps> = ({ layerMode, onLayerChange, 
             )}
           </ul>
           {layerMode !== 'spaces' && layerMode !== 'events' && (
-            <p className="mt-3 border-t hairline pt-2.5 text-[11px] leading-relaxed text-crater">演示数据，仅部分房间接入。</p>
+            <p className="mt-3 border-t hairline pt-2.5 text-[11px] leading-relaxed text-crater">
+              {isEnvironment && liveRoomIds.length > 0 ? `${liveRoomIds.join('、')} 为传感器实测，其余为演示数据` : '演示数据'}
+            </p>
           )}
         </section>
       )}

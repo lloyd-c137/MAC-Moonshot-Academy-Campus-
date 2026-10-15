@@ -1456,7 +1456,7 @@ for (const room of SOURCE_ROOMS) {
     occupancy: 'unknown',
     environment: OFFLINE_ENVIRONMENT(),
     pulse: 'unknown',
-    description: `FF-01 图纸房间 ${room.id}（${room.name}${room.areaM2Label ? ` · 图纸标注 ${room.areaM2Label} m²` : ''}）。该空间暂未接入传感器、预约或活动数据。`,
+    description: '',
     tags: [room.name, room.series + ' 系列'],
     isVerifiedInPlan: false,
     geometryProvenance: room.geometryStatus === 'NO_POLYGON_LABEL_ONLY' ? 'unverified' : 'derived',

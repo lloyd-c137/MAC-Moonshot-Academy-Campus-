@@ -23,6 +23,8 @@ The map polls each enabled binding every 60 s, and again whenever the tab become
 
 **Trend.** The trend lines show hourly averages over the past 24 hours, ending now. Hours without data are bridged with a dashed line, so reporting gaps stay visible.
 
+The room sheet links to the data provider (default [georgehan0514.top](https://georgehan0514.top/), set in 高级设置).
+
 Rooms without a sensor keep the built-in demo values, labelled 演示数据. You can turn those off in 站点设置.
 
 Code:
@@ -33,7 +35,7 @@ Code:
 
 | Section | What it does |
 |---|---|
-| 传感器接入 | API address, refresh interval, staleness threshold, trend length. Room ↔ location bindings, each with enable, test (shows the latest values and reading count) and delete. A device list from `/api/devices` with online / offline status and one-click "绑定到房间". |
+| 传感器接入 | Room ↔ location bindings, each with enable, test (shows the latest values and reading count) and delete. A device list from `/api/devices` with online / offline status and one-click "绑定到房间". 高级设置 (collapsed): API address, refresh interval, staleness threshold, trend length, data provider name and link. |
 | 房间资料 | Per-room name, English name, description, access, capacity and facilities. Empty fields fall back to the defaults. Edited names also update the map labels. |
 | 站点设置 | Show or hide the demo environment values for rooms without sensors. |
 | 发布配置 | Download, import, or write to the project file (dev server only). Clear this browser's edits. Preview the JSON. |

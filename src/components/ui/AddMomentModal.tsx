@@ -13,20 +13,13 @@ interface AddMomentModalProps {
   onMomentAdded: (newMoment: CampusMoment) => void;
 }
 
-const CATEGORIES: Array<{ id: CampusMoment['category']; label: string }> = [
-  { id: 'memory', label: '一段回忆' },
-  { id: 'student_project', label: '一个作品' },
-  { id: 'daily_snap', label: '日常一刻' },
-  { id: 'event_highlight', label: '活动现场' },
-];
-
 const field = 'w-full rounded-[12px] border hairline bg-white px-3.5 py-2.5 text-[14px] text-ink outline-none transition-shadow placeholder:text-dust focus:ring-2 focus:ring-flare/40';
 
 export const AddMomentModal: React.FC<AddMomentModalProps> = ({ isOpen, defaultSpaceId, onClose, onMomentAdded }) => {
   const [spaceId, setSpaceId] = useState(defaultSpaceId || 'M104');
   const [author, setAuthor] = useState('');
   const [content, setContent] = useState('');
-  const [category, setCategory] = useState<CampusMoment['category']>('memory');
+  const category: CampusMoment['category'] = 'memory';
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -65,7 +58,7 @@ export const AddMomentModal: React.FC<AddMomentModalProps> = ({ isOpen, defaultS
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} title="留下回忆" description="写下在这里发生的事。回忆只保存在这台设备的浏览器里。" width="max-w-[560px]">
+    <Dialog open={isOpen} onClose={onClose} title="留下回忆" description="只保存在这台设备上。" width="max-w-[560px]">
       <form onSubmit={submit} className="scroll-quiet flex-1 space-y-5 overflow-y-auto px-7 pb-6">
         <label className="block">
           <span className="text-[13px] font-medium text-ink">地点</span>
@@ -76,26 +69,10 @@ export const AddMomentModal: React.FC<AddMomentModalProps> = ({ isOpen, defaultS
           </select>
         </label>
 
-        <fieldset>
-          <legend className="text-[13px] font-medium text-ink">这是</legend>
-          <div className="mt-1.5 flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setCategory(c.id)}
-                aria-pressed={category === c.id}
-                className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors ${category === c.id ? 'bg-ink text-white' : 'border hairline bg-white/70 text-ink-soft hover:bg-white'}`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-
         <label className="block">
-          <span className="text-[13px] font-medium text-ink">内容</span>
+          <span className="text-[13px] font-medium text-ink">发生了什么</span>
           <textarea
+            data-autofocus
             rows={4}
             value={content}
             onChange={(e) => setContent(e.target.value)}

@@ -18,7 +18,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, title, description, onClos
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
-    const first = ref.current?.querySelector<HTMLElement>('input, textarea, select, button:not([data-close])');
+    const first = ref.current?.querySelector<HTMLElement>('[data-autofocus]') ?? ref.current?.querySelector<HTMLElement>('input, textarea, select, button:not([data-close])');
     first?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.stopPropagation(); onClose(); }

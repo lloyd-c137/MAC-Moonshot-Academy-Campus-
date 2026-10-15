@@ -31,7 +31,7 @@ export const FindMySpotModal: React.FC<FindMySpotModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} title="找一个适合的地方" description="说说你想做什么，我们从开放的校园空间里挑出合适的。">
+    <Dialog open={isOpen} onClose={onClose} title="你想做什么？">
       <div className="px-7">
         <form
           onSubmit={(e) => { e.preventDefault(); if (text.trim()) run('custom', text.trim()); }}
@@ -41,7 +41,7 @@ export const FindMySpotModal: React.FC<FindMySpotModalProps> = ({ isOpen, onClos
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="例如：采光好、能做模型的地方"
+            placeholder="或者直接说，比如：采光好、能做模型"
             aria-label="描述你想找的地方"
             className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-dust"
           />
@@ -73,30 +73,23 @@ export const FindMySpotModal: React.FC<FindMySpotModalProps> = ({ isOpen, onClos
           <ol className="divide-y divide-ink/10">
             {results.map((r) => (
               <li key={r.space.id} className="flex items-start gap-4 py-4">
-                <div className="w-16 shrink-0 pt-0.5">
-                  <div className="wordmark text-[13px] font-semibold text-ink">{displayCode(r.space.id)}</div>
-                  <div className="mt-2 h-1 rounded-full bg-regolith" aria-hidden="true">
-                    <div className="h-1 rounded-full bg-flare" style={{ width: `${r.score}%` }} />
-                  </div>
-                  <div className="mt-1 text-[11px] text-crater">匹配 {r.score}</div>
-                </div>
+                <div className="wordmark w-14 shrink-0 pt-1 text-[13px] font-semibold text-ink">{displayCode(r.space.id)}</div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[15px] font-semibold text-ink">{displayName(r.space)}</p>
                   <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{r.matchReason}</p>
-                  <p className="mt-1.5 text-[12px] text-crater">{r.environmentalHighlight}{r.featuresHighlight.length ? `；${r.featuresHighlight.join('、')}` : ''}</p>
                 </div>
                 <button
                   onClick={() => { onSelectSpace(r.space.id); onClose(); }}
-                  className="shrink-0 rounded-full border hairline bg-white/70 px-3.5 py-1.5 text-[13px] font-medium text-ink-soft hover:bg-white hover:text-ink"
+                  className="shrink-0 rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-ink-soft"
                 >
-                  在地图上看
+                  去看看
                 </button>
               </li>
             ))}
           </ol>
         )}
       </div>
-      <p className="border-t hairline px-7 py-3 text-[12px] text-dust">推荐基于演示环境数据和房间设施，只包含开放空间。</p>
+      <p className="border-t hairline px-7 py-3 text-[12px] text-dust">只推荐开放的房间。环境条件来自演示数据。</p>
     </Dialog>
   );
 };

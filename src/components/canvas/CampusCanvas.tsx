@@ -7,7 +7,7 @@ import { CampusSpace, MapLayerMode, NavigationRoute } from '../../types/campus';
 import { planToWorld, SPATIAL_PLAN } from '../../data/spatialPlan';
 import { CampusCameraController, ViewMode } from './cameraController';
 import { buildCampusScene, CampusModelRoom, CampusScene, loadCampusModel, ROOM_KIND_STYLE } from './campusModel3d';
-import { Box, Info, Maximize, Minus, Plus, RotateCcw, Square, X } from 'lucide-react';
+import { Box, Info, Maximize, Minus, Plus, ScanLine, Square, X } from 'lucide-react';
 import { layerColor, NO_DATA_COLOR } from '../ui/mapLayers';
 
 interface CampusCanvasProps {
@@ -24,6 +24,8 @@ interface CampusCanvasProps {
   onHoverSpace: (spaceId: string | null) => void;
   /** Spaces with live sensor readings and admin edits applied; drives data-layer colours. */
   spaces?: CampusSpace[];
+  /** Opens the drawing-comparison panel (from the 关于地图 popover). */
+  onOpenReview?: () => void;
 }
 
 const STATIC_SPACES = new Map(CAMPUS_SPACES.map((space) => [space.id, space]));
@@ -59,6 +61,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   onSelectSpace,
   onHoverSpace,
   spaces,
+  onOpenReview,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<CampusCameraController | null>(null);
@@ -392,25 +395,17 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       <div
         className={`absolute bottom-6 z-20 flex flex-col items-end gap-2 transition-[right] duration-500 ease-[var(--ease-orbit)] ${hasSelectedSpace ? 'right-6 lg:right-[27rem]' : 'right-6'} max-lg:bottom-auto max-lg:top-[8.5rem]`}
       >
-        <div className="glass flex flex-col gap-0.5 rounded-full p-1" role="group" aria-label="视角">
-          <button
-            onClick={() => controllerRef.current?.setViewMode('explore')}
-            aria-pressed={currentViewMode === 'explore'}
-            title="立体视角"
-            className={`grid h-9 w-9 place-items-center rounded-full transition-colors ${currentViewMode === 'explore' ? 'bg-ink text-white' : 'text-ink-soft hover:bg-white'}`}
-          >
-            <Box className="h-4 w-4" />
-            <span className="sr-only">立体视角</span>
-          </button>
-          <button
-            onClick={() => controllerRef.current?.setViewMode('plan')}
-            aria-pressed={currentViewMode === 'plan'}
-            title="平面视角"
-            className={`grid h-9 w-9 place-items-center rounded-full transition-colors ${currentViewMode === 'plan' ? 'bg-ink text-white' : 'text-ink-soft hover:bg-white'}`}
-          >
-            <Square className="h-4 w-4" />
-            <span className="sr-only">平面视角</span>
-          </button>
+        <div className="glass flex flex-col gap-0.5 rounded-[18px] p-1" role="group" aria-label="视角">
+          {([['explore', '立体', Box], ['plan', '平面', Square]] as const).map(([mode, text, Icon]) => (
+            <button
+              key={mode}
+              onClick={() => controllerRef.current?.setViewMode(mode)}
+              aria-pressed={currentViewMode === mode}
+              className={`flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-[14px] text-[10px] font-medium ${currentViewMode === mode ? 'bg-ink text-white' : 'text-ink-soft hover:bg-white'}`}
+            >
+              <Icon className="h-3.5 w-3.5" />{text}
+            </button>
+          ))}
         </div>
         <button
           onClick={() => controllerRef.current?.faceNorth()}
@@ -427,8 +422,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         <div className="glass flex flex-col gap-0.5 rounded-full p-1" role="group" aria-label="缩放">
           <button onClick={() => controllerRef.current?.zoomIn()} title="放大" aria-label="放大" className={controlButton}><Plus className="h-4 w-4" /></button>
           <button onClick={() => controllerRef.current?.zoomOut()} title="缩小" aria-label="缩小" className={controlButton}><Minus className="h-4 w-4" /></button>
-          <button onClick={() => controllerRef.current?.fitToPlan()} title="查看整个校园" aria-label="查看整个校园" className={controlButton}><Maximize className="h-4 w-4" /></button>
-          <button onClick={() => { controllerRef.current?.resetView(); controllerRef.current?.fitToPlan(); }} title="恢复默认视角" aria-label="恢复默认视角" className={controlButton}><RotateCcw className="h-4 w-4" /></button>
+          <button onClick={() => { controllerRef.current?.resetView(); controllerRef.current?.fitToPlan(); }} title="回到全景" aria-label="回到全景" className={controlButton}><Maximize className="h-4 w-4" /></button>
         </div>
       </div>
 
@@ -443,21 +437,24 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         {infoOpen && (
           <div className="glass animate-rise absolute bottom-12 left-0 w-80 rounded-[var(--radius-tile)] p-4 text-[13px] leading-relaxed text-ink-soft">
             <div className="flex items-start justify-between gap-3">
-              <p className="font-semibold text-ink">这张地图是怎么来的</p>
-              <button onClick={() => setInfoOpen(false)} aria-label="关闭说明" className="-m-1 rounded-full p-1 text-dust hover:text-ink"><X className="h-4 w-4" /></button>
+              <p className="font-semibold text-ink">关于这张地图</p>
+              <button onClick={() => setInfoOpen(false)} aria-label="关闭" className="-m-1 rounded-full p-1 text-dust hover:text-ink"><X className="h-4 w-4" /></button>
             </div>
-            <p className="mt-2">墙体、门洞、房间和看台座位都由 FF-01 一层平面图的 CAD 矢量生成，比例 1:300。</p>
-            <p className="mt-2">墙高是示意值，房间边界还没有逐间人工核验。环境、人流数据是演示样例。室内导航暂未开放。</p>
-            <p className="mt-3 border-t hairline pt-3 text-crater">拖动平移，滚轮缩放，右键拖动旋转。按 / 搜索房间。</p>
+            <p className="mt-2">根据一层平面图（FF-01）生成。房间边界还在逐间核对，墙高是示意值。室内导航暂未开放。</p>
+            <p className="mt-2 text-crater">拖动平移，滚轮缩放，右键拖动旋转，按 / 搜索。</p>
+            {onOpenReview && (
+              <button onClick={() => { setInfoOpen(false); onOpenReview(); }} className="mt-3 flex items-center gap-2 rounded-full border hairline bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink-soft hover:text-ink">
+                <ScanLine className="h-4 w-4" />对照原图
+              </button>
+            )}
           </div>
         )}
         <button
           onClick={() => setInfoOpen((open) => !open)}
           aria-expanded={infoOpen}
-          className="glass flex h-10 items-center gap-2 rounded-full px-3 text-xs text-ink-soft transition-colors hover:text-ink xl:pr-4"
+          className="glass flex h-10 items-center gap-2 rounded-full px-3.5 text-[12px] font-medium text-ink-soft hover:text-ink"
         >
-          <Info className="h-3.5 w-3.5 text-dust" />
-          <span className="max-xl:sr-only">模型源自 FF-01 图纸，尚未逐间核验</span>
+          <Info className="h-3.5 w-3.5" />关于地图
         </button>
       </div>
     </div>
