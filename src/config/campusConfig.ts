@@ -39,6 +39,9 @@ export interface CampusConfig {
     /** A reading older than this is shown as "not updated", not as current. */
     staleMinutes: number;
     historyHours: number;
+    /** Who provides the sensor data; shown as a small source link next to the readings. */
+    providerName?: string;
+    providerUrl?: string;
   };
   sensors: SensorBinding[];
   rooms: Record<string, RoomOverride>;
@@ -51,7 +54,7 @@ export interface CampusConfig {
 
 export const DEFAULT_CONFIG: CampusConfig = {
   version: 1,
-  sensorApi: { baseUrl: 'https://map.georgehan0514.top', refreshSeconds: 60, staleMinutes: 10, historyHours: 24 },
+  sensorApi: { baseUrl: 'https://map.georgehan0514.top', refreshSeconds: 60, staleMinutes: 10, historyHours: 24, providerName: 'georgehan0514.top', providerUrl: 'https://georgehan0514.top/' },
   sensors: [{ id: 'm104-m1', roomId: 'M104', locationId: 'M1', enabled: true, note: 'ESP32-S3 环境传感器' }],
   rooms: {},
   display: { showDemoEnvironment: true },

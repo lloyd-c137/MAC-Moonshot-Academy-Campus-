@@ -5,12 +5,13 @@ import { formatAge, type LiveRoomReading } from './sensorApi';
 const series = (points: LiveRoomReading['series'], key: 'temperature' | 'humidity' | 'co2') =>
   points.filter((p) => p[key] !== null);
 
-function liveEnvironment(base: EnvironmentalReading, live: LiveRoomReading): EnvironmentalReading {
+function liveEnvironment(base: EnvironmentalReading, live: LiveRoomReading, provider?: EnvironmentalReading['provider']): EnvironmentalReading {
   const { latest, status } = live;
   if (!latest || status === 'error' || status === 'empty' || status === 'loading') {
     return {
       ...base,
       source: 'sensor',
+      provider,
       sensorHealth: 'offline',
       sensorId: live.deviceId,
       temperatureTrend: [], humidityTrend: [], co2Trend: [],
@@ -21,6 +22,7 @@ function liveEnvironment(base: EnvironmentalReading, live: LiveRoomReading): Env
   return {
     ...base,
     source: 'sensor',
+    provider,
     sensorHealth: status === 'live' ? 'live' : 'stale',
     sensorId: live.deviceId,
     temperature: latest.temperature ?? base.temperature,
@@ -57,7 +59,10 @@ export function buildSpaces(base: CampusSpace[], config: CampusConfig, live: Rec
       : space;
     const reading = live[space.id];
     if (reading) {
-      next = { ...next, environment: liveEnvironment(next.environment, reading) };
+      const { providerName, providerUrl } = config.sensorApi;
+      let provider: EnvironmentalReading['provider'];
+      try { provider = providerUrl ? { name: providerName || new URL(providerUrl).host, url: new URL(providerUrl).toString() } : undefined; } catch { provider = undefined; }
+      next = { ...next, environment: liveEnvironment(next.environment, reading, provider) };
     } else if (next.environment.sensorHealth !== 'offline') {
       next = config.display.showDemoEnvironment
         ? { ...next, environment: { ...next.environment, source: 'demo', sensorHealth: 'mock' } }

@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useState } from 'react';
-import { ChevronDown, CircleAlert, Clock, Heart, Link2, Navigation, PenLine, Users, X } from 'lucide-react';
+import { ChevronDown, CircleAlert, Clock, ExternalLink, Heart, Link2, Navigation, PenLine, Users, X } from 'lucide-react';
 import type { CampusEvent, CampusMoment, CampusSpace } from '../../types/campus';
 import { displayCode, displayName, formatTime as time } from './format';
 
@@ -252,6 +252,11 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
                     <p className="mt-1 text-[11px] text-dust">
                       设备 {env.sensorId ?? '未知'}{capturedAt ? `，读数时间 ${capturedAt}` : ''}，趋势为过去 24 小时每小时平均，虚线表示没有数据
                     </p>
+                  )}
+                  {isSensor && env.provider && (
+                    <a href={env.provider.url} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-crater underline decoration-ink/20 underline-offset-2 hover:text-ember hover:decoration-ember">
+                      数据来源 {env.provider.name}<ExternalLink className="h-3 w-3" />
+                    </a>
                   )}
                 </section>
 

@@ -183,6 +183,15 @@ const SensorsSection: React.FC<{ draft: CampusConfig; update: (p: Partial<Campus
             <input className={`${input} mt-1.5`} value={api.baseUrl} onChange={(e) => update({ sensorApi: { ...api, baseUrl: e.target.value } })} placeholder="https://map.georgehan0514.top" />
             <span className="mt-1 block text-[12px] text-crater">读取 {api.baseUrl.replace(/\/+$/, '')}/api/readings?location=位置编号&hours={api.historyHours}</span>
           </label>
+          <label>
+            <span className={label}>数据提供者名称</span>
+            <input className={`${input} mt-1.5`} value={api.providerName ?? ''} onChange={(e) => update({ sensorApi: { ...api, providerName: e.target.value } })} placeholder="georgehan0514.top" />
+          </label>
+          <label>
+            <span className={label}>数据提供者链接</span>
+            <input className={`${input} mt-1.5`} value={api.providerUrl ?? ''} onChange={(e) => update({ sensorApi: { ...api, providerUrl: e.target.value } })} placeholder="https://georgehan0514.top/" />
+            <span className="mt-1 block text-[12px] text-crater">显示在房间环境数据下方，留空则不显示</span>
+          </label>
           {([
             ['refreshSeconds', '刷新间隔', '秒', 15],
             ['staleMinutes', '超过多久算“未更新”', '分钟', 1],

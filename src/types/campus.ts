@@ -46,6 +46,8 @@ export interface EnvironmentalReading {
   capturedAt?: number;
   /** Sensor-side status: why values are missing or old. */
   sensorNote?: string;
+  /** Who supplies the sensor data, for the source link. */
+  provider?: { name: string; url: string };
   sensorId?: string;
   isPrivateRoom?: boolean; // If true, do not expose exact headcounts for privacy (nurse, counseling, etc.)
 }
