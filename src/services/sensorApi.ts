@@ -149,6 +149,7 @@ export function useLiveSensors(config: CampusConfig, ready: boolean): Record<str
     if (enabled.length === 0) return;
     let abort = new AbortController();
     const poll = async () => {
+      if (document.visibilityState === 'hidden') return; // no polling in background tabs
       abort.abort();
       abort = new AbortController();
       const results = await Promise.allSettled(enabled.map((b) => fetchRoomReadings(configRef.current, b, abort.signal)));

@@ -21,7 +21,13 @@ export interface CampusModelRoom {
   geometryStatus: string;
 }
 
-interface PackedSegments { count: number; int16cm: string }
+/** Delta-encoded centimetre polylines: [n, x0, z0, dx1, dz1, …, n, …]. */
+interface PackedPolylines { polylines: number; segments: number; deltaCm: number[] }
+
+export interface CampusDetailData {
+  modelID: string;
+  floorLines: Record<'furniture' | 'doors' | 'stairs' | 'court', PackedPolylines>;
+}
 
 export interface CampusModelData {
   modelID: string;
@@ -35,33 +41,10 @@ export interface CampusModelData {
   rooms: CampusModelRoom[];
   corridors: Array<{ id: string; polygon: PolygonXZ }>;
   arena: { court: XZ[][]; seats: Array<{ p: XZ[]; row: number }>; standBlocks: PolygonXZ[]; seatCount: number };
-  floorLines: Record<'furniture' | 'doors' | 'stairs' | 'court', PackedSegments>;
 }
 
-export const CAMPUS_MODEL_URL = '/ff01-campus-3d.json';
-
-export async function loadCampusModel(signal?: AbortSignal): Promise<CampusModelData> {
-  const response = await fetch(CAMPUS_MODEL_URL, { signal });
-  if (!response.ok) throw new Error(`Campus model request failed: ${response.status}`);
-  return response.json();
-}
-
-/**
- * Room palette. `calm` is the everyday lunar tint; `strong` is used by the 空间 layer
- * so categories separate clearly. Orange is never used here: it marks selection and life.
- */
-export const ROOM_KIND_STYLE: Record<RoomKind, { calm: number; strong: number; label: string }> = {
-  classroom: { calm: 0xd6e1ec, strong: 0x9dbad6, label: '教室与书院' },
-  lab: { calm: 0xcbe3e0, strong: 0x86c2bb, label: '实验与科创' },
-  creative: { calm: 0xe5daed, strong: 0xc4a6d2, label: '艺术与创作' },
-  library: { calm: 0xd9dcf1, strong: 0xa8afe0, label: '图书与阅读' },
-  dining: { calm: 0xede2c6, strong: 0xe2c983, label: '餐厅' },
-  meeting: { calm: 0xd8e7d1, strong: 0xa5cd96, label: '会议与研讨' },
-  hall: { calm: 0xe9dbd0, strong: 0xd9b7a4, label: '多功能与活动' },
-  office: { calm: 0xdde2e8, strong: 0xb5bdc9, label: '办公与服务' },
-  service: { calm: 0xd2d7de, strong: 0xa0a8b4, label: '库房与设备' },
-  room: { calm: 0xdce0e5, strong: 0xc2c8d0, label: '其他房间' },
-};
+export { ROOM_KIND_STYLE } from './roomStyle';
+import { ROOM_KIND_STYLE } from './roomStyle';
 
 const COLORS = {
   ground: 0xdde2e7,
@@ -103,20 +86,29 @@ function flat(poly: PolygonXZ, y: number): THREE.BufferGeometry {
   return geometry;
 }
 
-function decodeSegments(packed: PackedSegments, y: number): THREE.BufferGeometry {
-  const bytes = Uint8Array.from(atob(packed.int16cm), (c) => c.charCodeAt(0));
-  const values = new Int16Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 2);
-  const positions = new Float32Array(packed.count * 6);
-  for (let i = 0; i < packed.count; i += 1) {
-    positions[i * 6] = values[i * 4] / 100;
-    positions[i * 6 + 1] = y;
-    positions[i * 6 + 2] = values[i * 4 + 1] / 100;
-    positions[i * 6 + 3] = values[i * 4 + 2] / 100;
-    positions[i * 6 + 4] = y;
-    positions[i * 6 + 5] = values[i * 4 + 3] / 100;
+function decodePolylines(packed: PackedPolylines, y: number): THREE.BufferGeometry {
+  const flat = packed.deltaCm;
+  const positions = new Float32Array(packed.segments * 6);
+  let i = 0;
+  let o = 0;
+  while (i < flat.length) {
+    const n = flat[i];
+    let x = flat[i + 1];
+    let z = flat[i + 2];
+    i += 3;
+    for (let k = 1; k < n; k += 1) {
+      const nx = x + flat[i];
+      const nz = z + flat[i + 1];
+      i += 2;
+      positions[o] = x / 100; positions[o + 1] = y; positions[o + 2] = z / 100;
+      positions[o + 3] = nx / 100; positions[o + 4] = y; positions[o + 5] = nz / 100;
+      o += 6;
+      x = nx;
+      z = nz;
+    }
   }
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions.subarray(0, o), 3));
   return geometry;
 }
 
@@ -170,6 +162,8 @@ export interface CampusScene {
   setRoomColors: (colorFor: (room: CampusModelRoom) => number) => void;
   setHighlight: (selectedId: string | null, hoveredId: string | null) => void;
   setDetailVisible: (visible: boolean) => void;
+  /** Adds the floor detail lines once they arrive. */
+  addFloorDetail: (detail: CampusDetailData) => void;
   /** Advances colour transitions; returns true while something is still animating. */
   tick: (dtMs: number) => boolean;
   dispose: () => void;
@@ -255,21 +249,9 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
   arena.add(seats);
   root.add(arena);
 
-  // Floor detail lines from furniture, doors, stairs and court markings.
+  // Floor detail lines (furniture, doors, stairs, court) arrive later via addFloorDetail.
   const detail = new THREE.Group();
   detail.name = 'Floor detail lines';
-  const lineLayer = (key: keyof CampusModelData['floorLines'], color: number, opacity: number, y: number) => {
-    const lines = new THREE.LineSegments(
-      decodeSegments(model.floorLines[key], y),
-      new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }),
-    );
-    lines.renderOrder = 2;
-    detail.add(lines);
-  };
-  lineLayer('furniture', COLORS.furniture, 0.45, 0.04);
-  lineLayer('stairs', COLORS.stairs, 0.8, 0.05);
-  lineLayer('doors', COLORS.doors, 0.7, 0.05);
-  lineLayer('court', COLORS.courtLines, 0.9, 0.05);
   root.add(detail);
 
   // Walls: extruded CAD wall bodies — light sides, dark caps so the plan reads like poché.
@@ -357,6 +339,22 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
     },
     setDetailVisible(visible) {
       detail.visible = visible;
+    },
+    addFloorDetail(data) {
+      if (detail.children.length) return;
+      const layers: Array<[keyof CampusDetailData['floorLines'], number, number, number]> = [
+        ['furniture', COLORS.furniture, 0.45, 0.04],
+        ['stairs', COLORS.stairs, 0.8, 0.05],
+        ['doors', COLORS.doors, 0.7, 0.05],
+        ['court', COLORS.courtLines, 0.9, 0.05],
+      ];
+      for (const [key, color, opacity, y] of layers) {
+        const packed = data.floorLines[key];
+        if (!packed) continue;
+        const lines = new THREE.LineSegments(decodePolylines(packed, y), new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
+        lines.renderOrder = 2;
+        detail.add(lines);
+      }
     },
     dispose() {
       root.traverse((object) => {

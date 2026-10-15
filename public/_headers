@@ -1,0 +1,14 @@
+# Cloudflare Pages response headers.
+# Hashed build output (JS, CSS, model data) never changes under the same name.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/brand/*
+  Cache-Control: public, max-age=604800
+
+/favicon.*
+  Cache-Control: public, max-age=604800
+
+# Published site configuration: short cache so admin changes show up quickly.
+/campus-config.json
+  Cache-Control: public, max-age=60

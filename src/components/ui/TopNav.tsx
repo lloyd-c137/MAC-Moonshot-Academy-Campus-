@@ -98,7 +98,7 @@ export const TopNav: React.FC<TopNavProps> = ({
     <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start gap-3 p-4 lg:px-6">
       {/* Brand */}
       <a href="/" className="glass pointer-events-auto flex h-11 shrink-0 items-center gap-2.5 rounded-full pl-1.5 pr-4" aria-label="Moonshot Academy Campus 首页">
-        <img src="/brand/mac-logo-256.png" alt="" className="h-8 w-8" />
+        <img src="/brand/mac-logo-192.webp" alt="" className="h-8 w-8" />
         <span className="wordmark hidden text-[13px] font-semibold text-ink sm:inline">Moonshot Academy Campus</span>
       </a>
 

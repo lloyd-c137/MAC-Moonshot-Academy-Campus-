@@ -13,7 +13,7 @@ The main map (`/`) now renders a 3D model of FF-01 generated from the drawing it
 Heights are illustrative (2.8 m walls; no section drawing), the outer slab is a derived closing of the wall union, and no room is DRAWING_VERIFIED. Indoor routing stays disabled.
 
 ```sh
-npm run rebuild:campus-3d -- --pdf "/path/to/FF-01.pdf"   # writes public/ff01-campus-3d.json + src/data/sourceRooms.ts
+npm run rebuild:campus-3d -- --pdf "/path/to/FF-01.pdf"   # writes src/generated/ff01-campus-{core,detail}.json + src/data/sourceRooms.ts
 npm run validate:campus-3d
 ```
 

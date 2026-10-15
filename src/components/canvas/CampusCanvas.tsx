@@ -6,7 +6,9 @@ import { CAMPUS_EVENTS } from '../../data/mockEvents';
 import { CampusSpace, MapLayerMode, NavigationRoute } from '../../types/campus';
 import { planToWorld, SPATIAL_PLAN } from '../../data/spatialPlan';
 import { CampusCameraController, ViewMode } from './cameraController';
-import { buildCampusScene, CampusModelRoom, CampusScene, loadCampusModel, ROOM_KIND_STYLE } from './campusModel3d';
+import { buildCampusScene, CampusModelRoom, CampusScene, ROOM_KIND_STYLE } from './campusModel3d';
+import { loadCampusCore, loadCampusDetail } from './modelLoader';
+import { dismissBootSplash } from '../../bootSplash';
 import { Box, Info, Maximize, Minus, Plus, ScanLine, Square, X } from 'lucide-react';
 import { layerColor, NO_DATA_COLOR } from '../ui/mapLayers';
 
@@ -83,7 +85,6 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   const [infoOpen, setInfoOpen] = useState(false);
   const [northDeg, setNorthDeg] = useState(0);
   const [scale, setScale] = useState({ metres: 10, px: 80 });
-  const [splashGone, setSplashGone] = useState(false);
 
   const roomWorld = (id: string): { x: number; z: number } | null => {
     const room = sceneRef.current?.roomById.get(id);
@@ -135,7 +136,10 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   }, [spaces, modelVersion]);
 
   useEffect(() => {
-    if (overlayRef.current) overlayRef.current.visible = showSourceOverlay;
+    if (overlayRef.current) {
+      overlayRef.current.visible = showSourceOverlay;
+      if (showSourceOverlay) overlayRef.current.userData.load?.();
+    }
     invalidateRef.current();
   }, [showSourceOverlay, modelVersion]);
 
@@ -148,7 +152,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
-    const abort = new AbortController();
+    const abort = new AbortController(); // marks the effect as torn down
 
     const width = container.clientWidth;
     const height = container.clientHeight;
@@ -163,14 +167,26 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Full sharpness at rest; a lighter pixel ratio while the camera is moving.
+    const FULL_DPR = Math.min(window.devicePixelRatio, 2);
+    const MOTION_DPR = Math.min(FULL_DPR, 1.25);
+    renderer.setPixelRatio(FULL_DPR);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     container.appendChild(renderer.domElement);
+    // Render on demand: the loop sleeps until something changes.
     let needsRender = true;
-    const invalidate = () => { needsRender = true; };
+    let frameId = 0;
+    const wake = () => { if (!frameId) frameId = requestAnimationFrame(frame); };
+    const invalidate = () => { needsRender = true; wake(); };
     invalidateRef.current = invalidate;
+    let settleTimer = 0;
+    const markMotion = () => {
+      if (FULL_DPR > MOTION_DPR && renderer.getPixelRatio() !== MOTION_DPR) renderer.setPixelRatio(MOTION_DPR);
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => { renderer.setPixelRatio(FULL_DPR); invalidate(); }, 180);
+    };
 
     const labelRenderer = new CSS2DRenderer();
     labelRenderer.setSize(width, height);
@@ -198,13 +214,18 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     sourceOverlay.visible = false;
     scene.add(sourceOverlay);
     overlayRef.current = sourceOverlay;
-    new THREE.TextureLoader().load(SPATIAL_PLAN.sourceOverlay, (texture) => {
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      sourceMaterial.map = texture;
-      sourceMaterial.needsUpdate = true;
-      invalidate();
-    });
+    // The drawing (~300 KB) is only fetched the first time someone opens 对照原图.
+    sourceOverlay.userData.load = () => {
+      if (sourceOverlay.userData.loading) return;
+      sourceOverlay.userData.loading = true;
+      new THREE.TextureLoader().load(SPATIAL_PLAN.sourceOverlay, (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        sourceMaterial.map = texture;
+        sourceMaterial.needsUpdate = true;
+        invalidate();
+      });
+    };
 
     const grid = new THREE.GridHelper(160, 16, 0x9aa4b2, 0xc6ccd4);
     grid.position.y = 0.06;
@@ -233,8 +254,10 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         const mpp = controller.metresPerPixel;
         const metres = [1, 2, 5, 10, 20, 50, 100].filter((m) => m / mpp <= 110).pop() ?? 1;
         setScale((prev) => (prev.metres === metres && Math.abs(prev.px - metres / mpp) < 0.5 ? prev : { metres, px: Math.round(metres / mpp) }));
+        markMotion();
         invalidate();
       },
+      onActivity: wake,
       onClickRaycast: (ndc) => selectRef.current(pickRoom(ndc)),
       onDoubleClickRaycast: (ndc) => {
         raycaster.setFromCamera(ndc, camera);
@@ -248,7 +271,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       },
     });
 
-    loadCampusModel(abort.signal)
+    loadCampusCore()
       .then((data) => {
         if (abort.signal.aborted) return;
         const campus = buildCampusScene(data);
@@ -265,13 +288,21 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         controller.setViewMode('explore');
         controller.fitToPlan();
         setModelState('ready');
-        window.setTimeout(() => setSplashGone(true), 700);
         setModelVersion((v) => v + 1);
+        dismissBootSplash();
+        // Floor detail lines are not needed for the first frame; fetch them when the browser is idle.
+        const whenIdle = (window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 300))) as (cb: () => void) => void;
+        whenIdle(() => {
+          loadCampusDetail()
+            .then((detail) => { if (!abort.signal.aborted) { campus.addFloorDetail(detail); invalidate(); } })
+            .catch((error) => console.warn('Floor detail lines could not be loaded.', error));
+        });
       })
       .catch((error) => {
         if (abort.signal.aborted) return;
         console.error('FF-01 campus model could not be loaded.', error);
         setModelState('error');
+        dismissBootSplash();
       });
 
     // Labels: priority order (selected, hovered, then larger rooms); any label that would
@@ -307,21 +338,24 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       }
     };
 
-    let animId = 0;
     let lastFrame = performance.now();
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
+    function frame() {
+      frameId = 0;
       controller.update();
       const now = performance.now();
-      if (sceneRef.current?.tick(now - lastFrame)) needsRender = true;
+      const fading = sceneRef.current?.tick(Math.min(64, now - lastFrame)) ?? false;
       lastFrame = now;
-      if (!needsRender) return;
-      needsRender = false;
-      updateLabels();
-      renderer.render(scene, camera);
-      labelRenderer.render(scene, camera);
-    };
-    animate();
+      if (fading) needsRender = true;
+      if (needsRender) {
+        needsRender = false;
+        updateLabels();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+      }
+      // Keep going only while something is animating.
+      if (controller.isAnimating || fading || needsRender) wake();
+    }
+    wake();
 
     const handleResize = () => {
       const w = container.clientWidth;
@@ -350,7 +384,8 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       invalidateRef.current = () => {};
       window.removeEventListener('resize', handleResize);
       canvasElem.removeEventListener('webglcontextlost', handleContextLost);
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(frameId);
+      window.clearTimeout(settleTimer);
       controller.dispose();
       controllerRef.current = null;
       sceneRef.current?.dispose();
@@ -373,20 +408,12 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     <div className="relative h-full w-full select-none overflow-hidden bg-[radial-gradient(ellipse_75%_70%_at_50%_46%,#f3f5f8_0%,#e3e7eb_58%,#cfd6de_100%)]">
       <div ref={mountRef} className="relative isolate h-full w-full" />
 
-      {!splashGone && (
-        <div
-          className={`absolute inset-0 z-40 grid place-items-center bg-regolith transition-opacity duration-700 ${modelState === 'ready' ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
-          role="status"
-          aria-live="polite"
-        >
-          <div className="flex flex-col items-center gap-6">
-            <img src="/brand/mac-logo-256.png" alt="" className={`h-24 w-24 ${modelState === 'loading' ? 'animate-orbit' : ''}`} />
-            <div className="text-center">
-              <div className="wordmark text-lg font-semibold text-ink">Moonshot Academy Campus</div>
-              <div className="mt-2 text-sm text-crater">
-                {modelState === 'error' ? '校园模型没有加载出来。请检查网络后刷新页面。' : '正在根据 FF-01 图纸生成校园模型'}
-              </div>
-            </div>
+      {modelState === 'error' && (
+        <div className="absolute inset-0 z-40 grid place-items-center bg-regolith" role="alert">
+          <div className="text-center">
+            <p className="text-[15px] font-semibold text-ink">校园模型没有加载出来</p>
+            <p className="mt-1 text-[13px] text-crater">请检查网络后刷新页面。</p>
+            <button onClick={() => window.location.reload()} className="mt-4 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-white hover:bg-ink-soft">刷新</button>
           </div>
         </div>
       )}

@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-"""Validate public/ff01-campus-3d.json against FF-01 and the V9 candidate model.
+"""Validate src/generated/ff01-campus-core.json (+ detail) against FF-01 and the V9 candidate model.
 
 Checks provenance and internal consistency only. Passing does NOT mean the
 geometry is architecturally verified; the model must keep saying so.
 """
 from __future__ import annotations
 
-import base64, gzip, json, re, sys
+import gzip, json, re, sys
 from pathlib import Path
 
 from shapely.geometry import Polygon
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL = ROOT / "public/ff01-campus-3d.json"
+MODEL = ROOT / "src/generated/ff01-campus-core.json"
+DETAIL = ROOT / "src/generated/ff01-campus-detail.json"
 V9 = ROOT / "public/ff01-architecture-v9.json"
 VECTORS = ROOT / "data/source/ff01-vectors.json.gz"
 ROOMS_TS = ROOT / "src/data/sourceRooms.ts"
@@ -70,9 +71,15 @@ def main():
     check(not rooms_inside, f"room polygons lie within the footprint ({rooms_inside or 'all'})")
 
     check(model["arena"]["seatCount"] == len(v9["arena"]["seatFootprintCandidates"]) == 572, "572 source seat footprints carried into the arena")
-    for key, packed in model["floorLines"].items():
-        n = len(base64.b64decode(packed["int16cm"])) // 8
-        check(n == packed["count"] and n > 0, f"floor line layer '{key}' decodes ({n} segments)")
+    detail = json.loads(DETAIL.read_text())
+    check(detail["modelID"] == model["modelID"], "detail file belongs to the same model")
+    for key, packed in detail["floorLines"].items():
+        flat, i, lines, segs, ok = packed["deltaCm"], 0, 0, 0, True
+        while i < len(flat):
+            n = flat[i]
+            if n < 2 or i + 1 + 2 * n > len(flat): ok = False; break
+            i += 1 + 2 * n; lines += 1; segs += n - 1
+        check(ok and lines == packed["polylines"] and segs == packed["segments"] and segs > 0, f"floor line layer '{key}' decodes ({lines} polylines, {segs} segments)")
 
     ts_ids = re.findall(r'"id": "([^"]+)"', ROOMS_TS.read_text(encoding="utf-8"))
     check(ts_ids == ids, "src/data/sourceRooms.ts matches the model room inventory")

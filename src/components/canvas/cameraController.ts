@@ -17,6 +17,8 @@ type CameraCallbacks = {
   onClickRaycast?: (ndc: THREE.Vector2) => void;
   onDoubleClickRaycast?: (ndc: THREE.Vector2) => void;
   onHoverRaycast?: (ndc: THREE.Vector2) => void;
+  /** A camera animation started; the render loop should wake up. */
+  onActivity?: () => void;
 };
 
 const MIN_ZOOM = 0.28;
@@ -405,12 +407,18 @@ export class CampusCameraController {
     this.zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, this.state.zoom / 1.25);
   }
 
+  /** True while a fly-to / view-mode transition is running. */
+  public get isAnimating(): boolean {
+    return this.transitioning;
+  }
+
   private startTransition(target: CameraState) {
     this.transitionStart = { ...this.state, target: this.state.target.clone() };
     this.transitionEnd = { ...target, target: target.target.clone() };
     this.transitionStartTime = performance.now();
     this.transitionDuration = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 600;
     this.transitioning = true;
+    this.callbacks.onActivity?.();
   }
 
   public update() {

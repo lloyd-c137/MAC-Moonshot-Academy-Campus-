@@ -31,7 +31,9 @@ from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data/source"
-OUT = ROOT / "public/ff01-campus-3d.json"
+GENERATED = ROOT / "src/generated"
+OUT = GENERATED / "ff01-campus-core.json"      # walls, rooms, arena: needed for the first frame
+DETAIL_OUT = GENERATED / "ff01-campus-detail.json"  # floor lines: loaded after the first frame
 ROOMS_TS = ROOT / "src/data/sourceRooms.ts"
 
 M_PER_PT = 0.10583333333333333           # 1:300, existing V6 calibration
@@ -80,7 +82,7 @@ def bezier(p0, p1, p2, p3, n=8):
     return out
 
 
-def path_polylines(drawing):
+def path_polylines(drawing, curve_steps=8):
     """Return a list of point sequences (pdf display pt) for one CAD path."""
     lines = []
     for item in drawing["items"]:
@@ -88,7 +90,7 @@ def path_polylines(drawing):
         if kind == "l":
             lines.append([tuple(item[1]), tuple(item[2])])
         elif kind == "c":
-            lines.append(bezier(*[tuple(p) for p in item[1:5]]))
+            lines.append(bezier(*[tuple(p) for p in item[1:5]], n=curve_steps))
         elif kind == "poly":
             pts = [tuple(p) for p in item[1]]
             lines.append(pts + [pts[0]])
@@ -139,17 +141,32 @@ def polys(geom):
     return [g for g in getattr(geom, "geoms", []) if isinstance(g, Polygon)]
 
 
-def pack_segments(polylines):
-    """Flat Int16 (centimetres) x1,z1,x2,z2 segments, base64 encoded."""
-    values = []
+def pack_polylines(polylines, min_length_cm=4):
+    """Delta-encoded centimetre polylines: [n, x0, z0, dx1, dz1, ..., n, ...].
+
+    Shared endpoints are stored once and small integers compress well, so this is
+    several times smaller over the wire than one record per segment.
+    """
+    flat, count, segments = [], 0, 0
     for line in polylines:
-        for a, b in zip(line, line[1:]):
-            if a == b:
-                continue
-            ax, az = world(a); bx, bz = world(b)
-            values.extend((round(ax * 100), round(az * 100), round(bx * 100), round(bz * 100)))
-    arr = np.asarray(values, dtype=np.int16)
-    return {"count": len(values) // 4, "int16cm": base64.b64encode(arr.tobytes()).decode("ascii")}
+        pts = []
+        for p in line:
+            x, z = world(p)
+            q = (round(x * 100), round(z * 100))
+            if not pts or pts[-1] != q:
+                pts.append(q)
+        if len(pts) < 2:
+            continue
+        length = sum(abs(b[0] - a[0]) + abs(b[1] - a[1]) for a, b in zip(pts, pts[1:]))
+        if length < min_length_cm:
+            continue
+        flat.append(len(pts))
+        flat.extend(pts[0])
+        for a, b in zip(pts, pts[1:]):
+            flat.extend((b[0] - a[0], b[1] - a[1]))
+        count += 1
+        segments += len(pts) - 1
+    return {"polylines": count, "segments": segments, "deltaCm": flat}
 
 
 # ---------------------------------------------------------------- room names
@@ -253,11 +270,11 @@ def main():
                 if len(line) >= 2:
                     glazing_lines.append(LineString(line))
         elif layer in COURT_LINE_LAYERS:
-            floor_lines["court"].extend(path_polylines(d))
+            floor_lines["court"].extend(path_polylines(d, curve_steps=4))
         elif layer not in SKIP_FLOOR_LAYERS:
             for group, sems in FLOOR_LINE_GROUPS.items():
                 if sem in sems:
-                    floor_lines[group].extend(path_polylines(d))
+                    floor_lines[group].extend(path_polylines(d, curve_steps=4))
     for face in v9["wallNetwork"]["wallFaceCandidates"]:
         g = shape(face["geometry"])
         if g.is_valid and not g.is_empty:
@@ -338,12 +355,14 @@ def main():
             "standBlocks": [w for p in polys(stand_blocks) for w in polys_world(p, 0.3)],
             "seatCount": len(seats),
         },
-        "floorLines": {k: pack_segments(v) for k, v in floor_lines.items()},
         "counts": {"wallSourcePaths": len(wall_path_ids), "wallLineObjects": len(wall_lines), "wallFaceObjects": len(wall_faces),
                    "wallBodies": len(polys(wall_union)), "glazingBodies": len(polys(glazing_union)),
                    "roomsWithPolygon": sum(1 for r in rooms if r["polygon"]), "roomLabels": len(rooms), "seats": len(seats)},
     }
+    GENERATED.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")))
+    detail = {"modelID": out["modelID"], "frame": out["frame"], "floorLines": {k: pack_polylines(v) for k, v in floor_lines.items()}}
+    DETAIL_OUT.write_text(json.dumps(detail, separators=(",", ":")))
 
     # Static room index for search / detail panel (no geometry).
     ts_rows = [{k: r[k] for k in ("id", "name", "kind", "series", "areaM2Label", "areaM2Polygon", "labelPlan", "geometryStatus")} for r in rooms]
@@ -357,7 +376,7 @@ def main():
     print("footprint m²", round(footprint.area * M_PER_PT ** 2), "bounds m", out["bounds"])
     print("seat rows", sorted({s['row'] for s in seats}))
     print("unnamed", [r["id"] for r in rooms if r["nameSource"] != "PDF_LABEL_BLOCK"], [(r["id"], r["name"]) for r in rooms if r["nameSource"] == "PDF_NEARBY_TEXT_LOW_CONFIDENCE"])
-    print("bytes", OUT.stat().st_size)
+    print("bytes core", OUT.stat().st_size, "detail", DETAIL_OUT.stat().st_size)
 
 
 if __name__ == "__main__":

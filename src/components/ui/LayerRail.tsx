@@ -1,6 +1,6 @@
 import React from 'react';
 import type { MapLayerMode } from '../../types/campus';
-import { ROOM_KIND_STYLE } from '../canvas/campusModel3d';
+import { ROOM_KIND_STYLE } from '../canvas/roomStyle';
 import { ENVIRONMENT_METRICS, LAYER_GROUPS, LAYER_LEGENDS, NO_DATA_COLOR } from './mapLayers';
 
 interface LayerRailProps {

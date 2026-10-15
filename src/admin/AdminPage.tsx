@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Building2, Cpu, Download, FileUp, Plus, RefreshCw, RotateCcw, Save, Search, Settings2, Trash2, Upload, Wifi } from 'lucide-react';
 import { CAMPUS_SPACES } from '../data/floorplanData';
 import { useToast } from '../components/ui/Toast';
+import { dismissBootSplash } from '../bootSplash';
 import { displayCode, displayName } from '../components/ui/format';
 import { type CampusConfig, type RoomOverride, type SensorBinding, useCampusConfig, writeLocalConfig } from '../config/campusConfig';
 import { type DeviceInfo, type LiveRoomReading, fetchDevices, fetchRoomReadings, formatAge } from '../services/sensorApi';
@@ -53,6 +54,7 @@ export const AdminPage: React.FC = () => {
 
   useEffect(() => { setDraft(config); }, [config]);
   useEffect(() => {
+    dismissBootSplash();
     document.title = '管理 · Moonshot Academy Campus';
     if (import.meta.env.DEV) fetch('/api/campus-config').then((r) => setDevWritable(r.ok)).catch(() => setDevWritable(false));
   }, []);
@@ -69,7 +71,7 @@ export const AdminPage: React.FC = () => {
     <div className="flex h-dvh w-screen overflow-hidden bg-[radial-gradient(ellipse_80%_70%_at_60%_30%,#f3f5f8_0%,#e3e7eb_60%,#d4dae1_100%)] text-ink">
       <aside className="flex w-64 shrink-0 flex-col gap-6 border-r hairline bg-white/40 p-5 max-md:hidden">
         <a href="/" className="flex items-center gap-2.5">
-          <img src="/brand/mac-logo-256.png" alt="" className="h-9 w-9" />
+          <img src="/brand/mac-logo-192.webp" alt="" className="h-9 w-9" />
           <span>
             <span className="wordmark block text-[12px] font-semibold leading-tight">Moonshot Academy Campus</span>
             <span className="text-[12px] text-crater">管理</span>

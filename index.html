@@ -13,11 +13,36 @@
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="/brand/mac-logo-192.webp" as="image" type="image/webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts load without blocking the first paint; system fonts show until they arrive. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600&display=swap&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-%20" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600&display=swap" />
+    </noscript>
+    <style>
+      /* Startup screen: painted from HTML alone, before any JavaScript runs. */
+      #boot-splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(ellipse 75% 70% at 50% 46%, #f3f5f8 0%, #e3e7eb 58%, #cfd6de 100%); transition: opacity 600ms ease; font-family: "Hanken Grotesk", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", system-ui, sans-serif; color: #18202e; }
+      #boot-splash[data-state="gone"] { opacity: 0; pointer-events: none; }
+      #boot-splash img { width: 96px; height: 96px; animation: boot-orbit 2.4s linear infinite; }
+      #boot-splash p { margin: 0; text-align: center; }
+      #boot-splash .name { margin-top: 24px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+      #boot-splash .hint { margin-top: 8px; font-size: 14px; color: #5e6878; }
+      @keyframes boot-orbit { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { #boot-splash img { animation: none; } }
+    </style>
   </head>
   <body>
+    <div id="boot-splash" role="status" aria-live="polite">
+      <div>
+        <img src="/brand/mac-logo-192.webp" alt="" width="96" height="96" />
+        <p class="name">Moonshot Academy Campus</p>
+        <p class="hint">正在载入校园地图</p>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

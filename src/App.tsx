@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CampusCanvas } from './components/canvas/CampusCanvas';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TopNav } from './components/ui/TopNav';
 import { LayerRail } from './components/ui/LayerRail';
 import { ContextDetailPanel, type DetailTab } from './components/ui/ContextDetailPanel';
@@ -8,12 +7,18 @@ import { FindMySpotModal } from './components/ui/FindMySpotModal';
 import { AddMomentModal } from './components/ui/AddMomentModal';
 import { GeometryReviewDrawer } from './components/ui/GeometryReviewDrawer';
 import { ToastProvider, useToast } from './components/ui/Toast';
-import { AdminPage } from './admin/AdminPage';
-import { GeometryReviewEditor } from './components/dev/GeometryReviewEditor';
-import { GeometryReviewSession } from './components/dev/GeometryReviewSession';
-import { BuildingPreviewV6 } from './components/dev/BuildingPreviewV6';
-import { BuildingPreviewV7 } from './components/dev/BuildingPreviewV7';
-import { BuildingPreviewV8, BuildingPreviewV9 } from './components/dev/BuildingPreviewV8';
+
+// Heavy or rarely visited views are separate chunks: three.js ships with the map, not the shell.
+// Dev-only previews are compiled out of production builds entirely.
+const NotAvailable: React.FC = () => null;
+const CampusCanvas = lazy(() => import('./components/canvas/CampusCanvas').then((m) => ({ default: m.CampusCanvas })));
+const AdminPage = lazy(() => import('./admin/AdminPage').then((m) => ({ default: m.AdminPage })));
+const GeometryReviewEditor = import.meta.env.DEV ? lazy(() => import('./components/dev/GeometryReviewEditor').then((m) => ({ default: m.GeometryReviewEditor }))) : NotAvailable;
+const GeometryReviewSession = import.meta.env.DEV ? lazy(() => import('./components/dev/GeometryReviewSession').then((m) => ({ default: m.GeometryReviewSession }))) : NotAvailable;
+const BuildingPreviewV6 = import.meta.env.DEV ? lazy(() => import('./components/dev/BuildingPreviewV6').then((m) => ({ default: m.BuildingPreviewV6 }))) : NotAvailable;
+const BuildingPreviewV7 = import.meta.env.DEV ? lazy(() => import('./components/dev/BuildingPreviewV7').then((m) => ({ default: m.BuildingPreviewV7 }))) : NotAvailable;
+const BuildingPreviewV8 = import.meta.env.DEV ? lazy(() => import('./components/dev/BuildingPreviewV8').then((m) => ({ default: m.BuildingPreviewV8 }))) : NotAvailable;
+const BuildingPreviewV9 = import.meta.env.DEV ? lazy(() => import('./components/dev/BuildingPreviewV8').then((m) => ({ default: m.BuildingPreviewV9 }))) : NotAvailable;
 import { CAMPUS_SPACES } from './data/floorplanData';
 import { CAMPUS_EVENTS } from './data/mockEvents';
 import { getLikedMomentIds, getStoredMoments, toggleLikeMoment } from './data/mockMoments';
@@ -21,6 +26,7 @@ import { useCampusConfig } from './config/campusConfig';
 import { useLiveSensors } from './services/sensorApi';
 import { buildSpaces } from './services/spaceModel';
 import { displayName } from './components/ui/format';
+import { dismissBootSplash } from './bootSplash';
 import type { CampusMoment, MapLayerMode } from './types/campus';
 
 type LeftPanel = 'none' | 'review';
@@ -113,6 +119,7 @@ function CampusApp() {
       <h1 className="sr-only">Moonshot Academy Campus 校园地图</h1>
 
       <div className="absolute inset-0">
+        <Suspense fallback={null}>
         <CampusCanvas
           layerMode={layerMode}
           selectedSpaceId={selectedSpaceId}
@@ -128,6 +135,7 @@ function CampusApp() {
           spaces={spaces}
           onOpenReview={() => setLeftPanel('review')}
         />
+        </Suspense>
       </div>
 
       <TopNav
@@ -184,14 +192,25 @@ function CampusApp() {
 
 export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '');
-  if (import.meta.env.DEV && path === '/dev/building-preview') return <BuildingPreviewV6 />;
-  if (import.meta.env.DEV && path === '/dev/building-preview-v7') return <BuildingPreviewV7 />;
-  if (import.meta.env.DEV && path === '/dev/building-preview-v8') return <BuildingPreviewV8 />;
-  if (import.meta.env.DEV && path === '/dev/building-preview-v9') return <BuildingPreviewV9 />;
-  if (import.meta.env.DEV && path === '/dev/geometry-review') return new URLSearchParams(window.location.search).get('mode') === 'edit' ? <GeometryReviewEditor /> : <GeometryReviewSession />;
+  const dev = (() => {
+    if (!import.meta.env.DEV) return null;
+    if (path === '/dev/building-preview') return <BuildingPreviewV6 />;
+    if (path === '/dev/building-preview-v7') return <BuildingPreviewV7 />;
+    if (path === '/dev/building-preview-v8') return <BuildingPreviewV8 />;
+    if (path === '/dev/building-preview-v9') return <BuildingPreviewV9 />;
+    if (path === '/dev/geometry-review') return new URLSearchParams(window.location.search).get('mode') === 'edit' ? <GeometryReviewEditor /> : <GeometryReviewSession />;
+    return null;
+  })();
+  if (dev) return <Suspense fallback={null}><DismissSplash />{dev}</Suspense>;
   return (
     <ToastProvider>
-      {path === '/admin' ? <AdminPage /> : <CampusApp />}
+      {path === '/admin' ? <Suspense fallback={null}><AdminPage /></Suspense> : <CampusApp />}
     </ToastProvider>
   );
+}
+
+/** Pages without the 3D map remove the startup screen as soon as they mount. */
+function DismissSplash() {
+  useEffect(() => dismissBootSplash(), []);
+  return null;
 }

@@ -60,7 +60,10 @@ npm run validate:campus-3d
 ```
 
 Without `--pdf`, the builder uses the path recorded in `data/source/spatial-extraction-summary.json`. It refuses to run if the PDF hash differs. Outputs:
-- `public/ff01-campus-3d.json` (~0.93 MB, ~0.38 MB gzipped)
+- `src/generated/ff01-campus-core.json`: walls, rooms, arena. About 50 KB over the wire (Brotli); fetched at start-up.
+- `src/generated/ff01-campus-detail.json`: furniture, door, stair and court lines as delta-encoded centimetre polylines. About 95 KB over the wire; fetched once the browser is idle after the first frame.
+
+Both are emitted by Vite with content hashes under `/assets/`, so they are cached for a year.
 - `src/data/sourceRooms.ts`
 
 ## Code map
@@ -71,3 +74,21 @@ Without `--pdf`, the builder uses the path recorded in `data/source/spatial-extr
 - `src/components/canvas/CampusCanvas.tsx`: renderer, lighting and shadows (computed once), CSS2D room labels by zoom level, picking, layer colouring, on-demand rendering, view controls.
 - `src/components/canvas/cameraController.ts`: adds `setFitBounds` and `targetViewMode`. An interrupted 2D/2.5D switch now completes its tilt.
 - `src/data/floorplanData.ts`: appends drawing-only spaces for every FF-01 label not covered by product content.
+
+## Performance
+
+| | Before | After |
+|---|---|---|
+| Downloaded before the map is usable (live site, 9 Mbit/s + 150 ms) | 1,129 KB | see the commit message for the measured figure |
+| Model data at start-up | 384 KB (one file, no long cache) | ~50 KB core; detail follows when idle |
+| FF-01 drawing texture | 296 KB at every start-up | only when 对照原图 is opened |
+| Logo | 62 KB PNG | 7 KB WebP |
+| JavaScript | one 978 KB file, 4 h cache | app shell, three.js and map code in separate files, cached for a year |
+| Rendering when nothing moves | animation loop running | loop sleeps (0 frames) |
+
+Other changes:
+- A startup screen is drawn from HTML, before any JavaScript runs.
+- Fonts no longer block the first paint. The wide display font is subset to Latin letters and digits.
+- The pixel ratio drops while the camera is moving.
+- Sensor polling pauses in background tabs.
+- Dev-only preview pages are left out of production builds.
