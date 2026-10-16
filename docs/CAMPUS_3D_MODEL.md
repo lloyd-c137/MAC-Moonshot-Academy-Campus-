@@ -119,8 +119,28 @@ Both are emitted by Vite with content hashes under `/assets/`, so they are cache
 | Rendering when nothing moves | animation loop running | loop sleeps (0 frames) |
 
 Other changes:
-- A startup screen is drawn from HTML, before any JavaScript runs.
+- A startup screen is drawn from HTML, before any JavaScript runs. The name "Moonshot Academy Campus" fades in once the display font is ready (or after 450 ms). It stays at least 900 ms so a fast load doesn't just flash it. The first 3D frame is rendered underneath it; the map then tilts in as the screen fades. Every animation on it is opacity or transform, so it stays smooth while the main thread loads the map.
 - Fonts no longer block the first paint. The wide display font is subset to Latin letters and digits.
 - The pixel ratio stays constant. Lowering it while moving reallocated the canvas and caused a visible hitch.
 - Sensor polling pauses in background tabs.
 - Dev-only preview pages are left out of production builds.
+
+### Interaction frame rate (October 2026)
+
+Measured on a MacBook Air (Apple silicon, Retina, 1536 × 900 viewport, canvas 3072 × 1800) with about 80 room labels on screen. The map was driven by scripted pointer and wheel input; numbers are frames per second.
+
+| | Pan | Rotate | Wheel zoom | Hover |
+|---|---|---|---|---|
+| Before | 23.7 | 20.5 | 17.0 | 32.5 |
+| After | 60 | 60 | 60 | 60 |
+
+What changed:
+- **Room labels no longer use `backdrop-filter`.** Re-blurring ~80 chips over a WebGL canvas that changes every frame cost two to three frame budgets. This was the main cause; turning off only this restored 60 fps for pan and rotate.
+- **Labels are positioned by the map code, not `CSS2DRenderer`.**
+  - Each chip is its own compositor layer, moved with `translate3d` and shown or hidden with `visibility`.
+  - Only changed values are written, and nothing is re-sorted or re-laid-out per frame.
+  - Chip sizes are measured once, in one batch, and again after web fonts load.
+  - This fixed the remaining zoom stutter, which came from labels appearing and disappearing.
+- **Compass and scale bar** are written straight to the DOM instead of through React state on every frame.
+- **Hover picking** runs at most once per frame. The canvas rectangle is cached, so pointer moves never force a layout.
+- **Adaptive resolution.** If more than 60% of 45 moving frames take longer than 24 ms, the pixel ratio steps down once (2 → 1.5 → 1.25 → 1) and stays there for the session. It is never toggled per gesture, which would reallocate the canvas.

@@ -7,7 +7,7 @@ import { planToWorld, SPATIAL_PLAN } from '../../data/spatialPlan';
 import { CampusCameraController, ViewMode } from './cameraController';
 import { buildCampusScene, CampusModelRoom, CampusScene, ROOM_KIND_STYLE } from './campusModel3d';
 import { loadCampusCore, loadCampusDetail } from './modelLoader';
-import { dismissBootSplash } from '../../bootSplash';
+import { dismissBootSplash, setBootStage } from '../../bootSplash';
 import { Box, Info, Maximize, Minus, Plus, ScanLine, Square, X } from 'lucide-react';
 import { layerColor, NO_DATA_COLOR } from '../ui/mapLayers';
 
@@ -331,7 +331,11 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     });
 
     loadCampusCore()
-      .then((data) => {
+      .then(async (data) => {
+        if (abort.signal.aborted) return;
+        // Let the startup screen show the new stage before the (synchronous) scene build.
+        setBootStage('正在生成 3D 校园');
+        await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
         if (abort.signal.aborted) return;
         const campus = buildCampusScene(data);
         scene.add(campus.root);
@@ -350,11 +354,18 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         controller.setFitBounds({ minX, minZ, maxX, maxZ });
         sun.shadow.needsUpdate = true;
         invalidate();
-        controller.setViewMode('explore');
-        controller.fitToPlan();
         setModelState('ready');
-        setModelVersion((v) => v + 1);
-        dismissBootSplash();
+        // The first frame (shadow map, shader compile) can take a while on slow machines. Present it
+        // while the startup screen still covers the map; then dissolve the screen and tilt into 3D
+        // together, so the intro motion is never skipped by a blocked main thread.
+        requestAnimationFrame(() => requestAnimationFrame(async () => {
+          if (abort.signal.aborted) return;
+          await dismissBootSplash(); // the name gets its moment; the map tilts in as the screen fades
+          if (abort.signal.aborted) return;
+          controller.setViewMode('explore');
+          controller.fitToPlan();
+          setModelVersion((v) => v + 1); // runs ?room= focus after the fit
+        }));
         // Floor detail lines are not needed for the first frame; fetch them when the browser is idle.
         const whenIdle = (window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 300))) as (cb: () => void) => void;
         whenIdle(() => {
@@ -367,7 +378,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         if (abort.signal.aborted) return;
         console.error('FF-01 campus model could not be loaded.', error);
         setModelState('error');
-        dismissBootSplash();
+        void dismissBootSplash();
       });
 
     // Labels: priority order (selected, hovered, then larger rooms); any label that would

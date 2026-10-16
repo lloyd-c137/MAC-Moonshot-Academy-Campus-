@@ -211,6 +211,6 @@ export default function App() {
 
 /** Pages without the 3D map remove the startup screen as soon as they mount. */
 function DismissSplash() {
-  useEffect(() => dismissBootSplash(), []);
+  useEffect(() => { void dismissBootSplash(); }, []);
   return null;
 }
