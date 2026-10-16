@@ -120,7 +120,7 @@ Both are emitted by Vite with content hashes under `/assets/`, so they are cache
 
 Other changes:
 - A startup screen is drawn from HTML, before any JavaScript runs. The name "Moonshot Academy Campus" fades in once the display font is ready (or after 450 ms). It stays at least 900 ms so a fast load doesn't just flash it. The first 3D frame is rendered underneath it; the map then tilts in as the screen fades. Every animation on it is opacity or transform, so it stays smooth while the main thread loads the map.
-- Fonts no longer block the first paint. The wide display font is subset to Latin letters and digits.
+- Fonts are self-hosted under `/fonts/` and preloaded: Hanken Grotesk (variable, 35 KB) and an Unbounded subset (Latin letters and digits, 8 KB). They no longer come from Google Fonts, which is unreachable in mainland China and failed in some browsers, leaving the site in system fonts.
 - The pixel ratio stays constant. Lowering it while moving reallocated the canvas and caused a visible hitch.
 - Sensor polling pauses in background tabs.
 - Dev-only preview pages are left out of production builds.

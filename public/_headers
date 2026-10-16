@@ -12,3 +12,7 @@
 # Published site configuration: short cache so admin changes show up quickly.
 /campus-config.json
   Cache-Control: public, max-age=60
+
+# Self-hosted fonts.
+/fonts/*
+  Cache-Control: public, max-age=2592000
