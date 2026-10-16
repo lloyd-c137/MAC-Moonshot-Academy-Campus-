@@ -1,5 +1,5 @@
-import React, { useEffect, useId, useState } from 'react';
-import { ChevronDown, Clock, ExternalLink, Heart, PenLine, Share2, X } from 'lucide-react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { ChevronDown, ExternalLink, Heart, PenLine, Share2, X } from 'lucide-react';
 import type { CampusEvent, CampusMoment, CampusSpace, EnvironmentalReading } from '../../types/campus';
 import { displayCode, displayName, formatTime as time } from './format';
 
@@ -23,24 +23,46 @@ const CATEGORY_LABEL: Partial<Record<CampusSpace['category'], string>> = {
   entrance: '入口门厅', health_service: '健康服务', restroom: '卫生间', circulation: '设备与库房',
 };
 const SERIES_LABEL: Record<string, string> = { M: 'M 区', S: 'S 环', A: 'A 区', CENTRAL: '中心', PUBLIC: '公共区域', SERVICE: '服务区' };
-const ACCESS: Partial<Record<CampusSpace['access'], { text: string; tone: string }>> = {
-  open: { text: '开放', tone: 'text-calm' },
-  closed: { text: '暂不开放', tone: 'text-crater' },
-  restricted: { text: '需预约', tone: 'text-ember' },
+const ACCESS: Partial<Record<CampusSpace['access'], { text: string; dot: string }>> = {
+  open: { text: '开放', dot: 'bg-calm' },
+  closed: { text: '暂不开放', dot: 'bg-haze' },
+  restricted: { text: '需预约', dot: 'bg-flare' },
 };
-const OCCUPANCY: Partial<Record<CampusSpace['occupancy'], { text: string; tone: string }>> = {
-  available: { text: '空闲', tone: 'text-calm' },
-  in_use: { text: '使用中', tone: 'text-ink' },
-  crowded: { text: '人很多', tone: 'text-alert' },
+const OCCUPANCY: Partial<Record<CampusSpace['occupancy'], string>> = {
+  available: '此刻空闲',
+  in_use: '此刻有人在用',
+  crowded: '此刻人很多',
 };
 
 type Tone = 'good' | 'fair' | 'warn' | 'bad';
-const TONE_CLASS: Record<Tone, string> = {
-  good: 'bg-calm/10 text-calm',
-  fair: 'bg-regolith text-ink-soft',
-  warn: 'bg-flare-wash text-ember',
-  bad: 'bg-alert/10 text-alert',
+const TONE_TEXT: Record<Tone, string> = {
+  good: 'text-calm',
+  fair: 'text-ink-soft',
+  warn: 'text-ember',
+  bad: 'text-alert',
 };
+const TONE_RANK: Record<Tone, number> = { good: 0, fair: 1, warn: 2, bad: 3 };
+
+/** The one sentence the environment block leads with: the most pressing reading, said plainly. */
+function environmentHeadline(t: number, h: number, co2: number): { text: string; tone: Tone } {
+  const parts = [
+    { metric: 'co2' as const, v: verdict('co2', co2) },
+    { metric: 'temperature' as const, v: verdict('temperature', t) },
+    { metric: 'humidity' as const, v: verdict('humidity', h) },
+  ].sort((a, b) => TONE_RANK[b.v.tone] - TONE_RANK[a.v.tone]);
+  const worst = parts[0];
+  if (TONE_RANK[worst.v.tone] < 2) return { text: '温度、湿度和空气都很舒服。', tone: 'good' };
+  const sentence: Record<string, string> = {
+    '偏高': '空气有点闷，建议开窗通风。',
+    '很闷': '空气很闷，请马上开窗。',
+    '偏冷': '有点冷，记得带件外套。',
+    '偏暖': '有点热，可以开空调或开窗。',
+    '偏热': '很热，注意降温。',
+    '干燥': '空气偏干，多喝点水。',
+    '潮湿': '有点潮湿。',
+  };
+  return { text: sentence[worst.v.text] ?? `${worst.v.text}。`, tone: worst.v.tone };
+}
 
 /** Turns a reading into the conclusion people actually want: is it OK? */
 function verdict(metric: 'temperature' | 'humidity' | 'co2', v: number): { text: string; tone: Tone } {
@@ -56,10 +78,10 @@ function verdict(metric: 'temperature' | 'humidity' | 'co2', v: number): { text:
     if (v <= 60) return { text: '舒适', tone: 'good' };
     return { text: '潮湿', tone: 'warn' };
   }
-  if (v < 800) return { text: '空气清新', tone: 'good' };
+  if (v < 800) return { text: '清新', tone: 'good' };
   if (v < 1000) return { text: '一般', tone: 'fair' };
-  if (v < 1500) return { text: '偏高，建议通风', tone: 'warn' };
-  return { text: '很闷，请开窗', tone: 'bad' };
+  if (v < 1500) return { text: '偏高', tone: 'warn' };
+  return { text: '很闷', tone: 'bad' };
 }
 
 /** One short status for the environment block. */
@@ -83,7 +105,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: string }> = ({ data, times, color, label }) => {
   const id = useId();
   if (data.length < 2) return null;
-  const w = 112, h = 32;
+  const w = 100, h = 28;
   const timed = !!times && times.length === data.length;
   let points: Array<[number, number, number]>;
   if (timed) {
@@ -112,7 +134,7 @@ const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: 
   const [lx, ly] = xy[xy.length - 1];
   const fmt = (n: number) => Number(n.toFixed(1));
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`${label}近 24 小时在 ${fmt(min)} 到 ${fmt(max)} 之间`} className="shrink-0 overflow-visible">
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label={`${label}近 24 小时在 ${fmt(min)} 到 ${fmt(max)} 之间`} className="h-7 w-full overflow-visible">
       <title>{`近 24 小时${timed ? '每小时平均' : ''}：最低 ${fmt(min)}，最高 ${fmt(max)}${timed ? `。${points.length} 个小时有数据，虚线处没有数据` : ''}`}</title>
       <defs>
         <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
@@ -121,10 +143,9 @@ const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: 
         </linearGradient>
       </defs>
       {!timed && <polygon points={`0,${h} ${xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')} ${w},${h}`} fill={`url(#${id})`} />}
-      {dashed.length > 0 && <path d={dashed.join('')} fill="none" stroke={color} strokeOpacity="0.45" strokeWidth="1.2" strokeDasharray="2 3" />}
-      {solid.length > 0 && <path d={solid.join('')} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />}
-      {timed && xy.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="1.4" fill={color} />)}
-      <circle cx={lx} cy={ly} r="2.6" fill="#fff" stroke={color} strokeWidth="1.6" />
+      {dashed.length > 0 && <path d={dashed.join('')} fill="none" stroke={color} strokeOpacity="0.45" strokeWidth="1.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />}
+      {solid.length > 0 && <path d={solid.join('')} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />}
+      <circle cx={lx} cy={ly} r="2.2" fill={color} />
     </svg>
   );
 };
@@ -132,10 +153,21 @@ const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: 
 export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
   space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare,
 }) => {
-  const [tab, setTab] = useState<DetailTab>('overview');
   const [collapsed, setCollapsed] = useState(false);
-  useEffect(() => { setCollapsed(false); setTab('overview'); }, [space?.id]);
-  useEffect(() => { if (tabRequest) { setCollapsed(false); setTab(tabRequest.tab); } }, [tabRequest]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const eventsRef = useRef<HTMLElement>(null);
+  const memoriesRef = useRef<HTMLElement>(null);
+  useEffect(() => { setCollapsed(false); scrollRef.current?.scrollTo({ top: 0 }); }, [space?.id]);
+  // Requests that used to switch tabs now scroll to that section of the page.
+  useEffect(() => {
+    if (!tabRequest) return;
+    setCollapsed(false);
+    const target = tabRequest.tab === 'events' ? eventsRef.current : tabRequest.tab === 'memories' ? memoriesRef.current : null;
+    requestAnimationFrame(() => {
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      else scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }, [tabRequest]);
   if (!space) return null;
 
   const spaceEvents = events.filter((e) => e.spaceId === space.id && e.status !== 'past');
@@ -144,237 +176,180 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
   const env = space.environment;
   const hasValues = env.sensorHealth !== 'offline';
   const status = environmentStatus(env);
-  const capturedAt = env.capturedAt
-    ? new Date(env.capturedAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' })
-    : null;
-
-  // Only facts we actually know; unknowns are left out rather than shown as "未知".
-  const facts = [
-    ACCESS[space.access] && { label: '准入', value: ACCESS[space.access]!.text, tone: ACCESS[space.access]!.tone },
-    OCCUPANCY[space.occupancy] && {
-      label: '此刻', value: OCCUPANCY[space.occupancy]!.text, tone: OCCUPANCY[space.occupancy]!.tone,
-      sub: !env.isPrivateRoom && space.headcountEstimate !== undefined ? `约 ${space.headcountEstimate} 人` : undefined,
-    },
-    space.capacity
-      ? { label: '容纳', value: `${space.capacity} 人`, tone: 'text-ink' }
-      : space.areaM2 ? { label: '面积', value: `${space.areaM2} m²`, tone: 'text-ink' } : null,
-  ].filter(Boolean) as Array<{ label: string; value: string; tone: string; sub?: string }>;
-
-  const tabs: Array<{ id: DetailTab; label: string; count?: number }> = [
-    { id: 'overview', label: '概况' },
-    { id: 'events', label: '活动', count: spaceEvents.length },
-    { id: 'memories', label: '回忆', count: spaceMoments.length },
-  ];
+  const code = displayCode(space.id);
+  const access = ACCESS[space.access];
+  const occupancy = OCCUPANCY[space.occupancy];
+  const headcount = !env.isPrivateRoom && space.headcountEstimate !== undefined ? space.headcountEstimate : undefined;
+  const fill = space.capacity && headcount !== undefined ? Math.min(1, headcount / space.capacity) : null;
+  const headline = hasValues ? environmentHeadline(env.temperature, env.humidity, env.co2) : null;
   const metrics = [
     { key: 'temperature' as const, label: '温度', value: env.temperature, unit: '°C', data: env.temperatureTrend, color: '#e08a3c' },
     { key: 'humidity' as const, label: '湿度', value: env.humidity, unit: '%', data: env.humidityTrend, color: '#4f8fc0' },
     { key: 'co2' as const, label: 'CO₂', value: env.co2, unit: 'ppm', data: env.co2Trend, color: '#2f9e8f' },
   ];
+  const kicker = [CATEGORY_LABEL[space.category], SERIES_LABEL[space.series]].filter(Boolean).join('，');
+  const iconButton = 'grid h-8 w-8 place-items-center rounded-full text-crater hover:bg-ink/[0.06] hover:text-ink';
 
   return (
     <aside
       key={space.id}
       aria-label={`${space.id} ${space.name}`}
-      className={`glass animate-sheet !bg-[rgb(247_248_250/0.95)] absolute z-30 flex flex-col overflow-hidden rounded-[var(--radius-sheet)]
-        right-4 top-[4.75rem] w-[400px] lg:right-6 ${collapsed ? '' : 'bottom-6'}
-        max-lg:inset-x-3 max-lg:top-auto max-lg:bottom-3 max-lg:w-auto ${collapsed ? '' : 'max-lg:max-h-[62vh]'}`}
+      className={`room-sheet animate-sheet absolute z-30 flex flex-col overflow-hidden rounded-[var(--radius-sheet)]
+        right-4 top-[4.75rem] w-[392px] lg:right-6 ${collapsed ? '' : 'bottom-6'}
+        max-lg:inset-x-3 max-lg:top-auto max-lg:bottom-3 max-lg:w-auto ${collapsed ? '' : 'max-lg:max-h-[64vh]'}`}
     >
-      <header className="px-6 pb-5 pt-5">
-        <div className="flex items-center justify-between text-[12px] text-crater">
-          <span>{[CATEGORY_LABEL[space.category], SERIES_LABEL[space.series]].filter(Boolean).join('，')}</span>
-          <div className="-mr-2 flex items-center">
-            <button onClick={() => setCollapsed((c) => !c)} aria-expanded={!collapsed} aria-label={collapsed ? '展开详情' : '收起详情'} className="rounded-full p-1.5 text-dust hover:bg-white hover:text-ink lg:hidden">
-              <ChevronDown className={`h-4 w-4 transition-transform ${collapsed ? '' : 'rotate-180'}`} />
-            </button>
-            <button onClick={onClose} aria-label="关闭详情" className="rounded-full p-1.5 text-dust hover:bg-white hover:text-ink">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+      <header className="relative px-7 pb-6 pt-6">
+        <div className="absolute right-4 top-4 flex items-center gap-0.5">
+          {onShare && <button onClick={() => onShare(space.id)} aria-label="分享这个房间" title="分享" className={iconButton}><Share2 className="h-4 w-4" /></button>}
+          <button onClick={() => setCollapsed((c) => !c)} aria-expanded={!collapsed} aria-label={collapsed ? '展开详情' : '收起详情'} className={`${iconButton} lg:hidden`}>
+            <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${collapsed ? '' : 'rotate-180'}`} />
+          </button>
+          <button onClick={onClose} aria-label="关闭详情" className={iconButton}><X className="h-4 w-4" /></button>
         </div>
-        <div className="mt-3 flex items-end gap-3">
-          {displayCode(space.id)
-            ? <span className="wordmark text-[44px] font-semibold leading-[0.9] text-ink">{displayCode(space.id)}</span>
-            : <span className="text-[30px] font-semibold leading-tight text-ink">{displayName(space)}</span>}
-          {live && (
-            <button onClick={() => setTab('events')} className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-flare-wash px-2.5 py-1 text-[11px] font-semibold text-ember hover:bg-[#ffe9d6]">
-              <span className="live-dot h-1.5 w-1.5 rounded-full bg-flare" />活动进行中
-            </button>
-          )}
-        </div>
-        {displayCode(space.id) ? <h2 className="mt-3 text-xl font-semibold leading-snug text-ink">{displayName(space)}</h2> : <h2 className="sr-only">{displayName(space)}</h2>}
 
-        {!collapsed && facts.length > 0 && (
-          <dl className={`mt-5 grid divide-x divide-ink/10 border-y hairline ${facts.length === 3 ? 'grid-cols-3' : facts.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            {facts.map((fact) => (
-              <div key={fact.label} className="px-3 py-2.5 first:pl-0">
-                <dt className="text-[11px] text-crater">{fact.label}</dt>
-                <dd className={`mt-0.5 text-[15px] font-semibold ${fact.tone}`}>
-                  {fact.value}
-                  {fact.sub && <span className="block text-[12px] font-normal text-crater">{fact.sub}</span>}
-                </dd>
+        {kicker && <p className="text-[12px] text-crater">{kicker}</p>}
+        {code ? (
+          <>
+            <p className="wordmark mt-3 text-[46px] font-semibold leading-[0.92] tracking-[-0.02em] text-ink">{code}</p>
+            <h2 className="mt-2.5 text-[21px] font-semibold leading-snug text-ink">{displayName(space)}</h2>
+          </>
+        ) : (
+          <h2 className="mt-3 pr-16 text-[30px] font-semibold leading-tight tracking-[-0.01em] text-ink">{displayName(space)}</h2>
+        )}
+
+        {(access || occupancy || space.capacity) && (
+          <div className="mt-5">
+            <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13px] text-ink-soft">
+              {access && <span className="inline-flex items-center gap-1.5 font-semibold text-ink"><span className={`h-1.5 w-1.5 rounded-full ${access.dot}`} />{access.text}</span>}
+              {occupancy && <span>{occupancy}{headcount !== undefined ? `，约 ${headcount} 人` : ''}</span>}
+              {space.capacity ? <span className="ml-auto text-crater">可容纳 {space.capacity} 人</span> : null}
+            </p>
+            {fill !== null && (
+              <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-ink/[0.07]" role="img" aria-label={`约 ${headcount} 人，容量 ${space.capacity} 人`}>
+                <div className={`h-full rounded-full ${fill > 0.85 ? 'bg-alert' : fill > 0.6 ? 'bg-flare' : 'bg-calm'}`} style={{ width: `${Math.max(3, fill * 100)}%` }} />
               </div>
-            ))}
-          </dl>
+            )}
+          </div>
         )}
       </header>
 
       {!collapsed && (
         <>
-          <div className="px-6" role="tablist" aria-label="房间内容">
-            <div className="flex gap-6 border-b hairline">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  role="tab"
-                  aria-selected={tab === t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`relative -mb-px pb-2.5 text-[14px] font-medium ${tab === t.id ? 'text-ink' : 'text-crater hover:text-ink'}`}
-                >
-                  {t.label}
-                  {!!t.count && <span className="ml-1 text-[12px] text-dust">{t.count}</span>}
-                  {tab === t.id && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-flare" />}
-                </button>
-              ))}
-            </div>
-          </div>
+          <div ref={scrollRef} className="scroll-quiet flex-1 overflow-y-auto px-7 pb-8">
+            {live && (
+              <button
+                onClick={() => eventsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="group mb-7 block w-full border-l-2 border-flare pl-4 text-left"
+              >
+                <span className="text-[12px] font-semibold text-ember">正在进行，{time(live.startTime)} 到 {time(live.endTime)}</span>
+                <span className="mt-1 block text-[16px] font-semibold leading-snug text-ink group-hover:text-ember">{live.title}</span>
+              </button>
+            )}
 
-          <div className="scroll-quiet flex-1 overflow-y-auto px-6 py-5" role="tabpanel">
-            {tab === 'overview' && (
-              <div className="space-y-6">
-                {live && (
-                  <button onClick={() => setTab('events')} className="w-full rounded-[var(--radius-tile)] bg-flare-wash p-4 text-left hover:bg-[#ffe9d6]">
-                    <span className="text-[12px] font-semibold text-ember">正在这里：{time(live.startTime)} 至 {time(live.endTime)}</span>
-                    <span className="mt-1 block text-[15px] font-semibold text-ink">{live.title}</span>
-                  </button>
-                )}
+            {space.description && <p className="text-[14.5px] leading-[1.8] text-ink-soft">{space.description}</p>}
 
-                {space.description && <p className="text-[14px] leading-[1.75] text-ink-soft">{space.description}</p>}
-
-                <section aria-label="环境">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-[13px] font-semibold text-ink">环境</h3>
-                    {status && (
-                      <span className="inline-flex items-center gap-1.5 text-[12px] text-crater">
-                        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />{status.text}
-                      </span>
-                    )}
-                  </div>
-
-                  {hasValues ? (
-                    <ul className="mt-1 divide-y divide-ink/10">
-                      {metrics.map((m) => {
-                        const v = verdict(m.key, m.value);
-                        return (
-                          <li key={m.key} className="flex items-center gap-3 py-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="text-[12px] text-crater">{m.label}</div>
-                              <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                                <span className="text-[20px] font-semibold leading-none text-ink">
-                                  {m.value}<span className="ml-0.5 text-[12px] font-medium text-crater">{m.unit}</span>
-                                </span>
-                                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE_CLASS[v.tone]}`}>{v.text}</span>
-                              </div>
-                            </div>
-                            <Trend data={m.data} times={env.trendTimes} color={m.color} label={m.label} />
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <p className="mt-2 text-[13px] text-crater">{env.source === 'sensor' ? '传感器暂时连不上，稍后会自动重试。' : '这个房间没有环境传感器。'}</p>
-                  )}
-
-                  {env.source === 'sensor' && (
-                    <p className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-dust">
-                      <span title={env.sensorId ? `设备 ${env.sensorId}${capturedAt ? `，读数时间 ${capturedAt}` : ''}` : undefined}>
-                        {hasValues ? '右侧为近 24 小时每小时平均' : ''}
-                      </span>
-                      {env.provider && (
-                        <a href={env.provider.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-crater underline decoration-ink/20 underline-offset-2 hover:text-ember hover:decoration-ember">
-                          数据来源 {env.provider.name}<ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
-                    </p>
-                  )}
-                </section>
-
-                {space.features.length > 0 && (
-                  <section aria-label="设施">
-                    <h3 className="text-[13px] font-semibold text-ink">设施</h3>
-                    <ul className="mt-2.5 flex flex-wrap gap-1.5">
-                      {space.features.map((feature) => (
-                        <li key={feature} className="rounded-full border hairline bg-white/60 px-3 py-1 text-[12px] text-ink-soft">{feature}</li>
-                      ))}
-                    </ul>
-                  </section>
-                )}
+            <section aria-labelledby="sheet-env" className="mt-9">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 id="sheet-env" className="text-[13px] font-semibold text-ink">环境</h3>
+                {status && <span className="inline-flex items-center gap-1.5 text-[12px] text-crater"><span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />{status.text}</span>}
               </div>
-            )}
-
-            {tab === 'events' && (
-              spaceEvents.length === 0 ? (
-                <p className="py-10 text-center text-[14px] text-ink-soft">近期没有活动安排。</p>
+              {hasValues && headline ? (
+                <>
+                  <p className={`mt-3 text-[17px] font-semibold leading-snug ${headline.tone === 'good' ? 'text-ink' : TONE_TEXT[headline.tone]}`}>{headline.text}</p>
+                  <div className="mt-5 grid grid-cols-3 gap-5">
+                    {metrics.map((m) => {
+                      const v = verdict(m.key, m.value);
+                      return (
+                        <div key={m.key} className="min-w-0">
+                          <div className="text-[12px] text-crater">{m.label}</div>
+                          <div className="mt-1.5 whitespace-nowrap text-[24px] font-semibold leading-none tracking-[-0.02em] text-ink">
+                            {m.value}<span className="ml-0.5 text-[11px] font-medium tracking-normal text-crater">{m.unit}</span>
+                          </div>
+                          <div className={`mt-1.5 text-[12px] font-medium ${TONE_TEXT[v.tone]}`}>{v.text}</div>
+                          <div className="mt-3"><Trend data={m.data} times={env.trendTimes} color={m.color} label={m.label} /></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               ) : (
-                <ul className="space-y-4">
-                  {spaceEvents.map((e) => (
-                    <li key={e.id} className="relative pl-4">
-                      <span className={`absolute left-0 top-1.5 h-[calc(100%-0.5rem)] w-0.5 rounded-full ${e.status === 'happening_now' ? 'bg-flare' : 'bg-glow'}`} />
-                      <div className="flex items-center gap-2 text-[12px]">
-                        <span className={e.status === 'happening_now' ? 'font-semibold text-ember' : 'text-crater'}>{e.status === 'happening_now' ? '进行中' : '即将开始'}</span>
-                        <span className="flex items-center gap-1 text-crater"><Clock className="h-3 w-3" />{time(e.startTime)} 至 {time(e.endTime)}</span>
-                      </div>
-                      <p className="mt-1 text-[15px] font-semibold text-ink">{e.title}</p>
-                      <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{e.description}</p>
-                      <p className="mt-1.5 text-[12px] text-crater">{e.organizer}</p>
-                    </li>
-                  ))}
-                </ul>
-              )
-            )}
+                <p className="mt-3 text-[14px] text-crater">{env.source === 'sensor' ? '传感器暂时连不上，稍后会自动重试。' : '这个房间没有环境传感器。'}</p>
+              )}
+              {(hasValues || env.provider) && (
+                <p className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-dust">
+                  <span title={env.sensorId ? `设备 ${env.sensorId}` : undefined}>{hasValues ? (env.source === 'sensor' ? '曲线为近 24 小时每小时平均' : '演示数据，曲线为近 24 小时') : ''}</span>
+                  {env.source === 'sensor' && env.provider && (
+                    <a href={env.provider.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-crater underline decoration-ink/20 underline-offset-2 hover:text-ember hover:decoration-ember">
+                      数据来源 {env.provider.name}<ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </p>
+              )}
+            </section>
 
-            {tab === 'memories' && (
-              spaceMoments.length === 0 ? (
-                <div className="py-10 text-center">
-                  <p className="text-[14px] text-ink-soft">还没有人在这里留下回忆。</p>
-                  <button onClick={() => onOpenAddMoment(space.id)} className="mt-3 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-white hover:bg-ink-soft">写第一条</button>
-                </div>
+            <section ref={eventsRef} aria-labelledby="sheet-events" className="mt-10 scroll-mt-4">
+              <h3 id="sheet-events" className="text-[13px] font-semibold text-ink">活动{spaceEvents.length > 0 && <span className="ml-1.5 font-normal text-dust">{spaceEvents.length}</span>}</h3>
+              {spaceEvents.length === 0 ? (
+                <p className="mt-3 text-[14px] text-crater">近期没有活动安排。</p>
               ) : (
-                <ul className="space-y-5">
+                <ol className="mt-4 space-y-5">
+                  {spaceEvents.map((e) => {
+                    const isLive = e.status === 'happening_now';
+                    return (
+                      <li key={e.id} className="grid grid-cols-[3.25rem_1fr] gap-x-4">
+                        <div className="pt-0.5 text-right tabular-nums">
+                          <div className={`text-[14px] font-semibold ${isLive ? 'text-ember' : 'text-ink'}`}>{time(e.startTime)}</div>
+                          <div className="text-[12px] text-dust">{time(e.endTime)}</div>
+                        </div>
+                        <div className="min-w-0 border-l border-ink/10 pl-4">
+                          <p className="text-[15px] font-semibold leading-snug text-ink">{e.title}</p>
+                          <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{e.description}</p>
+                          <p className="mt-1.5 text-[12px] text-crater">{isLive ? '正在进行，' : ''}{e.organizer}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+
+            <section ref={memoriesRef} aria-labelledby="sheet-memories" className="mt-10 scroll-mt-4">
+              <div className="flex items-baseline justify-between">
+                <h3 id="sheet-memories" className="text-[13px] font-semibold text-ink">回忆{spaceMoments.length > 0 && <span className="ml-1.5 font-normal text-dust">{spaceMoments.length}</span>}</h3>
+              </div>
+              {spaceMoments.length === 0 ? (
+                <p className="mt-3 text-[14px] text-crater">还没有人在这里留下回忆。</p>
+              ) : (
+                <ul className="mt-4 space-y-7">
                   {spaceMoments.map((m) => {
                     const liked = likedIds?.has(m.id) ?? false;
                     return (
-                      <li key={m.id} className={`border-b hairline pb-5 last:border-0 ${m.timeAgo === '刚刚' ? 'animate-rise' : ''}`}>
-                        <div className="flex items-baseline justify-between text-[12px]">
-                          <span className="font-semibold text-ink">{m.author}</span>
-                          <span className="text-dust">{m.timeAgo}</span>
+                      <li key={m.id} className={m.timeAgo === '刚刚' ? 'animate-rise' : ''}>
+                        {m.imageUrl && <img src={m.imageUrl} alt="" className="mb-3 aspect-[4/3] w-full rounded-[14px] object-cover" />}
+                        <blockquote className="text-[15px] leading-[1.75] text-ink">{m.content}</blockquote>
+                        <div className="mt-2 flex items-center justify-between text-[12px] text-crater">
+                          <span>{m.author}，{m.timeAgo}</span>
+                          <button
+                            onClick={() => onLikeMoment(m.id)}
+                            aria-pressed={liked}
+                            aria-label={`${liked ? '取消喜欢' : '喜欢'}，当前 ${m.likes}`}
+                            className={`-mr-1 inline-flex items-center gap-1.5 rounded-full px-1.5 py-1 ${liked ? 'text-ember' : 'hover:text-ember'}`}
+                          >
+                            <Heart className={`h-3.5 w-3.5 transition-transform duration-200 ${liked ? 'scale-110 fill-flare text-flare' : ''}`} />{m.likes}
+                          </button>
                         </div>
-                        {m.imageUrl && <img src={m.imageUrl} alt="" className="mt-3 aspect-[4/3] w-full rounded-[12px] object-cover" />}
-                        <p className="mt-2 text-[14px] leading-[1.75] text-ink-soft">{m.content}</p>
-                        <button
-                          onClick={() => onLikeMoment(m.id)}
-                          aria-pressed={liked}
-                          aria-label={`${liked ? '取消喜欢' : '喜欢'}，当前 ${m.likes}`}
-                          className={`mt-2 inline-flex items-center gap-1.5 text-[12px] ${liked ? 'text-ember' : 'text-crater hover:text-ember'}`}
-                        >
-                          <Heart className={`h-3.5 w-3.5 transition-transform duration-200 ${liked ? 'scale-110 fill-flare text-flare' : ''}`} />{m.likes}
-                        </button>
                       </li>
                     );
                   })}
                 </ul>
-              )
-            )}
+              )}
+            </section>
           </div>
 
-          <footer className="flex gap-2 border-t hairline p-4">
-            <button onClick={() => onOpenAddMoment(space.id)} className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-flare text-[14px] font-semibold text-white shadow-[0_10px_24px_-12px_rgb(211_84_0/0.9)] hover:bg-ember">
-              <PenLine className="h-4 w-4" />留下回忆
+          <footer className="relative px-5 pb-5 pt-1 before:pointer-events-none before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-gradient-to-t before:from-[#fbfcfd] before:to-transparent">
+            <button onClick={() => onOpenAddMoment(space.id)} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-flare text-[14px] font-semibold text-white hover:bg-ember">
+              <PenLine className="h-4 w-4" />在这里留下回忆
             </button>
-            {onShare && (
-              <button onClick={() => onShare(space.id)} className="flex h-11 items-center gap-2 rounded-full border hairline bg-white/70 px-4 text-[14px] font-medium text-ink-soft hover:bg-white hover:text-ink">
-                <Share2 className="h-4 w-4" />分享
-              </button>
-            )}
           </footer>
         </>
       )}

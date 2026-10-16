@@ -81,6 +81,39 @@
       0 2px 8px rgb(24 32 46 / 0.06);
   }
   .hairline { border-color: rgb(24 32 46 / 0.09); }
+  /* "此刻在校园": a solid white live capsule. Its shape is animated as real numbers. */
+  .live-dock {
+    background: #ffffff;
+    box-shadow:
+      0 0 0 1px rgb(24 32 46 / 0.07),
+      0 18px 40px -18px rgb(24 32 46 / 0.35),
+      0 2px 6px rgb(24 32 46 / 0.06);
+    transition:
+      width 560ms cubic-bezier(0.32, 0.72, 0, 1),
+      height 560ms cubic-bezier(0.32, 0.72, 0, 1),
+      border-radius 560ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .live-dock__body {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+  .live-dock__body.is-open {
+    opacity: 1;
+    transform: none;
+    transition: opacity 320ms ease 180ms, transform 420ms cubic-bezier(0.22, 1, 0.36, 1) 160ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-dock, .live-dock__body, .live-dock__body.is-open { transition: none; }
+  }
+  /* Room sheet: a solid sheet of paper over the map rather than another frosted panel. */
+  .room-sheet {
+    background: #fbfcfd;
+    box-shadow:
+      0 0 0 1px rgb(24 32 46 / 0.06),
+      0 30px 60px -24px rgb(24 32 46 / 0.32),
+      0 2px 6px rgb(24 32 46 / 0.05);
+  }
   .scroll-quiet { scrollbar-width: thin; scrollbar-color: rgb(24 32 46 / 0.18) transparent; }
   .wordmark {
     font-family: var(--font-display);
