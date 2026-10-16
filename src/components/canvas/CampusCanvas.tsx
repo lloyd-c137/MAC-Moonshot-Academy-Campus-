@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { CSS2DObject, CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CAMPUS_SPACES } from '../../data/floorplanData';
 import { CAMPUS_EVENTS } from '../../data/mockEvents';
 import { CampusSpace, MapLayerMode, NavigationRoute } from '../../types/campus';
@@ -41,17 +40,42 @@ function roomColor(room: CampusModelRoom, mode: MapLayerMode, spaces: Map<string
   return layerColor(mode, spaces.get(room.id), CAMPUS_EVENTS, room.id) ?? NO_DATA;
 }
 
-function makeLabel(room: CampusModelRoom): CSS2DObject {
+/**
+ * A room label: a DOM chip positioned with a compositor-only transform.
+ * Only changed values are written, so a frame where nothing moved touches no styles.
+ */
+interface RoomLabel {
+  roomId: string;
+  element: HTMLDivElement;
+  nameEl: HTMLSpanElement;
+  world: THREE.Vector3;
+  area: number;
+  /** Measured once (CSS px); invalidated when the text changes. */
+  size: [number, number] | null;
+  drawingName?: string;
+  shown: boolean;
+  x: number;
+  y: number;
+  state: '' | 'active' | 'selected';
+}
+
+function makeLabel(room: CampusModelRoom): RoomLabel {
   const el = document.createElement('div');
   el.className = 'campus-room-label';
   el.innerHTML = (room.code ? `<span class="campus-room-label__id">${room.code}</span>` : '') + `<span class="campus-room-label__name">${room.name}</span>`;
   if (!room.code) el.classList.add('is-uncoded');
-  const object = new CSS2DObject(el);
-  object.position.set(room.label[0], 0.4, room.label[1]);
-  object.userData.roomId = room.id;
-  object.visible = false;
-  object.userData.area = room.areaM2Polygon ?? room.areaM2Label ?? 0;
-  return object;
+  return {
+    roomId: room.id,
+    element: el,
+    nameEl: el.querySelector('.campus-room-label__name') as HTMLSpanElement,
+    world: new THREE.Vector3(room.label[0], 0.4, room.label[1]),
+    area: room.areaM2Polygon ?? room.areaM2Label ?? 0,
+    size: null,
+    shown: false,
+    x: NaN,
+    y: NaN,
+    state: '',
+  };
 }
 
 export const CampusCanvas: React.FC<CampusCanvasProps> = ({
@@ -71,7 +95,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   const sceneRef = useRef<CampusScene | null>(null);
   const overlayRef = useRef<THREE.Mesh | null>(null);
   const gridRef = useRef<THREE.GridHelper | null>(null);
-  const labelsRef = useRef<CSS2DObject[]>([]);
+  const labelsRef = useRef<RoomLabel[]>([]);
   const highlightRef = useRef<{ selected: string | null; hovered: string | null }>({ selected: null, hovered: null });
   // The scene is static: render only when the camera, highlight or a layer changes.
   const invalidateRef = useRef<() => void>(() => {});
@@ -84,8 +108,11 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   const [modelState, setModelState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [modelVersion, setModelVersion] = useState(0);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [northDeg, setNorthDeg] = useState(0);
-  const [scale, setScale] = useState({ metres: 10, px: 80 });
+  // Compass and scale bar change every frame of a gesture: written straight to the DOM, not through React.
+  const [northUp, setNorthUp] = useState(true);
+  const compassRef = useRef<SVGSVGElement>(null);
+  const scaleBarRef = useRef<HTMLDivElement>(null);
+  const scaleTextRef = useRef<HTMLSpanElement>(null);
 
   const roomWorld = (id: string): { x: number; z: number } | null => {
     const room = sceneRef.current?.roomById.get(id);
@@ -124,15 +151,15 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   // Room names edited in /admin replace the drawing names on the map labels.
   useEffect(() => {
     if (!spaces) return;
+    const byId = new Map(spaces.map((sp) => [sp.id, sp]));
     for (const label of labelsRef.current) {
-      const id = label.userData.roomId as string;
-      const space = spaces.find((sp) => sp.id === id);
-      const nameEl = label.element.querySelector('.campus-room-label__name');
-      if (!space || !nameEl) continue;
-      if (label.userData.drawingName === undefined) label.userData.drawingName = nameEl.textContent;
+      const id = label.roomId;
+      const space = byId.get(id);
+      if (!space) continue;
+      if (label.drawingName === undefined) label.drawingName = label.nameEl.textContent ?? '';
       const edited = space.name !== STATIC_SPACES.get(id)?.name;
-      const next = edited ? space.name.replace(new RegExp(`^${id}\\s*`), '') : (label.userData.drawingName as string);
-      if (nameEl.textContent !== next) { nameEl.textContent = next; label.userData.size = undefined; }
+      const next = edited ? space.name.replace(new RegExp(`^${id}\\s*`), '') : label.drawingName;
+      if (label.nameEl.textContent !== next) { label.nameEl.textContent = next; label.size = null; }
     }
     invalidateRef.current();
   }, [spaces, modelVersion]);
@@ -169,8 +196,31 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(width, height);
-    // A constant pixel ratio: switching it mid-gesture reallocates the canvas and causes a visible hitch.
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Pixel ratio: full sharpness by default. If this GPU cannot keep up while the map moves, step it
+    // down once and keep it there (never toggled per gesture: that reallocates the canvas and hitches).
+    const maxDpr = Math.min(window.devicePixelRatio, 2);
+    const dprSteps = [maxDpr, 1.5, 1.25, 1].filter((v, i, all) => v <= maxDpr && all.indexOf(v) === i);
+    let dprStep = 0;
+    try { dprStep = Math.min(dprSteps.length - 1, Number(sessionStorage.getItem('campus-dpr-step')) || 0); } catch { /* storage blocked */ }
+    renderer.setPixelRatio(dprSteps[dprStep]);
+    let motionFrames = 0;
+    let slowFrames = 0;
+    let lastRenderAt = 0;
+    const watchFrameTime = (now: number, moving: boolean) => {
+      const dt = now - lastRenderAt;
+      lastRenderAt = now;
+      if (!moving || dt > 120 || document.hidden) return; // pauses and background tabs say nothing about the GPU
+      motionFrames++;
+      if (dt > 24) slowFrames++; // below ~40 fps
+      if (motionFrames < 45) return;
+      if (slowFrames / motionFrames > 0.6 && dprStep < dprSteps.length - 1) {
+        dprStep++;
+        renderer.setPixelRatio(dprSteps[dprStep]);
+        try { sessionStorage.setItem('campus-dpr-step', String(dprStep)); } catch { /* storage blocked */ }
+      }
+      motionFrames = 0;
+      slowFrames = 0;
+    };
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -182,10 +232,11 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     const invalidate = () => { needsRender = true; wake(); };
     invalidateRef.current = invalidate;
 
-    const labelRenderer = new CSS2DRenderer();
-    labelRenderer.setSize(width, height);
-    labelRenderer.domElement.className = 'campus-label-layer';
-    container.appendChild(labelRenderer.domElement);
+    const labelLayer = document.createElement('div');
+    labelLayer.className = 'campus-label-layer';
+    container.appendChild(labelLayer);
+    let viewW = width;
+    let viewH = height;
 
     // Lighting: soft sky fill + a low warm sun for wall shadows.
     scene.add(new THREE.HemisphereLight(0xffffff, 0xd9dee4, 1.95));
@@ -231,6 +282,8 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     controllerRef.current = controller;
     if (import.meta.env.DEV) Object.assign(window, { __campusController: controller });
 
+    let lastDeg = NaN;
+    let lastMpp = NaN;
     const raycaster = new THREE.Raycaster();
     const pickRoom = (ndc: THREE.Vector2): string | null => {
       const model = sceneRef.current;
@@ -242,12 +295,24 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
 
     controller.setCallbacks({
       onStateChange: (state) => {
-        setCurrentViewMode(controller.targetViewMode);
-        setNorthDeg(Math.round((state.azimuth * 180) / Math.PI));
+        setCurrentViewMode(controller.targetViewMode); // React skips the render when unchanged
+        const deg = (state.azimuth * 180) / Math.PI;
+        if (deg !== lastDeg) {
+          lastDeg = deg;
+          compassRef.current?.style.setProperty('transform', `rotate(${deg.toFixed(1)}deg)`);
+          setNorthUp(Math.abs(Math.round(deg) % 360) === 0);
+        }
         // Scale bar: the largest "nice" length that fits in ~110 px.
         const mpp = controller.metresPerPixel;
-        const metres = [1, 2, 5, 10, 20, 50, 100].filter((m) => m / mpp <= 110).pop() ?? 1;
-        setScale((prev) => (prev.metres === metres && Math.abs(prev.px - metres / mpp) < 0.5 ? prev : { metres, px: Math.round(metres / mpp) }));
+        if (mpp !== lastMpp) {
+          lastMpp = mpp;
+          const metres = [1, 2, 5, 10, 20, 50, 100].filter((m) => m / mpp <= 110).pop() ?? 1;
+          if (scaleBarRef.current) scaleBarRef.current.style.width = `${Math.round(metres / mpp)}px`;
+          if (scaleTextRef.current && scaleTextRef.current.textContent !== `${metres} m`) {
+            scaleTextRef.current.textContent = `${metres} m`;
+            scaleTextRef.current.parentElement?.setAttribute('aria-label', `比例尺 ${metres} 米`);
+          }
+        }
         invalidate();
       },
       onActivity: wake,
@@ -272,9 +337,15 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         scene.add(campus.root);
         sceneRef.current = campus;
         sourceOverlay.position.set(SPATIAL_PLAN.sourcePageWorldOffsetX, campus.wallTopY + 0.08, SPATIAL_PLAN.sourcePageWorldOffsetZ);
-        const labels = data.rooms.map(makeLabel);
-        labels.forEach((label) => scene.add(label));
+        // Largest rooms first: they win label collisions.
+        const labels = data.rooms.map(makeLabel).sort((a, b) => b.area - a.area);
+        labelLayer.replaceChildren(...labels.map((label) => label.element));
+        // Measure every chip in one layout pass now, instead of one forced layout per chip mid-gesture.
+        const measure = () => { for (const label of labels) label.size = [label.element.offsetWidth, label.element.offsetHeight]; };
+        measure();
         labelsRef.current = labels;
+        // Web fonts arrive after first paint and change chip widths.
+        document.fonts?.ready.then(() => { if (!abort.signal.aborted) { measure(); invalidate(); } });
         const [minX, minZ, maxX, maxZ] = data.bounds;
         controller.setFitBounds({ minX, minZ, maxX, maxZ });
         sun.shadow.needsUpdate = true;
@@ -302,33 +373,58 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     // Labels: priority order (selected, hovered, then larger rooms); any label that would
     // overlap one already placed is hidden, so the map never shows a pile of chips.
     const projected = new THREE.Vector3();
+    const placed: number[] = []; // flat [x0, y0, x1, y1, …], reused every frame
+    const setState = (label: RoomLabel, state: RoomLabel['state']) => {
+      if (label.state === state) return;
+      label.state = state;
+      label.element.classList.toggle('is-active', state !== '');
+      label.element.classList.toggle('is-selected', state === 'selected');
+    };
+    const place = (label: RoomLabel, active: boolean): boolean => {
+      projected.copy(label.world).project(camera);
+      const x = ((projected.x + 1) / 2) * viewW;
+      const y = ((1 - projected.y) / 2) * viewH;
+      if (x < -60 || x > viewW + 60 || y < -30 || y > viewH + 30) return false;
+      if (!label.size) label.size = [label.element.offsetWidth || label.element.textContent!.length * 9 + 18, label.element.offsetHeight || 30];
+      const [lw, lh] = label.size;
+      const x0 = x - lw / 2 - 3, y0 = y - lh / 2 - 2, x1 = x + lw / 2 + 3, y1 = y + lh / 2 + 2;
+      if (!active) {
+        for (let i = 0; i < placed.length; i += 4) {
+          if (x0 < placed[i + 2] && x1 > placed[i] && y0 < placed[i + 3] && y1 > placed[i + 1]) return false;
+        }
+      }
+      placed.push(x0, y0, x1, y1);
+      // Snap to device pixels so text stays crisp, and skip the write when nothing moved.
+      const dpr = window.devicePixelRatio || 1;
+      const sx = Math.round((x - lw / 2) * dpr) / dpr;
+      const sy = Math.round((y - lh / 2) * dpr) / dpr;
+      if (sx !== label.x || sy !== label.y) {
+        label.x = sx;
+        label.y = sy;
+        label.element.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+      }
+      return true;
+    };
+    const show = (label: RoomLabel, visible: boolean) => {
+      if (label.shown === visible) return;
+      label.shown = visible;
+      label.element.classList.toggle('is-shown', visible);
+    };
     const updateLabels = () => {
       const { selected, hovered } = highlightRef.current;
       const zoom = controller.state.zoom;
       const minArea = zoom >= LABEL_ZOOM ? 0 : zoom >= 1.05 ? 95 : Infinity;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      const placed: Array<[number, number, number, number]> = [];
-      const ordered = [...labelsRef.current].sort((a, b) => {
-        const rank = (o: CSS2DObject) => (o.userData.roomId === selected ? 2e6 : o.userData.roomId === hovered ? 1e6 : (o.userData.area as number));
-        return rank(b) - rank(a);
-      });
-      for (const label of ordered) {
-        const id = label.userData.roomId as string;
-        const active = id === selected || id === hovered;
-        label.element.classList.toggle('is-active', active);
-        label.element.classList.toggle('is-selected', id === selected);
-        if (!active && label.userData.area < minArea) { label.visible = false; continue; }
-        projected.copy(label.position).project(camera);
-        const x = ((projected.x + 1) / 2) * w;
-        const y = ((1 - projected.y) / 2) * h;
-        if (x < -60 || x > w + 60 || y < -30 || y > h + 30) { label.visible = false; continue; }
-        if (!label.userData.size && label.element.offsetWidth) label.userData.size = [label.element.offsetWidth, label.element.offsetHeight];
-        const [lw, lh] = (label.userData.size as [number, number] | undefined) ?? [label.element.textContent!.length * 9 + 18, 30];
-        const box: [number, number, number, number] = [x - lw / 2 - 3, y - lh / 2 - 2, x + lw / 2 + 3, y + lh / 2 + 2];
-        const overlaps = placed.some((p) => box[0] < p[2] && box[2] > p[0] && box[1] < p[3] && box[3] > p[1]);
-        label.visible = active || !overlaps;
-        if (label.visible) placed.push(box);
+      placed.length = 0;
+      const labels = labelsRef.current;
+      // Active labels claim their space first.
+      for (const label of labels) {
+        const state = label.roomId === selected ? 'selected' : label.roomId === hovered ? 'active' : '';
+        setState(label, state);
+        if (state) show(label, place(label, true));
+      }
+      for (const label of labels) {
+        if (label.state) continue;
+        show(label, label.area >= minArea && place(label, false));
       }
     };
 
@@ -344,7 +440,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         needsRender = false;
         updateLabels();
         renderer.render(scene, camera);
-        labelRenderer.render(scene, camera);
+        watchFrameTime(now, controller.isAnimating || controller.isInteracting);
       }
       // Keep going only while something is animating.
       if (controller.isAnimating || fading || needsRender) wake();
@@ -361,7 +457,9 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       camera.bottom = -frustumSize / 2;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
-      labelRenderer.setSize(w, h);
+      viewW = w;
+      viewH = h;
+      for (const label of labelsRef.current) label.size = null;
       invalidate();
     };
     window.addEventListener('resize', handleResize);
@@ -429,11 +527,11 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         </div>
         <button
           onClick={() => controllerRef.current?.faceNorth()}
-          title={northDeg % 360 === 0 ? '北方朝上' : '点击让北方朝上'}
+          title={northUp ? '北方朝上' : '点击让北方朝上'}
           aria-label="指北针，点击让北方朝上"
           className="glass group grid h-11 w-11 place-items-center rounded-full transition-transform active:scale-95"
         >
-          <svg viewBox="0 0 24 24" className="h-6 w-6 transition-transform duration-300" style={{ transform: `rotate(${northDeg}deg)` }} aria-hidden="true">
+          <svg ref={compassRef} viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
             <path d="M12 2.5 15.2 12H8.8Z" fill="#ff7a00" />
             <path d="M12 21.5 8.8 12h6.4Z" fill="#c9cfd7" />
             <text x="12" y="10.4" textAnchor="middle" fontSize="4.6" fontWeight="700" fill="#fff" fontFamily="Unbounded, sans-serif">N</text>
@@ -447,9 +545,9 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       </div>
 
       {/* Scale bar: snaps to 1 / 2 / 5 / 10 / 20 / 50 / 100 m. */}
-      <div className="pointer-events-none absolute bottom-[4.6rem] left-7 z-20 flex items-end gap-2 text-[11px] font-medium text-ink-soft max-md:hidden" aria-label={`比例尺 ${scale.metres} 米`}>
-        <div className="h-1.5 border-x-2 border-b-2 border-ink-soft/70 transition-[width] duration-200" style={{ width: scale.px }} />
-        <span>{scale.metres} m</span>
+      <div className="pointer-events-none absolute bottom-[4.6rem] left-7 z-20 flex items-end gap-2 text-[11px] font-medium text-ink-soft max-md:hidden" aria-label="比例尺 10 米">
+        <div ref={scaleBarRef} className="h-1.5 border-x-2 border-b-2 border-ink-soft/70" style={{ width: 80 }} />
+        <span ref={scaleTextRef}>10 m</span>
       </div>
 
       {/* Source of the model: quiet by default, details on request. */}

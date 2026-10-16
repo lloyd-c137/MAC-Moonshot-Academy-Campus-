@@ -86,22 +86,29 @@
 }
 
 /* 3D map room labels (CSS2DRenderer). */
+/* Labels move with compositor-only transforms. No backdrop blur: re-blurring ~80 chips over a
+   moving WebGL canvas every frame cost 2-3x the frame budget (20 fps while panning). */
 .campus-label-layer {
   position: absolute;
   inset: 0;
   z-index: 0;
   isolation: isolate;
   pointer-events: none;
+  overflow: hidden;
+  contain: strict;
 }
 .campus-room-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  will-change: transform;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 3px 8px 4px;
   border-radius: 999px;
-  background: rgb(250 251 252 / 0.86);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: rgb(250 251 252 / 0.93);
   box-shadow: 0 1px 2px rgb(24 32 46 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.8);
   color: var(--color-ink);
   font: 500 10.5px/1.15 var(--font-sans);
@@ -109,16 +116,19 @@
   pointer-events: none;
   transition: background-color 160ms ease, color 160ms ease;
 }
+.campus-room-label.is-shown { visibility: visible; }
 .campus-room-label__id {
   font: 600 8.5px/1.1 var(--font-display);
   letter-spacing: 0.02em;
   color: var(--color-crater);
 }
 .campus-room-label.is-active {
+  z-index: 2;
   background: #fff;
   box-shadow: 0 4px 14px rgb(24 32 46 / 0.2);
 }
 .campus-room-label.is-selected {
+  z-index: 3;
   background: var(--color-flare);
   color: #fff;
   box-shadow: 0 6px 18px -4px rgb(211 84 0 / 0.55);

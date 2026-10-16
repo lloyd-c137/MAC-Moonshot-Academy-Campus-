@@ -120,6 +120,9 @@ export class CampusCameraController {
     this.domElement.addEventListener('lostpointercapture', this.onPointerCancel);
     this.domElement.addEventListener('wheel', this.onWheel, { passive: false });
     this.domElement.addEventListener('contextmenu', this.onContextMenu);
+    this.resizeObserver?.observe(this.domElement);
+    window.addEventListener('resize', this.dropRect);
+    window.addEventListener('scroll', this.dropRect, true);
   }
 
   public dispose() {
@@ -130,14 +133,26 @@ export class CampusCameraController {
     this.domElement.removeEventListener('lostpointercapture', this.onPointerCancel);
     this.domElement.removeEventListener('wheel', this.onWheel);
     this.domElement.removeEventListener('contextmenu', this.onContextMenu);
+    cancelAnimationFrame(this.hoverFrame);
+    this.resizeObserver?.disconnect();
+    window.removeEventListener('resize', this.dropRect);
+    window.removeEventListener('scroll', this.dropRect, true);
     for (const id of this.pointers.keys()) this.releasePointer(id);
     this.pointers.clear();
   }
 
   private onContextMenu = (event: MouseEvent) => event.preventDefault();
 
+  // The canvas rect is read on every pointer move; cache it so a move never forces a layout.
+  private rectCache: DOMRect | null = null;
+  private readonly resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { this.rectCache = null; }) : null;
+  private readonly dropRect = () => { this.rectCache = null; };
+  private rect(): DOMRect {
+    return (this.rectCache ??= this.domElement.getBoundingClientRect());
+  }
+
   private getNDC(clientX: number, clientY: number): THREE.Vector2 {
-    const rect = this.domElement.getBoundingClientRect();
+    const rect = this.rect();
     return new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
   }
 
@@ -223,7 +238,7 @@ export class CampusCameraController {
   private onPointerMove = (event: PointerEvent) => {
     const point = this.pointers.get(event.pointerId);
     if (!point) {
-      if (this.pointers.size === 0) this.callbacks.onHoverRaycast?.(this.getNDC(event.clientX, event.clientY));
+      if (this.pointers.size === 0) this.queueHover(event.clientX, event.clientY);
       return;
     }
     point.set(event.clientX, event.clientY);
@@ -271,6 +286,20 @@ export class CampusCameraController {
     this.pointerLast.copy(point);
     this.recordSample(point.x, point.y, event.timeStamp);
   };
+
+  // Hover picking runs at most once per frame; high-rate mice send several moves per frame.
+  private hoverPoint: { x: number; y: number } | null = null;
+  private hoverFrame = 0;
+  private queueHover(x: number, y: number) {
+    this.hoverPoint = { x, y };
+    if (this.hoverFrame) return;
+    this.hoverFrame = requestAnimationFrame(() => {
+      this.hoverFrame = 0;
+      const p = this.hoverPoint;
+      this.hoverPoint = null;
+      if (p && this.pointers.size === 0) this.callbacks.onHoverRaycast?.(this.getNDC(p.x, p.y));
+    });
+  }
 
   private onPointerUp = (event: PointerEvent) => {
     if (!this.pointers.has(event.pointerId)) return;
@@ -457,7 +486,7 @@ export class CampusCameraController {
   public focusOnPosition(x: number, z: number, zoom = 1.45, safeOffsetPx?: number, liftPx = 0) {
     this.haltMotion();
     const finalZoom = THREE.MathUtils.clamp(Math.max(zoom, this.state.zoom), MIN_ZOOM, MAX_ZOOM);
-    const rect = this.domElement.getBoundingClientRect();
+    const rect = this.rect();
     const panelOffset = safeOffsetPx ?? Math.min(204, Math.max(0, (rect.width - 48) / 2));
     this.camera.updateMatrixWorld();
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
@@ -487,7 +516,7 @@ export class CampusCameraController {
 
   /** World metres covered by one CSS pixel horizontally at the current zoom. */
   public get metresPerPixel(): number {
-    const rect = this.domElement.getBoundingClientRect();
+    const rect = this.rect();
     return (this.camera.top - this.camera.bottom) / (Math.max(1, rect.height) * this.state.zoom);
   }
 
@@ -562,7 +591,7 @@ export class CampusCameraController {
   private stepZoom(factor: number) {
     this.cancelTransition();
     this.glide.active = false;
-    const rect = this.domElement.getBoundingClientRect();
+    const rect = this.rect();
     this.zoomAnchor.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
     this.zoomGoal = THREE.MathUtils.clamp((this.zoomGoal ?? this.state.zoom) * factor, MIN_ZOOM, MAX_ZOOM);
     if (reduceMotion()) {
@@ -572,6 +601,11 @@ export class CampusCameraController {
     }
     this.lastUpdate = performance.now();
     this.callbacks.onActivity?.();
+  }
+
+  /** True while a finger or mouse button is down on the map. */
+  public get isInteracting(): boolean {
+    return this.pointers.size > 0;
   }
 
   /** True while anything moves on its own (fly-to, glide, smooth zoom). */
@@ -589,7 +623,7 @@ export class CampusCameraController {
       this.transitionDuration = options.duration;
     } else {
       // Scale with how far the view travels on screen: short hops are quick.
-      const rect = this.domElement.getBoundingClientRect();
+      const rect = this.rect();
       const unitsPerPixel = (this.camera.top - this.camera.bottom) / (Math.max(1, rect.height) * this.state.zoom);
       const travelPx = this.transitionStart.target.distanceTo(this.transitionEnd.target) / unitsPerPixel;
       const zoomSteps = Math.abs(Math.log(this.transitionEnd.zoom / this.transitionStart.zoom));
