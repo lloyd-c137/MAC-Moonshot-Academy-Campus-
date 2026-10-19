@@ -7,6 +7,8 @@ import { FindMySpotModal } from './components/ui/FindMySpotModal';
 import { AddMomentModal } from './components/ui/AddMomentModal';
 import { GeometryReviewDrawer } from './components/ui/GeometryReviewDrawer';
 import { RoutePanel, type RouteField } from './components/ui/RoutePanel';
+import { RouteGuidance } from './components/ui/RouteGuidance';
+import { routeNames } from './components/ui/routeText';
 import { useWalkRoute } from './services/useWalkRoute';
 import { ToastProvider, useToast } from './components/ui/Toast';
 
@@ -67,7 +69,25 @@ function CampusApp() {
   const [routeFrameNonce, setRouteFrameNonce] = useState(0);
   const routeOpen = leftPanel === 'route';
   const walk = useWalkRoute(routeOpen, routeFrom, routeTo);
-  useEffect(() => { if (walk.route) setRouteFrameNonce((n) => n + 1); }, [walk.route]);
+  // Step-by-step guidance: the step the walker is at, or null for the route overview.
+  const [guideStep, setGuideStep] = useState<number | null>(null);
+  const [guidePeek, setGuidePeek] = useState(false); // whole route in view while guiding
+  const guiding = routeOpen && guideStep !== null && walk.route !== null && walk.steps.length > 1;
+  const reframe = useCallback(() => setRouteFrameNonce((n) => n + 1), []);
+  useEffect(() => { setGuideStep(null); if (walk.route) reframe(); }, [walk.route, reframe]);
+  useEffect(() => { if (!routeOpen) setGuideStep(null); }, [routeOpen]);
+  const lastStep = Math.max(0, walk.steps.length - 1);
+  const goToStep = useCallback((k: number | null) => {
+    setGuideStep(k === null ? null : Math.max(0, Math.min(lastStep, k)));
+    setGuidePeek(false);
+    setSelectedSpaceId(null);
+    setPickField(null);
+    reframe();
+  }, [lastStep, reframe]);
+  const spaceById = useMemo(() => new Map(spaces.map((s) => [s.id, s])), [spaces]);
+  const names = useMemo(() => routeNames(spaceById, routeFrom, routeTo), [spaceById, routeFrom, routeTo]);
+  // The landmark of the upcoming turn is highlighted on the map.
+  const guideLandmark = guiding && guideStep !== null ? walk.steps[guideStep + 1]?.landmarkId ?? null : null;
   useEffect(() => {
     const url = new URL(window.location.href);
     const set = (key: string, value: string | null) => (value && routeOpen ? url.searchParams.set(key, value) : url.searchParams.delete(key));
@@ -156,14 +176,22 @@ function CampusApp() {
   // Escape closes the topmost layer first. Dialogs handle their own Escape.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || findOpen || momentSpaceId) return;
-      if (leftPanel === 'route' && pickField) setPickField(null);
+      if (findOpen || momentSpaceId) return;
+      const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes((event.target as HTMLElement).tagName);
+      if (guiding && !typing && (event.key === 'ArrowRight' || event.key === 'ArrowLeft')) {
+        event.preventDefault();
+        goToStep((guideStep ?? 0) + (event.key === 'ArrowRight' ? 1 : -1));
+        return;
+      }
+      if (event.key !== 'Escape') return;
+      if (guiding) goToStep(null);
+      else if (leftPanel === 'route' && pickField) setPickField(null);
       else if (leftPanel !== 'none') closeRoute();
       else setSelectedSpaceId(null);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [findOpen, momentSpaceId, leftPanel, pickField, closeRoute]);
+  }, [findOpen, momentSpaceId, leftPanel, pickField, closeRoute, guiding, guideStep, goToStep]);
 
   return (
     <main className="relative h-dvh w-screen overflow-hidden bg-regolith text-ink">
@@ -174,9 +202,13 @@ function CampusApp() {
         <CampusCanvas
           layerMode={layerMode}
           selectedSpaceId={selectedSpaceId}
-          hoveredSpaceId={hoveredSpaceId}
+          hoveredSpaceId={guideLandmark ?? hoveredSpaceId}
           route={walk.route}
+          routeSteps={walk.steps}
+          routeStep={guiding ? guideStep : null}
           routeFrameNonce={routeFrameNonce}
+          guiding={guiding}
+          routeOverview={guiding && guidePeek}
           reviewMode={leftPanel === 'review'}
           showNavGraph={false}
           showGrid={showGrid}
@@ -190,6 +222,7 @@ function CampusApp() {
         </Suspense>
       </div>
 
+      {!guiding && <>
       <TopNav
         spaces={spaces}
         events={CAMPUS_EVENTS}
@@ -211,9 +244,25 @@ function CampusApp() {
         onToggleGrid={() => setShowGrid((v) => !v)}
         onToggleSourceOverlay={() => setShowSourceOverlay((v) => !v)}
       />
+      </>}
+
+      {guiding && guideStep !== null && (
+        <RouteGuidance
+          steps={walk.steps}
+          index={guideStep}
+          names={names}
+          onPrev={() => goToStep(guideStep - 1)}
+          onNext={() => goToStep(guideStep + 1)}
+          onEnd={() => goToStep(null)}
+          overview={guidePeek}
+          onOverview={() => { setGuidePeek((v) => !v); reframe(); }}
+          onRecenter={() => { setGuidePeek(false); reframe(); }}
+          onShowDestination={() => { const id = routeTo; closeRoute(); if (id) setSelectedSpaceId(id); }}
+        />
+      )}
 
       <RoutePanel
-        isOpen={routeOpen}
+        isOpen={routeOpen && !guiding}
         spaces={spaces}
         routableIds={walk.routableIds}
         fromId={routeFrom}
@@ -225,7 +274,8 @@ function CampusApp() {
         onPickField={setPickField}
         onChange={setRouteEnd}
         onSwap={() => { setRouteFrom(routeTo); setRouteTo(routeFrom); }}
-        onFrameRoute={() => setRouteFrameNonce((n) => n + 1)}
+        onFrameRoute={reframe}
+        onStartGuidance={(k) => goToStep(k ?? 0)}
         onClose={closeRoute}
       />
 
@@ -245,13 +295,13 @@ function CampusApp() {
         refreshingEnvironment={selectedSpaceId ? refreshingSensors.has(selectedSpaceId) : false}
       />
 
-      <BottomDiscoverDock
+      {!guiding && <BottomDiscoverDock
         events={CAMPUS_EVENTS}
         spaces={spaces}
         compact={selectedSpaceId !== null}
         onSelectSpace={selectSpace}
         onOpenFindSpot={() => setFindOpen(true)}
-      />
+      />}
 
       <FindMySpotModal isOpen={findOpen} onClose={() => setFindOpen(false)} onSelectSpace={selectSpace} />
 

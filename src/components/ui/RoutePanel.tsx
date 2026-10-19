@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDownUp, CornerUpLeft, CornerUpRight, Loader2, LocateFixed, MapPin, Maximize2, Navigation, Search, X } from 'lucide-react';
+import { ArrowDownUp, Loader2, LocateFixed, MapPin, Maximize2, Navigation, Search, X } from 'lucide-react';
+import { ManeuverIcon, glyphOf } from './RouteGuidance';
+import { routeNames, spaced, stepText, walkMinutes } from './routeText';
 import type { CampusSpace } from '../../types/campus';
 import type { RouteStep, WalkRoute } from '../../services/pathfinding';
 import { displayCode, displayName } from './format';
@@ -22,6 +24,8 @@ interface RoutePanelProps {
   onChange: (field: RouteField, spaceId: string | null) => void;
   onSwap: () => void;
   onFrameRoute: () => void;
+  /** Start step-by-step guidance (optionally at a given step). */
+  onStartGuidance: (step?: number) => void;
   onClose: () => void;
 }
 
@@ -149,30 +153,16 @@ const FieldRow: React.FC<{
   );
 };
 
-/** Space between Chinese text and a name that starts or ends with a room code (到达 M123 教室). */
-const spaced = (name: string) => `${/^[A-Za-z0-9]/.test(name) ? ' ' : ''}${name}${/[A-Za-z0-9]$/.test(name) ? ' ' : ''}`;
-
-function stepText(step: RouteStep, nameOf: (id: string) => string, toName: string, fromName: string): string {
-  const m = Math.max(1, Math.round(step.afterM));
-  if (step.kind === 'start') return `从${spaced(fromName)}出发`;
-  if (step.kind === 'arrive') return `再走 ${m} 米到达${spaced(toName)}`.trimEnd();
-  const turn = step.kind === 'left' ? '左转' : '右转';
-  return `走 ${m} 米，${step.landmarkId ? `在${spaced(nameOf(step.landmarkId))}附近` : ''}${turn}`;
-}
-
 export const RoutePanel: React.FC<RoutePanelProps> = ({
   isOpen, spaces, routableIds, fromId, toId, pickField, status, route, steps,
-  onPickField, onChange, onSwap, onFrameRoute, onClose,
+  onPickField, onChange, onSwap, onFrameRoute, onStartGuidance, onClose,
 }) => {
   const byId = useMemo(() => new Map(spaces.map((s) => [s.id, s])), [spaces]);
   const options = useMemo(() => (routableIds ? spaces.filter((s) => routableIds.has(s.id)) : []), [spaces, routableIds]);
   if (!isOpen) return null;
 
-  const nameOf = (id: string) => {
-    const code = displayCode(id);
-    const name = placeName(byId.get(id), id);
-    return code && name !== code ? `${code} ${name}` : name;
-  };
+  const names = routeNames(byId, fromId, toId);
+  const nameOf = names.nameOf;
   const choose = (field: RouteField, id: string) => onChange(field, id);
 
   return (
@@ -241,24 +231,41 @@ export const RoutePanel: React.FC<RoutePanelProps> = ({
           <div className="mt-5">
             <div className="flex items-end justify-between gap-3">
               <p className="text-ink">
-                <span className="text-[28px] font-semibold leading-none tracking-[-0.02em]">{Math.round(route.lengthM)}</span>
-                <span className="ml-1 text-[13px] text-crater">米</span>
-                <span className="ml-3 text-[14px] text-ink-soft">步行约 {route.minutes} 分钟</span>
+                <span className="text-[28px] font-semibold leading-none tracking-[-0.02em]">{walkMinutes(route.lengthM)}</span>
+                <span className="ml-1 text-[13px] text-crater">分钟</span>
+                <span className="ml-3 text-[14px] text-ink-soft">{Math.round(route.lengthM)} 米</span>
               </p>
               <button type="button" onClick={onFrameRoute} className="flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium text-crater hover:bg-white hover:text-ink">
                 <Maximize2 className="h-3.5 w-3.5" />看全程
               </button>
             </div>
 
-            <ol className="mt-4 space-y-2.5 border-t hairline pt-4">
+            <button
+              type="button"
+              onClick={() => onStartGuidance(0)}
+              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-flare text-[15px] font-semibold text-white shadow-[0_12px_28px_-14px_rgb(211_84_0/0.9)] hover:bg-ember"
+            >
+              <Navigation className="h-4 w-4" />开始导航
+            </button>
+
+            <ol className="mt-5 border-t hairline pt-2" aria-label="路线步骤，点一步从那里开始导航">
               {steps.map((step, i) => {
-                const Icon = step.kind === 'left' ? CornerUpLeft : step.kind === 'right' ? CornerUpRight : MapPin;
+                const text = stepText(step, names);
                 return (
-                  <li key={i} className="flex items-start gap-3 text-[13.5px] leading-snug text-ink-soft">
-                    {step.kind === 'start'
-                      ? <span className="mt-[3px] h-[13px] w-[13px] shrink-0 rounded-full border-[3px] border-ink bg-white" />
-                      : <Icon className={`mt-px h-4 w-4 shrink-0 ${step.kind === 'arrive' ? 'text-flare' : 'text-ink'}`} />}
-                    <span>{stepText(step, nameOf, nameOf(toId), nameOf(fromId))}</span>
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => onStartGuidance(Math.min(i, steps.length - 2))}
+                      className="group -mx-2 flex w-[calc(100%+1rem)] items-start gap-3 rounded-[12px] px-2 py-2 text-left hover:bg-white/70"
+                    >
+                      <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${step.kind === 'arrive' ? 'bg-flare text-white' : step.kind === 'depart' ? 'bg-ink text-white' : 'bg-white text-ink'}`}>
+                        {step.kind === 'arrive' ? <MapPin className="h-3.5 w-3.5" /> : <ManeuverIcon kind={glyphOf(step)} className="h-4 w-4" />}
+                      </span>
+                      <span className="min-w-0 flex-1 pt-[3px]">
+                        <span className="block text-[13.5px] font-medium leading-snug text-ink">{text.primary}</span>
+                        {text.secondary && <span className="mt-0.5 block text-[12px] text-crater">{text.secondary}</span>}
+                      </span>
+                    </button>
                   </li>
                 );
               })}

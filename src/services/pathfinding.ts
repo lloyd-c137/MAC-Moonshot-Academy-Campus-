@@ -283,57 +283,178 @@ export function findRoute(grid: NavGrid, fromId: string, toId: string): WalkRout
   };
 }
 
+export type TurnKind = 'straight' | 'slight-left' | 'slight-right' | 'left' | 'right' | 'sharp-left' | 'sharp-right' | 'uturn';
+export type Compass = '北' | '东北' | '东' | '东南' | '南' | '西南' | '西' | '西北';
+export type LegArea = 'ring' | 'court' | null;
+
 export interface RouteStep {
-  kind: 'start' | 'left' | 'right' | 'arrive';
-  /** Metres walked since the previous step. */
-  afterM: number;
+  kind: 'depart' | 'turn' | 'arrive';
+  /** Direction change at this point (turn steps). */
+  turn?: TurnKind;
+  /** Index into route.points where this step happens. */
+  pointIndex: number;
+  at: [number, number];
+  /** Metres from this step to the next one (0 for arrive). */
+  legM: number;
+  /** Metres from here to the destination. */
+  remainingM: number;
   /** Room near the turn, when one is close enough to recognise. */
   landmarkId?: string;
+  /** Depart: compass heading of the first leg (x east, z south). */
+  heading?: Compass;
+  /** Named stretch the leg after this step mostly follows. */
+  area?: LegArea;
+  /** Turn right after leaving the start room / right before entering the destination. */
+  leavingStart?: boolean;
+  enteringDestination?: boolean;
 }
 
-const TURN_DEG = 35;
 const LANDMARK_M = 7;
+const DOOR_M = 6;
+const MERGE_M = 9;
+/** Ring corridor around the arena (from the walking grid: fully walkable bands at these radii). */
+const ARENA_CENTRE: [number, number] = [-8.4, -2.85];
+const RING_BAND: [number, number] = [27, 35.5];
+const COURT_BAND: [number, number] = [12, 17];
+
+function classifyTurn(deg: number): TurnKind {
+  const a = Math.abs(deg);
+  const side = deg > 0 ? 'right' : 'left';
+  if (a < 28) return 'straight';
+  if (a < 60) return `slight-${side}` as TurnKind;
+  if (a < 135) return side;
+  if (a < 165) return `sharp-${side}` as TurnKind;
+  return 'uturn';
+}
+
+function compass(dx: number, dz: number): Compass {
+  // x east, z south; 0 = north, clockwise.
+  const bearing = (Math.atan2(dx, -dz) * 180) / Math.PI;
+  const names: Compass[] = ['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
+  return names[(Math.round(bearing / 45) + 8) % 8];
+}
+
+/** Which named stretch a leg (a polyline) mostly follows, sampled every metre. */
+function legArea(a: [number, number], b: [number, number], poly: [number, number][] = [a, b]): LegArea {
+  let ring = 0, court = 0, n = 0;
+  for (let i = 1; i < poly.length; i++) {
+    const [x0, z0] = poly[i - 1], [x1, z1] = poly[i];
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const parts = Math.max(1, Math.round(len));
+    for (let k = 0; k < parts; k++) {
+      const x = x0 + ((x1 - x0) * k) / parts, z = z0 + ((z1 - z0) * k) / parts;
+      const r = Math.hypot(x - ARENA_CENTRE[0], z - ARENA_CENTRE[1]);
+      n++;
+      if (r >= RING_BAND[0] && r <= RING_BAND[1]) ring++;
+      if (r >= COURT_BAND[0] && r <= COURT_BAND[1]) court++;
+    }
+  }
+  if (n < 8) return null;
+  if (ring / n >= 0.75) return 'ring';
+  if (court / n >= 0.75) return 'court';
+  return null;
+}
 
 /**
- * Turn-by-turn steps: every bend sharper than TURN_DEG becomes a left / right turn,
- * named after the nearest room (other than the start and destination) within LANDMARK_M.
- * x is east and z is south, so with north up a positive cross product is a right turn.
+ * Maneuvers along the straightened route: depart, every bend of at least 28°
+ * (classified slight / turn / sharp / u-turn and named after the nearest room
+ * within LANDMARK_M), and arrive. x is east and z is south, so with north up a
+ * positive cross product is a right turn. A short jog (left then right within a
+ * few metres) reads as going straight on.
  */
 export function describeRoute(grid: NavGrid, route: WalkRoute, isLandmark: (id: string) => boolean): RouteStep[] {
   const pts = route.points;
-  const steps: RouteStep[] = [{ kind: 'start', afterM: 0 }];
+  const cum = [0];
+  for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
+  const total = cum[cum.length - 1];
   const landmarks: [string, number, number][] = [];
   for (const [id, i] of grid.anchors) {
     if (id === route.fromId || id === route.toId || !isLandmark(id)) continue;
     landmarks.push([id, grid.x0 + ((i % grid.w) + 0.5) * grid.cellM, grid.z0 + (((i / grid.w) | 0) + 0.5) * grid.cellM]);
   }
-  let walked = 0;
-  for (let k = 1; k < pts.length; k++) {
-    const [ax, az] = pts[k - 1];
-    const [bx, bz] = pts[k];
-    walked += Math.hypot(bx - ax, bz - az);
-    if (k === pts.length - 1) break;
-    const [cx, cz] = pts[k + 1];
-    const v1x = bx - ax, v1z = bz - az, v2x = cx - bx, v2z = cz - bz;
-    const angle = (Math.atan2(v1x * v2z - v1z * v2x, v1x * v2x + v1z * v2z) * 180) / Math.PI;
-    if (Math.abs(angle) < TURN_DEG || walked < 2) continue;
-    let landmarkId: string | undefined;
+  const nearestLandmark = (x: number, z: number) => {
     let best = LANDMARK_M;
-    for (const [id, x, z] of landmarks) {
-      const d = Math.hypot(x - bx, z - bz);
-      if (d < best) { best = d; landmarkId = id; }
+    let id: string | undefined;
+    for (const [lid, lx, lz] of landmarks) {
+      const d = Math.hypot(lx - x, lz - z);
+      if (d < best) { best = d; id = lid; }
     }
-    const kind = angle > 0 ? 'right' : 'left';
-    const prev = steps[steps.length - 1];
-    if (walked < 3 && (prev.kind === 'left' || prev.kind === 'right') && prev.kind !== kind) {
-      // A short jog (left then right within a few metres) reads as going straight on.
-      steps.pop();
-      walked += prev.afterM;
+    return id;
+  };
+
+  // Bends at each vertex, then merge consecutive same-side bends a few metres apart:
+  // a straightened 90° corner often comes out as two 45° bends.
+  const bends: { k: number; deg: number }[] = [];
+  for (let k = 1; k < pts.length - 1; k++) {
+    const [ax, az] = pts[k - 1], [bx, bz] = pts[k], [cx, cz] = pts[k + 1];
+    const v1x = bx - ax, v1z = bz - az, v2x = cx - bx, v2z = cz - bz;
+    const deg = (Math.atan2(v1x * v2z - v1z * v2x, v1x * v2x + v1z * v2z) * 180) / Math.PI;
+    if (Math.abs(deg) >= 8) bends.push({ k, deg });
+  }
+  const groups: { k: number; deg: number; peak: number }[] = [];
+  for (const bend of bends) {
+    const g = groups[groups.length - 1];
+    if (g && Math.sign(g.deg) === Math.sign(bend.deg) && cum[bend.k] - cum[g.k] < MERGE_M) {
+      g.deg += bend.deg;
+      if (Math.abs(bend.deg) > g.peak) { g.peak = Math.abs(bend.deg); g.k = bend.k; }
       continue;
     }
-    steps.push({ kind, afterM: walked, landmarkId });
-    walked = 0;
+    groups.push({ k: bend.k, deg: bend.deg, peak: Math.abs(bend.deg) });
   }
-  steps.push({ kind: 'arrive', afterM: walked });
+  const turns: { k: number; turn: TurnKind }[] = [];
+  let lastK = 0;
+  for (const g of groups) {
+    const turn = classifyTurn(g.deg);
+    if (turn === 'straight') continue;
+    const prev = turns[turns.length - 1];
+    const sideOf = (t: TurnKind) => (t.includes('left') ? 'left' : t.includes('right') ? 'right' : 'u');
+    if (prev && cum[g.k] - cum[prev.k] < 3 && sideOf(prev.turn) !== sideOf(turn) && sideOf(turn) !== 'u') {
+      turns.pop(); // jog: cancels out
+      continue;
+    }
+    if (cum[g.k] < 1.5 || total - cum[g.k] < 1.5 || g.k <= lastK) continue; // inside the start / end cell cluster
+    turns.push({ k: g.k, turn });
+    lastK = g.k;
+  }
+
+  // Slight bends at the corners of the octagonal ring corridor are the corridor, not turns.
+  for (let changed = true; changed;) {
+    changed = false;
+    for (let n = 0; n < turns.length; n++) {
+      if (!turns[n].turn.startsWith('slight')) continue;
+      const before = n === 0 ? 0 : turns[n - 1].k;
+      const after = n === turns.length - 1 ? pts.length - 1 : turns[n + 1].k;
+      if (legArea(pts[before], pts[turns[n].k], pts.slice(before, turns[n].k + 1)) === 'ring'
+        && legArea(pts[turns[n].k], pts[after], pts.slice(turns[n].k, after + 1)) === 'ring') {
+        turns.splice(n, 1);
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  const [dx, dz] = [pts[Math.min(1, pts.length - 1)][0] - pts[0][0], pts[Math.min(1, pts.length - 1)][1] - pts[0][1]];
+  const points = [0, ...turns.map((t) => t.k), pts.length - 1];
+  const steps: RouteStep[] = points.map((k, n) => {
+    const next = points[n + 1];
+    const step: RouteStep = {
+      kind: n === 0 ? 'depart' : n === points.length - 1 ? 'arrive' : 'turn',
+      pointIndex: k,
+      at: pts[k],
+      legM: next === undefined ? 0 : cum[next] - cum[k],
+      remainingM: total - cum[k],
+      area: next === undefined ? null : legArea(pts[k], pts[next], pts.slice(k, next + 1)),
+    };
+    if (step.kind === 'turn') {
+      step.turn = turns[n - 1].turn;
+      step.landmarkId = nearestLandmark(pts[k][0], pts[k][1]);
+    }
+    return step;
+  });
+  steps[0].heading = compass(dx, dz);
+  const startIsRoom = !route.fromId.startsWith('ENTRANCE-');
+  if (startIsRoom && steps.length > 2 && steps[1].kind === 'turn' && cum[steps[1].pointIndex] <= DOOR_M) steps[1].leavingStart = true;
+  const last = steps[steps.length - 2];
+  if (last && last.kind === 'turn' && last.legM <= DOOR_M) last.enteringDestination = true;
   return steps;
 }

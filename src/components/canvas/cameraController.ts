@@ -598,6 +598,55 @@ export class CampusCameraController {
     this.startTransition({ ...this.state, target, zoom, viewMode: mode, polar, azimuth });
   }
 
+  /**
+   * Fit a set of ground points into the uncovered part of the screen, optionally turning
+   * the view (heading-up navigation) and tilting into 2.5D. Extents are measured along the
+   * screen axes of the target heading, so a long corridor fills the view.
+   */
+  public framePoints(
+    points: [number, number][],
+    inset: { left?: number; right?: number; top?: number; bottom?: number } = {},
+    options: { azimuth?: number; viewMode?: ViewMode; polar?: number; maxZoom?: number; minSpanM?: number; duration?: number } = {},
+  ) {
+    if (!points.length) return;
+    this.haltMotion();
+    const rect = this.rect();
+    const left = inset.left ?? 0, right = inset.right ?? 0, top = inset.top ?? 0, bottom = inset.bottom ?? 0;
+    const usableW = Math.max(120, rect.width - left - right);
+    const usableH = Math.max(120, rect.height - top - bottom);
+    const mode = options.viewMode ?? this.transitionEnd?.viewMode ?? this.state.viewMode;
+    const polar = mode === 'plan' ? PLAN_POLAR : (options.polar ?? (this.state.viewMode === 'explore' ? (this.transitionEnd?.polar ?? this.state.polar) : this.explorePolar));
+    let azimuth = this.transitionEnd?.azimuth ?? this.state.azimuth;
+    if (options.azimuth !== undefined) {
+      // Turn the short way round from the current heading.
+      const delta = Math.atan2(Math.sin(options.azimuth - this.state.azimuth), Math.cos(options.azimuth - this.state.azimuth));
+      azimuth = this.state.azimuth + delta;
+    }
+    if (mode === 'explore') { this.explorePolar = polar; this.exploreAzimuth = azimuth; }
+    const screenRight = new THREE.Vector3(Math.cos(azimuth), 0, -Math.sin(azimuth));
+    const away = new THREE.Vector3(-Math.sin(azimuth), 0, -Math.cos(azimuth));
+    let minR = Infinity, maxR = -Infinity, minU = Infinity, maxU = -Infinity;
+    for (const [x, z] of points) {
+      const r = x * screenRight.x + z * screenRight.z;
+      const u = x * away.x + z * away.z;
+      minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+      minU = Math.min(minU, u); maxU = Math.max(maxU, u);
+    }
+    const minSpan = options.minSpanM ?? 12;
+    const across = Math.max(minSpan, maxR - minR);
+    const foreshorten = mode === 'plan' ? 1 : Math.cos(polar);
+    const deep = Math.max(minSpan, maxU - minU) * foreshorten;
+    const viewW = (this.camera.right - this.camera.left) * (usableW / rect.width);
+    const viewH = (this.camera.top - this.camera.bottom) * (usableH / rect.height);
+    const zoom = THREE.MathUtils.clamp(Math.min(viewW / across, viewH / deep) * 0.84, MIN_ZOOM, Math.min(MAX_ZOOM, options.maxZoom ?? 3.2));
+    const unitsPerPixel = (this.camera.top - this.camera.bottom) / (rect.height * zoom);
+    const midR = (minR + maxR) / 2, midU = (minU + maxU) / 2;
+    const target = new THREE.Vector3()
+      .addScaledVector(screenRight, midR + ((right - left) / 2) * unitsPerPixel)
+      .addScaledVector(away, midU - (((bottom - top) / 2) * unitsPerPixel) / Math.max(0.3, foreshorten));
+    this.startTransition({ ...this.state, target, zoom, viewMode: mode, polar, azimuth }, options.duration !== undefined ? { duration: options.duration, ease: easeInOutCubic } : {});
+  }
+
   public resetView() {
     const mode = this.transitionEnd?.viewMode ?? this.state.viewMode;
     this.glide.active = false;

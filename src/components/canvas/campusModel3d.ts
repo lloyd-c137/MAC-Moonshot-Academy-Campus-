@@ -166,6 +166,13 @@ export interface CampusScene {
   setDetailVisible: (visible: boolean) => void;
   /** Adds the floor detail lines once they arrive. */
   addFloorDetail: (detail: CampusDetailData) => void;
+  /**
+   * Wall height as a fraction of full height. Routes lower the walls (as indoor maps draw
+   * walls as low extrusions) so a path down a corridor is not hidden in the tilted view.
+   */
+  setWallHeight: (fraction: number) => void;
+  /** True while walls are changing height (the shadow map must follow). */
+  readonly wallsMoving: boolean;
   /** Advances colour transitions; returns true while something is still animating. */
   tick: (dtMs: number) => boolean;
   dispose: () => void;
@@ -276,6 +283,8 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
 
   let selected: string | null = null;
   let hovered: string | null = null;
+  let wallScale = 1;
+  let wallTarget = 1;
   const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const flare = new THREE.Color(COLORS.selected);
   const hoverTint = new THREE.Color(COLORS.hovered);
@@ -324,8 +333,22 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
       hovered = hoveredId;
       applyColors(false);
     },
+    setWallHeight(fraction) {
+      wallTarget = THREE.MathUtils.clamp(fraction, 0.05, 1);
+      if (reduceMotion) { wallScale = wallTarget; walls.scale.y = glass.scale.y = wallScale; }
+    },
+    get wallsMoving() {
+      return wallScale !== wallTarget;
+    },
     tick(dtMs) {
-      if (!animating) return false;
+      let moving = false;
+      if (wallScale !== wallTarget) {
+        wallScale += (wallTarget - wallScale) * (1 - Math.exp(-dtMs / 110));
+        if (Math.abs(wallTarget - wallScale) < 0.004) wallScale = wallTarget;
+        walls.scale.y = glass.scale.y = wallScale;
+        moving = true;
+      }
+      if (!animating) return moving;
       const k = 1 - Math.exp(-dtMs / 90);
       let pending = false;
       for (const mesh of roomMeshes.values()) {

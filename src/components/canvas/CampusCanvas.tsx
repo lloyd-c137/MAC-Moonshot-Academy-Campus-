@@ -3,8 +3,8 @@ import * as THREE from 'three';
 import { CAMPUS_SPACES } from '../../data/floorplanData';
 import { CAMPUS_EVENTS } from '../../data/mockEvents';
 import { CampusSpace, MapLayerMode } from '../../types/campus';
-import type { WalkRoute } from '../../services/pathfinding';
-import { buildRouteObject, disposeObject } from './routeLayer';
+import type { RouteStep, WalkRoute } from '../../services/pathfinding';
+import { RouteLayer } from './routeLayer';
 import { planToWorld, SPATIAL_PLAN } from '../../data/spatialPlan';
 import { CampusCameraController, ViewMode } from './cameraController';
 import { buildCampusScene, CampusModelRoom, CampusScene, ROOM_KIND_STYLE } from './campusModel3d';
@@ -19,7 +19,14 @@ interface CampusCanvasProps {
   hoveredSpaceId: string | null;
   /** Walking route to draw; the camera frames it whenever routeFrameNonce changes. */
   route?: WalkRoute | null;
+  routeSteps?: RouteStep[];
+  /** Step-by-step guidance: the step the walker is at (null = route overview). */
+  routeStep?: number | null;
   routeFrameNonce?: number;
+  /** Guidance hides the map's own controls on small screens. */
+  guiding?: boolean;
+  /** While guiding, frame the whole route instead of the current leg. */
+  routeOverview?: boolean;
   reviewMode: boolean;
   showNavGraph: boolean;
   showGrid: boolean;
@@ -36,6 +43,8 @@ interface CampusCanvasProps {
 const STATIC_SPACES = new Map(CAMPUS_SPACES.map((space) => [space.id, space]));
 const NO_DATA = parseInt(NO_DATA_COLOR.slice(1), 16);
 const LABEL_ZOOM = 1.55;
+/** Wall height (fraction of 2.8 m) while a route is shown. */
+const ROUTE_WALL_HEIGHT = 0.32;
 
 /** Room colour per map layer; rooms a data layer knows nothing about stay neutral. */
 function roomColor(room: CampusModelRoom, mode: MapLayerMode, spaces: Map<string, CampusSpace>): number {
@@ -94,7 +103,11 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   spaces,
   onOpenReview,
   route = null,
+  routeSteps,
+  routeStep = null,
   routeFrameNonce = 0,
+  guiding = false,
+  routeOverview = false,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<CampusCameraController | null>(null);
@@ -102,7 +115,9 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   const overlayRef = useRef<THREE.Mesh | null>(null);
   const gridRef = useRef<THREE.GridHelper | null>(null);
   const threeSceneRef = useRef<THREE.Scene | null>(null);
-  const routeObjectRef = useRef<THREE.Group | null>(null);
+  const routeLayerRef = useRef<RouteLayer | null>(null);
+  const routeStepRef = useRef<number | null>(routeStep);
+  routeStepRef.current = routeStep;
   const labelsRef = useRef<RoomLabel[]>([]);
   const highlightRef = useRef<{ selected: string | null; hovered: string | null }>({ selected: null, hovered: null });
   // The scene is static: render only when the camera, highlight or a layer changes.
@@ -141,40 +156,81 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       narrow ? 0 : undefined, narrow ? height * 0.22 : 0);
   }, [selectedSpaceId, modelVersion]);
 
-  // Walking route: replace the drawn route whenever it changes.
+  // Walking route: rebuild the drawn route whenever it changes.
   useEffect(() => {
     const scene = threeSceneRef.current;
     if (!scene) return;
-    if (routeObjectRef.current) {
-      scene.remove(routeObjectRef.current);
-      disposeObject(routeObjectRef.current);
-      routeObjectRef.current = null;
+    if (routeLayerRef.current) {
+      scene.remove(routeLayerRef.current.group);
+      routeLayerRef.current.dispose();
+      routeLayerRef.current = null;
     }
+    // Low walls while a route is on the map, so corridors stay visible in 2.5D.
+    sceneRef.current?.setWallHeight(route ? ROUTE_WALL_HEIGHT : 1);
     if (route && route.points.length) {
-      const object = buildRouteObject(route.points);
-      scene.add(object);
-      routeObjectRef.current = object;
+      const layer = new RouteLayer(route.points, routeSteps ?? []);
+      layer.setProgress(routeStepRef.current);
+      scene.add(layer.group);
+      routeLayerRef.current = layer;
     }
     invalidateRef.current();
-  }, [route, modelVersion]);
+  }, [route, routeSteps, modelVersion]);
 
-  // Frame the whole route in the part of the map not covered by the route panel.
+  // Guidance progress restyles the route (walked / current / ahead, turn arrow).
+  useEffect(() => {
+    routeLayerRef.current?.setProgress(routeStep);
+    invalidateRef.current();
+  }, [routeStep]);
+
+  // Camera: overview frames the whole route beside the panel; guidance turns the map so the
+  // current leg points up the screen and frames it between the banner and the bottom bar.
   useEffect(() => {
     const controller = controllerRef.current;
     const container = mountRef.current;
     if (!route || !controller || !container || route.points.length === 0) return;
-    let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity;
-    for (const [x, z] of route.points) {
-      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-      minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
-    }
     const box = container.getBoundingClientRect();
-    const panel = document.querySelector('[data-route-panel]')?.getBoundingClientRect();
     const narrow = box.width < 768;
-    const inset = narrow
-      ? { top: panel ? panel.bottom - box.top + 12 : 80, bottom: 90, left: 16, right: 16 }
-      : { left: panel ? panel.right - box.left + 16 : 24, top: 80, bottom: 96, right: 88 };
-    controller.frameBounds({ minX, minZ, maxX, maxZ }, inset);
+    const steps = routeSteps ?? [];
+    const k = routeStep;
+    const banner = document.querySelector('[data-route-banner]')?.getBoundingClientRect();
+    const bar = document.querySelector('[data-route-bar]')?.getBoundingClientRect();
+    const guideInset = {
+      top: banner ? banner.bottom - box.top + 16 : 140,
+      bottom: bar ? box.bottom - bar.top + 16 : 150,
+      left: narrow ? 16 : 32,
+      right: narrow ? 16 : 96,
+    };
+    if (k === null || steps.length < 2 || routeOverview) {
+      const panel = document.querySelector('[data-route-panel]')?.getBoundingClientRect();
+      const inset = k !== null ? guideInset : narrow
+        ? { top: panel ? panel.bottom - box.top + 12 : 80, bottom: 90, left: 16, right: 16 }
+        : { left: panel ? panel.right - box.left + 16 : 24, top: 80, bottom: 96, right: 88 };
+      controller.framePoints(route.points, inset);
+      return;
+    }
+    const inset = guideInset;
+    const pts = route.points;
+    const last = steps.length - 1;
+    if (k >= last) {
+      // Arrived: the last few metres and the destination, keeping the current heading.
+      controller.framePoints(pts.slice(Math.max(0, steps[Math.max(0, last - 1)].pointIndex)), inset, { viewMode: 'explore', minSpanM: 16, maxZoom: 3.4 });
+      return;
+    }
+    const i0 = steps[k].pointIndex;
+    const i1 = steps[k + 1].pointIndex;
+    const leg = pts.slice(i0, i1 + 1);
+    // Show a little of what comes after the maneuver, so the turn is visible.
+    const after = pts[Math.min(pts.length - 1, i1 + 1)];
+    const end = pts[i1];
+    const look: [number, number] = (() => {
+      const dx = after[0] - end[0], dz = after[1] - end[1];
+      const len = Math.hypot(dx, dz);
+      return len > 0 ? [end[0] + (dx / len) * Math.min(5, len), end[1] + (dz / len) * Math.min(5, len)] : end;
+    })();
+    const [sx, sz] = pts[i0];
+    const hx = end[0] - sx, hz = end[1] - sz;
+    const azimuth = Math.atan2(-hx, -hz); // walking direction points up the screen
+    controller.framePoints([...leg, look], inset, { azimuth, viewMode: 'explore', polar: 0.82, minSpanM: 14, maxZoom: 3.6 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeFrameNonce, modelVersion]);
 
@@ -490,7 +546,9 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       frameId = 0;
       controller.update();
       const now = performance.now();
+      const wallsWereMoving = sceneRef.current?.wallsMoving ?? false;
       const fading = sceneRef.current?.tick(Math.min(64, now - lastFrame)) ?? false;
+      if (wallsWereMoving) sun.shadow.needsUpdate = true; // shadows follow the wall height
       lastFrame = now;
       if (fading) needsRender = true;
       if (needsRender) {
@@ -541,7 +599,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       labelsRef.current = [];
       overlayRef.current = null;
       gridRef.current = null;
-      if (routeObjectRef.current) { disposeObject(routeObjectRef.current); routeObjectRef.current = null; }
+      if (routeLayerRef.current) { routeLayerRef.current.dispose(); routeLayerRef.current = null; }
       threeSceneRef.current = null;
       sourceOverlay.geometry.dispose();
       sourceMaterial.map?.dispose();
@@ -570,7 +628,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
 
       {/* Map controls: view mode, zoom, framing. Shifts left of the detail sheet when it is open. */}
       <div
-        className={`absolute bottom-6 z-20 flex flex-col items-end gap-2 transition-[right] duration-500 ease-[var(--ease-orbit)] ${hasSelectedSpace ? 'right-6 lg:right-[27rem]' : 'right-6'} max-lg:bottom-auto max-lg:top-[8.5rem]`}
+        className={`absolute bottom-6 z-20 flex flex-col items-end gap-2 transition-[right] duration-500 ease-[var(--ease-orbit)] ${hasSelectedSpace ? 'right-6 lg:right-[27rem]' : 'right-6'} max-lg:bottom-auto max-lg:top-[8.5rem] ${guiding ? 'max-lg:hidden' : ''}`}
       >
         <div className="glass flex flex-col gap-0.5 rounded-[18px] p-1" role="group" aria-label="视角">
           {([['explore', '立体', Box], ['plan', '平面', Square]] as const).map(([mode, text, Icon]) => (
@@ -610,7 +668,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       </div>
 
       {/* Source of the model: quiet by default, details on request. */}
-      <div className="absolute bottom-6 left-6 z-20 max-md:hidden">
+      <div className={`absolute bottom-6 left-6 z-20 max-md:hidden ${guiding ? 'hidden' : ''}`}>
         {infoOpen && (
           <div className="glass animate-rise absolute bottom-12 left-0 w-80 rounded-[var(--radius-tile)] p-4 text-[13px] leading-relaxed text-ink-soft">
             <div className="flex items-start justify-between gap-3">
