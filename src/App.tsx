@@ -6,6 +6,8 @@ import { BottomDiscoverDock } from './components/ui/BottomDiscoverDock';
 import { FindMySpotModal } from './components/ui/FindMySpotModal';
 import { AddMomentModal } from './components/ui/AddMomentModal';
 import { GeometryReviewDrawer } from './components/ui/GeometryReviewDrawer';
+import { RoutePanel, type RouteField } from './components/ui/RoutePanel';
+import { useWalkRoute } from './services/useWalkRoute';
 import { ToastProvider, useToast } from './components/ui/Toast';
 
 // Heavy or rarely visited views are separate chunks: three.js ships with the map, not the shell.
@@ -29,13 +31,14 @@ import { displayName } from './components/ui/format';
 import { dismissBootSplash } from './bootSplash';
 import type { CampusMoment, MapLayerMode } from './types/campus';
 
-type LeftPanel = 'none' | 'review';
+type LeftPanel = 'none' | 'review' | 'route';
 const VALID_IDS = new Set(CAMPUS_SPACES.map((s) => s.id));
 
-const roomFromUrl = () => {
-  const id = new URLSearchParams(window.location.search).get('room');
+const idFromUrl = (key: string) => {
+  const id = new URLSearchParams(window.location.search).get(key);
   return id && VALID_IDS.has(id) ? id : null;
 };
+const roomFromUrl = () => idFromUrl('room');
 
 function CampusApp() {
   const toast = useToast();
@@ -46,7 +49,7 @@ function CampusApp() {
   const [layerMode, setLayerMode] = useState<MapLayerMode>('explore');
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(roomFromUrl);
   const [hoveredSpaceId, setHoveredSpaceId] = useState<string | null>(null);
-  const [leftPanel, setLeftPanel] = useState<LeftPanel>('none');
+  const [leftPanel, setLeftPanel] = useState<LeftPanel>(() => (idFromUrl('from') || idFromUrl('to') ? 'route' : 'none'));
   const [findOpen, setFindOpen] = useState(false);
   const [momentSpaceId, setMomentSpaceId] = useState<string | null>(null);
   const [showGrid, setShowGrid] = useState(false);
@@ -56,7 +59,44 @@ function CampusApp() {
   const [tabRequest, setTabRequest] = useState<{ tab: DetailTab; nonce: number } | null>(null);
 
   const selectedSpace = useMemo(() => spaces.find((s) => s.id === selectedSpaceId) ?? null, [spaces, selectedSpaceId]);
-  const selectSpace = useCallback((id: string | null) => setSelectedSpaceId(id), []);
+
+  // Routes: ?from= & ?to= in the address bar so a route can be shared.
+  const [routeFrom, setRouteFrom] = useState<string | null>(() => idFromUrl('from'));
+  const [routeTo, setRouteTo] = useState<string | null>(() => idFromUrl('to'));
+  const [pickField, setPickField] = useState<RouteField | null>(() => (idFromUrl('to') && !idFromUrl('from') ? 'from' : null));
+  const [routeFrameNonce, setRouteFrameNonce] = useState(0);
+  const routeOpen = leftPanel === 'route';
+  const walk = useWalkRoute(routeOpen, routeFrom, routeTo);
+  useEffect(() => { if (walk.route) setRouteFrameNonce((n) => n + 1); }, [walk.route]);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const set = (key: string, value: string | null) => (value && routeOpen ? url.searchParams.set(key, value) : url.searchParams.delete(key));
+    set('from', routeFrom);
+    set('to', routeTo);
+    if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
+  }, [routeFrom, routeTo, routeOpen]);
+
+  const setRouteEnd = useCallback((field: RouteField, id: string | null) => {
+    if (field === 'from') setRouteFrom(id); else setRouteTo(id);
+    // After choosing one end, move on to the other if it is still empty.
+    setPickField(id ? (field === 'from' ? (routeTo ? null : 'to') : (routeFrom ? null : 'from')) : field);
+  }, [routeFrom, routeTo]);
+  const openRoute = useCallback((field: RouteField, id: string) => {
+    setLeftPanel('route');
+    setSelectedSpaceId(null);
+    if (field === 'to') { setRouteTo(id); setPickField(routeFrom && routeFrom !== id ? null : 'from'); if (routeFrom === id) setRouteFrom(null); }
+    else { setRouteFrom(id); setPickField(routeTo && routeTo !== id ? null : 'to'); if (routeTo === id) setRouteTo(null); }
+  }, [routeFrom, routeTo]);
+  const closeRoute = useCallback(() => { setLeftPanel('none'); setPickField(null); }, []);
+
+  // While an end of the route is being picked, a click on the map fills it instead of opening the room.
+  const selectSpace = useCallback((id: string | null) => {
+    if (routeOpen && pickField) {
+      if (id) setRouteEnd(pickField, id);
+      return;
+    }
+    setSelectedSpaceId(id);
+  }, [routeOpen, pickField, setRouteEnd]);
 
   // Keep ?room= in the address bar so a room can be shared and Back returns to the previous room.
   const fromHistory = useRef(false);
@@ -117,12 +157,13 @@ function CampusApp() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || findOpen || momentSpaceId) return;
-      if (leftPanel !== 'none') setLeftPanel('none');
+      if (leftPanel === 'route' && pickField) setPickField(null);
+      else if (leftPanel !== 'none') closeRoute();
       else setSelectedSpaceId(null);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [findOpen, momentSpaceId, leftPanel]);
+  }, [findOpen, momentSpaceId, leftPanel, pickField, closeRoute]);
 
   return (
     <main className="relative h-dvh w-screen overflow-hidden bg-regolith text-ink">
@@ -134,7 +175,8 @@ function CampusApp() {
           layerMode={layerMode}
           selectedSpaceId={selectedSpaceId}
           hoveredSpaceId={hoveredSpaceId}
-          activeRoute={null}
+          route={walk.route}
+          routeFrameNonce={routeFrameNonce}
           reviewMode={leftPanel === 'review'}
           showNavGraph={false}
           showGrid={showGrid}
@@ -153,6 +195,8 @@ function CampusApp() {
         events={CAMPUS_EVENTS}
         onSelectSpace={selectSpace}
         onOpenFindSpot={() => setFindOpen(true)}
+        onOpenRoute={() => { setLeftPanel('route'); if (!routeFrom) setPickField('from'); else if (!routeTo) setPickField('to'); }}
+        routeOpen={routeOpen}
       />
 
       <LayerRail layerMode={layerMode} onLayerChange={setLayerMode} hideLegend={leftPanel !== 'none'} liveRoomIds={Object.entries(live).filter(([, r]) => r.latest).map(([id]) => id)} />
@@ -168,6 +212,23 @@ function CampusApp() {
         onToggleSourceOverlay={() => setShowSourceOverlay((v) => !v)}
       />
 
+      <RoutePanel
+        isOpen={routeOpen}
+        spaces={spaces}
+        routableIds={walk.routableIds}
+        fromId={routeFrom}
+        toId={routeTo}
+        pickField={pickField}
+        status={walk.status}
+        route={walk.route}
+        steps={walk.steps}
+        onPickField={setPickField}
+        onChange={setRouteEnd}
+        onSwap={() => { setRouteFrom(routeTo); setRouteTo(routeFrom); }}
+        onFrameRoute={() => setRouteFrameNonce((n) => n + 1)}
+        onClose={closeRoute}
+      />
+
       <ContextDetailPanel
         space={selectedSpace}
         events={CAMPUS_EVENTS}
@@ -178,6 +239,8 @@ function CampusApp() {
         onOpenAddMoment={(id) => setMomentSpaceId(id)}
         onLikeMoment={likeMoment}
         onShare={shareSpace}
+        onRouteTo={(id) => openRoute('to', id)}
+        onRouteFrom={(id) => openRoute('from', id)}
         onRefreshEnvironment={selectedSpaceId && live[selectedSpaceId] ? refreshEnvironment : undefined}
         refreshingEnvironment={selectedSpaceId ? refreshingSensors.has(selectedSpaceId) : false}
       />

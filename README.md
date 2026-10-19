@@ -10,7 +10,7 @@ Live sensor data and the admin panel (`/admin`): [`docs/ADMIN_AND_SENSORS.md`](d
 
 The main map (`/`) now renders a 3D model of FF-01 generated from the drawing itself: 159 wall bodies extruded from the CAD wall layers (existing walls, new partitions, architectural walls, shear walls / columns, with door openings kept where the CAD lines break), 182 glazing bodies, 93 clickable room floors from the V9 candidates, all 101 room labels with names read from the PDF label text, the Lotus Arena court and 572 seats as stepped tiers, plus furniture / door / stair lines on the floor. It supports 2.5D and 2D views, search-to-focus, room selection, layer colouring and a toggleable FF-01 overlay for comparison (关于地图 → 对照原图 → 叠加原图).
 
-Heights are illustrative (2.8 m walls; no section drawing), the outer slab is a derived closing of the wall union, and no room is DRAWING_VERIFIED. Indoor routing stays disabled.
+Heights are illustrative (2.8 m walls; no section drawing), the outer slab is a derived closing of the wall union, and no room is DRAWING_VERIFIED.
 
 ```sh
 npm run rebuild:campus-3d -- --pdf "/path/to/FF-01.pdf"   # writes src/generated/ff01-campus-{core,detail}.json + src/data/sourceRooms.ts
@@ -19,11 +19,22 @@ npm run validate:campus-3d
 
 See [`docs/CAMPUS_3D_MODEL.md`](docs/CAMPUS_3D_MODEL.md).
 
+## Routes (路线)
+
+Pick a start and a destination (top bar 路线, or 到这里去 / 从这里出发 in a room sheet, or click rooms on the map) and the map draws the walking route with distance, walking time and turn-by-turn directions. Routes are found with A* on a 0.2 m walking grid derived from the 3D wall, glazing and footprint geometry; links like `/?from=ENTRANCE-WEST&to=A106` open a route directly. Routes are estimates from the drawing: 9 door openings are inferred from the door layer, and doors are not verified as open. One floor only (FF-01).
+
+```sh
+npm run rebuild:nav-grid    # after rebuild:campus-3d; writes src/generated/ff01-nav-grid.json
+npm run validate:nav-grid
+```
+
+See [`docs/NAVIGATION.md`](docs/NAVIGATION.md).
+
 ## Current spatial status
 
 The repository includes a reproducible native-vector and CAD-layer extraction of the one-page FF-01 drawing (1:300, rotated PDF page), a complete inventory of 101 room-label IDs / 98 base room codes, and a calibrated full-sheet 2D source reference. All 33,355 original vectors join to PyMuPDF's CAD layer records with a maximum transformed bbox error of 0.0002 pt. The two overall axis/dimension-chain spans reconstruct within 0.01% of their printed values. Those spans are not the exterior building footprint.
 
-The PDF contains 126 CAD layers, including source-named existing walls, new partitions, structural fills, door leaves, stairs, seating and furniture. Layer association is verified; these categories do not by themselves prove room polygons, door openings, corridor topology or passability. The V3 hybrid pipeline emits six room-seeded candidates (M102, M103, M104, S208, S209, S210). V4 packages all 131 boundary edges with nearest CAD-layer/P-ID evidence and up to three conservative snap proposals per room. All six review packets are ready; 0/6 room geometries are independently verified and IoU is not measurable. M102 draft revision 5 remains preserved. Existing app polygons, wall segments, arena geometry and navigation connections remain illustrative or unverified. Source-plan mode displays the actual drawing; schematic 2.5D meshes, heatmap fills and navigation routes remain withheld until source geometry is independently checked. Indoor routing is temporarily unavailable.
+The PDF contains 126 CAD layers, including source-named existing walls, new partitions, structural fills, door leaves, stairs, seating and furniture. Layer association is verified; these categories do not by themselves prove room polygons, door openings, corridor topology or passability. The V3 hybrid pipeline emits six room-seeded candidates (M102, M103, M104, S208, S209, S210). V4 packages all 131 boundary edges with nearest CAD-layer/P-ID evidence and up to three conservative snap proposals per room. All six review packets are ready; 0/6 room geometries are independently verified and IoU is not measurable. M102 draft revision 5 remains preserved. Existing app polygons, wall segments, arena geometry and navigation connections remain illustrative or unverified. Source-plan mode displays the actual drawing; schematic 2.5D meshes, heatmap fills and navigation routes remain withheld until source geometry is independently checked.
 
 **Current status: PARTIAL. Do not treat the map as a completed digital twin or verified indoor navigation system.** See [`docs/SPATIAL_FIDELITY_AUDIT.md`](docs/SPATIAL_FIDELITY_AUDIT.md), [`docs/PILOT_FAILURE_ROOT_CAUSE.md`](docs/PILOT_FAILURE_ROOT_CAUSE.md), [`docs/PILOT_BOUNDARY_ERROR_AUDIT.md`](docs/PILOT_BOUNDARY_ERROR_AUDIT.md), [`docs/PILOT_GEOMETRY_VALIDATION.md`](docs/PILOT_GEOMETRY_VALIDATION.md), and [`docs/UPDATED_UNRESOLVED_GEOMETRY.md`](docs/UPDATED_UNRESOLVED_GEOMETRY.md).
 

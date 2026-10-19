@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Search, Sparkles, X } from 'lucide-react';
+import { CalendarDays, Navigation, Search, Sparkles, X } from 'lucide-react';
 import type { CampusEvent, CampusSpace } from '../../types/campus';
 import { displayCode, displayName } from './format';
 
@@ -8,6 +8,8 @@ interface TopNavProps {
   events: CampusEvent[];
   onSelectSpace: (spaceId: string) => void;
   onOpenFindSpot: () => void;
+  onOpenRoute?: () => void;
+  routeOpen?: boolean;
 }
 
 type Result =
@@ -53,7 +55,7 @@ function search(query: string, spaces: CampusSpace[], events: CampusEvent[]): Re
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
-  spaces, events, onSelectSpace, onOpenFindSpot,
+  spaces, events, onSelectSpace, onOpenFindSpot, onOpenRoute, routeOpen = false,
 }) => {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -166,6 +168,16 @@ export const TopNav: React.FC<TopNavProps> = ({
 
       {/* Actions */}
       <div className="pointer-events-auto flex shrink-0 items-center gap-2">
+        {onOpenRoute && (
+          <button
+            onClick={onOpenRoute}
+            aria-pressed={routeOpen}
+            className={`${capsuleButton} glass max-sm:w-11 max-sm:justify-center max-sm:px-0 ${routeOpen ? 'text-ember' : 'text-ink-soft hover:text-ink'}`}
+          >
+            <Navigation className="h-4 w-4" />
+            <span className="max-sm:sr-only">路线</span>
+          </button>
+        )}
         <button
           onClick={onOpenFindSpot}
           className={`${capsuleButton} bg-flare text-white shadow-[0_10px_24px_-10px_rgb(211_84_0/0.8)] hover:bg-ember max-sm:w-11 max-sm:justify-center max-sm:px-0`}

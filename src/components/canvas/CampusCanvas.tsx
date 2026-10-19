@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { CAMPUS_SPACES } from '../../data/floorplanData';
 import { CAMPUS_EVENTS } from '../../data/mockEvents';
-import { CampusSpace, MapLayerMode, NavigationRoute } from '../../types/campus';
+import { CampusSpace, MapLayerMode } from '../../types/campus';
+import type { WalkRoute } from '../../services/pathfinding';
+import { buildRouteObject, disposeObject } from './routeLayer';
 import { planToWorld, SPATIAL_PLAN } from '../../data/spatialPlan';
 import { CampusCameraController, ViewMode } from './cameraController';
 import { buildCampusScene, CampusModelRoom, CampusScene, ROOM_KIND_STYLE } from './campusModel3d';
@@ -15,7 +17,9 @@ interface CampusCanvasProps {
   layerMode: MapLayerMode;
   selectedSpaceId: string | null;
   hoveredSpaceId: string | null;
-  activeRoute: NavigationRoute | null;
+  /** Walking route to draw; the camera frames it whenever routeFrameNonce changes. */
+  route?: WalkRoute | null;
+  routeFrameNonce?: number;
   reviewMode: boolean;
   showNavGraph: boolean;
   showGrid: boolean;
@@ -89,12 +93,16 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   onHoverSpace,
   spaces,
   onOpenReview,
+  route = null,
+  routeFrameNonce = 0,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<CampusCameraController | null>(null);
   const sceneRef = useRef<CampusScene | null>(null);
   const overlayRef = useRef<THREE.Mesh | null>(null);
   const gridRef = useRef<THREE.GridHelper | null>(null);
+  const threeSceneRef = useRef<THREE.Scene | null>(null);
+  const routeObjectRef = useRef<THREE.Group | null>(null);
   const labelsRef = useRef<RoomLabel[]>([]);
   const highlightRef = useRef<{ selected: string | null; hovered: string | null }>({ selected: null, hovered: null });
   // The scene is static: render only when the camera, highlight or a layer changes.
@@ -132,6 +140,43 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     controllerRef.current.focusOnPosition(point.x, point.z, 2.4, // never zooms out (controller keeps a closer zoom)
       narrow ? 0 : undefined, narrow ? height * 0.22 : 0);
   }, [selectedSpaceId, modelVersion]);
+
+  // Walking route: replace the drawn route whenever it changes.
+  useEffect(() => {
+    const scene = threeSceneRef.current;
+    if (!scene) return;
+    if (routeObjectRef.current) {
+      scene.remove(routeObjectRef.current);
+      disposeObject(routeObjectRef.current);
+      routeObjectRef.current = null;
+    }
+    if (route && route.points.length) {
+      const object = buildRouteObject(route.points);
+      scene.add(object);
+      routeObjectRef.current = object;
+    }
+    invalidateRef.current();
+  }, [route, modelVersion]);
+
+  // Frame the whole route in the part of the map not covered by the route panel.
+  useEffect(() => {
+    const controller = controllerRef.current;
+    const container = mountRef.current;
+    if (!route || !controller || !container || route.points.length === 0) return;
+    let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity;
+    for (const [x, z] of route.points) {
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+    }
+    const box = container.getBoundingClientRect();
+    const panel = document.querySelector('[data-route-panel]')?.getBoundingClientRect();
+    const narrow = box.width < 768;
+    const inset = narrow
+      ? { top: panel ? panel.bottom - box.top + 12 : 80, bottom: 90, left: 16, right: 16 }
+      : { left: panel ? panel.right - box.left + 16 : 24, top: 80, bottom: 96, right: 88 };
+    controller.frameBounds({ minX, minZ, maxX, maxZ }, inset);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeFrameNonce, modelVersion]);
 
   // Selection / hover highlight.
   useEffect(() => {
@@ -187,6 +232,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     const height = container.clientHeight;
 
     const scene = new THREE.Scene();
+    threeSceneRef.current = scene;
     scene.background = null; // the page's moonlight gradient shows through
 
     const frustumSize = 180;
@@ -495,6 +541,8 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       labelsRef.current = [];
       overlayRef.current = null;
       gridRef.current = null;
+      if (routeObjectRef.current) { disposeObject(routeObjectRef.current); routeObjectRef.current = null; }
+      threeSceneRef.current = null;
       sourceOverlay.geometry.dispose();
       sourceMaterial.map?.dispose();
       sourceMaterial.dispose();
@@ -569,7 +617,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
               <p className="font-semibold text-ink">关于这张地图</p>
               <button onClick={() => setInfoOpen(false)} aria-label="关闭" className="-m-1 rounded-full p-1 text-dust hover:text-ink"><X className="h-4 w-4" /></button>
             </div>
-            <p className="mt-2">根据一层平面图（FF-01）生成。房间边界还在逐间核对，墙高是示意值。室内导航暂未开放。</p>
+            <p className="mt-2">根据一层平面图（FF-01）生成。房间边界还在逐间核对，墙高是示意值。路线按图纸推算，门禁和开放时间未核实。</p>
             <p className="mt-2 text-crater">拖动平移，滚轮缩放，右键拖动旋转，按 / 搜索。</p>
             {onOpenReview && (
               <button onClick={() => { setInfoOpen(false); onOpenReview(); }} className="mt-3 flex items-center gap-2 rounded-full border hairline bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink-soft hover:text-ink">

@@ -47,7 +47,7 @@ The logo is a set of translucent orange orbits overlapping a white disc, and the
 - **Layer rail (left):** 总览, 用途, 环境 (with 温度 / 湿度 / CO₂ inside the legend), 人流, 活动. The legend sits under the rail. Map colours and the legend come from one module, `src/components/ui/mapLayers.ts`.
 - **Room sheet (right):** room code headline, then only the facts that are known (准入, 此刻 with headcount, 容纳 or 面积), then 概况 / 活动 / 回忆. Each environment value carries a verdict tag (舒适, 偏高，建议通风, and so on), and the status is a single line. "留下回忆" is the primary action; 分享 copies a link.
 - **此刻在校园 (bottom):** a capsule that opens into 正在发生, 热闹与安静 and 值得一去. It condenses when a room is open.
-- **关于地图 (bottom left):** one popover with where the map comes from, the controls, and 对照原图, which opens the drawing-comparison panel. Indoor routing has no entry point until it works.
+- **关于地图 (bottom left):** one popover with where the map comes from, the controls, and 对照原图, which opens the drawing-comparison panel. The 路线 capsule in the top bar opens the route panel (left), which sits where the review drawer does.
 - **Phone:** the top bar becomes icons, the rail becomes a scrolling chip row, and the room sheet becomes a bottom sheet.
 
 ![Room sheet](evidence/ui/room-detail-1536x864.png)

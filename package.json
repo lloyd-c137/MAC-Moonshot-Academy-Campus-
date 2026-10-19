@@ -21,6 +21,8 @@
     "validate:architecture-v9": "python3 scripts/validate_architecture_v9.py",
     "rebuild:campus-3d": "python3 scripts/build_campus_3d.py",
     "validate:campus-3d": "python3 scripts/validate_campus_3d.py",
+    "rebuild:nav-grid": "python3 scripts/build_nav_grid.py",
+    "validate:nav-grid": "python3 scripts/validate_nav_grid.py",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"

@@ -71,7 +71,7 @@ The source drawing can be overlaid on the model (图纸对照 → 叠加 FF-01 �
 - **Names**: A209's name is a low-confidence nearby-text match. M106-1 and S102 have no name text on the sheet.
 - **Footprint**: derived, not traced. Entrance recesses narrower than ~5.9 m are bridged.
 - **Arena**: no ring-corridor polygon and no access openings. Stand height is illustrative.
-- **Navigation**: still disabled. The wall model shows openings but does not establish passability.
+- **Navigation**: routes run on a walking grid derived from this model ([`NAVIGATION.md`](NAVIGATION.md)). The wall model shows openings but does not establish passability; rebuild the grid after rebuilding the model.
 - **Rooms without product content**: rooms not described in `floorplanData.ts` get a drawing-only entry (name and area). They show no sensor, occupancy or event data, and none is invented.
 
 ## Rebuild

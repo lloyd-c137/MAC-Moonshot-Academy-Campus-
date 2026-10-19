@@ -6,10 +6,13 @@
  */
 import coreUrl from '../../generated/ff01-campus-core.json?url';
 import detailUrl from '../../generated/ff01-campus-detail.json?url';
+import navGridUrl from '../../generated/ff01-nav-grid.json?url';
 import type { CampusDetailData, CampusModelData } from './campusModel3d';
+import { parseNavGrid, type NavGrid, type RawNavGrid } from '../../services/pathfinding';
 
 let core: Promise<CampusModelData> | null = null;
 let detail: Promise<CampusDetailData> | null = null;
+let navGrid: Promise<NavGrid> | null = null;
 
 const getJson = async <T,>(url: string, priority: 'high' | 'low'): Promise<T> => {
   const response = await fetch(url, { priority } as RequestInit);
@@ -27,4 +30,10 @@ export function loadCampusCore(): Promise<CampusModelData> {
 export function loadCampusDetail(): Promise<CampusDetailData> {
   detail ??= getJson<CampusDetailData>(detailUrl, 'low').catch((error) => { detail = null; throw error; });
   return detail;
+}
+
+/** The walking grid for routes (~50 KB over the wire): fetched the first time routing opens. */
+export function loadNavGrid(): Promise<NavGrid> {
+  navGrid ??= getJson<RawNavGrid>(navGridUrl, 'high').then(parseNavGrid).catch((error) => { navGrid = null; throw error; });
+  return navGrid;
 }

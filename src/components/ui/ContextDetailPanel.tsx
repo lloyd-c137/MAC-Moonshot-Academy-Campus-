@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ChevronDown, ExternalLink, Heart, PenLine, RefreshCw, Share2, X } from 'lucide-react';
+import { ChevronDown, ExternalLink, Heart, LocateFixed, Navigation, PenLine, RefreshCw, Share2, X } from 'lucide-react';
 import type { CampusEvent, CampusMoment, CampusSpace, EnvironmentalReading } from '../../types/campus';
 import { displayCode, displayName, formatTime as time } from './format';
 
@@ -18,6 +18,9 @@ interface ContextDetailPanelProps {
   /** Present when the room has a bound sensor: fetch its latest reading now. */
   onRefreshEnvironment?: (spaceId: string) => void;
   refreshingEnvironment?: boolean;
+  /** Open the route panel with this room as the destination / the start. */
+  onRouteTo?: (spaceId: string) => void;
+  onRouteFrom?: (spaceId: string) => void;
 }
 
 const CATEGORY_LABEL: Partial<Record<CampusSpace['category'], string>> = {
@@ -154,7 +157,7 @@ const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: 
 };
 
 export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
-  space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare, onRefreshEnvironment, refreshingEnvironment = false,
+  space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare, onRefreshEnvironment, refreshingEnvironment = false, onRouteTo, onRouteFrom,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -364,6 +367,20 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
           </div>
 
           <footer className="relative px-5 pb-5 pt-1 before:pointer-events-none before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-gradient-to-t before:from-[#fbfcfd] before:to-transparent">
+            {(onRouteTo || onRouteFrom) && (
+              <div className="mb-2 grid grid-cols-2 gap-2">
+                {onRouteTo && (
+                  <button onClick={() => onRouteTo(space.id)} className="flex h-10 items-center justify-center gap-1.5 rounded-full border hairline bg-white text-[13px] font-medium text-ink hover:border-ink/25">
+                    <Navigation className="h-3.5 w-3.5 text-flare" />到这里去
+                  </button>
+                )}
+                {onRouteFrom && (
+                  <button onClick={() => onRouteFrom(space.id)} className="flex h-10 items-center justify-center gap-1.5 rounded-full border hairline bg-white text-[13px] font-medium text-ink-soft hover:border-ink/25 hover:text-ink">
+                    <LocateFixed className="h-3.5 w-3.5" />从这里出发
+                  </button>
+                )}
+              </div>
+            )}
             <button onClick={() => onOpenAddMoment(space.id)} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-flare text-[14px] font-semibold text-white hover:bg-ember">
               <PenLine className="h-4 w-4" />在这里留下回忆
             </button>

@@ -562,6 +562,42 @@ export class CampusCameraController {
     });
   }
 
+  /**
+   * Fit a world-space rectangle (e.g. a walking route) into the part of the screen not
+   * covered by panels. Insets are CSS pixels; keeps the current view mode, tilt and heading.
+   */
+  public frameBounds(
+    b: { minX: number; minZ: number; maxX: number; maxZ: number },
+    inset: { left?: number; right?: number; top?: number; bottom?: number } = {},
+    maxZoom = 3.2,
+  ) {
+    this.haltMotion();
+    const rect = this.rect();
+    const left = inset.left ?? 0, right = inset.right ?? 0, top = inset.top ?? 0, bottom = inset.bottom ?? 0;
+    const usableW = Math.max(120, rect.width - left - right);
+    const usableH = Math.max(120, rect.height - top - bottom);
+    const mode = this.transitionEnd?.viewMode ?? this.state.viewMode;
+    const polar = this.transitionEnd?.polar ?? this.state.polar;
+    const azimuth = this.transitionEnd?.azimuth ?? this.state.azimuth;
+    const w = Math.max(4, b.maxX - b.minX);
+    const d = Math.max(4, b.maxZ - b.minZ);
+    const c = Math.abs(Math.cos(azimuth));
+    const s = Math.abs(Math.sin(azimuth));
+    const across = w * c + d * s;
+    const deep = (w * s + d * c) * (mode === 'plan' ? 1 : Math.cos(polar));
+    const viewW = (this.camera.right - this.camera.left) * (usableW / rect.width);
+    const viewH = (this.camera.top - this.camera.bottom) * (usableH / rect.height);
+    const zoom = THREE.MathUtils.clamp(Math.min(viewW / across, viewH / deep) * 0.82, MIN_ZOOM, Math.min(MAX_ZOOM, maxZoom));
+    // Shift the target so the rectangle sits in the middle of the uncovered area.
+    const unitsPerPixel = (this.camera.top - this.camera.bottom) / (rect.height * zoom);
+    const screenRight = new THREE.Vector3(Math.cos(azimuth), 0, -Math.sin(azimuth));
+    const away = new THREE.Vector3(-Math.sin(azimuth), 0, -Math.cos(azimuth));
+    const target = new THREE.Vector3((b.minX + b.maxX) / 2, 0, (b.minZ + b.maxZ) / 2)
+      .addScaledVector(screenRight, ((right - left) / 2) * unitsPerPixel)
+      .addScaledVector(away, -(((bottom - top) / 2) * unitsPerPixel) / Math.max(0.3, mode === 'plan' ? 1 : Math.cos(polar)));
+    this.startTransition({ ...this.state, target, zoom, viewMode: mode, polar, azimuth });
+  }
+
   public resetView() {
     const mode = this.transitionEnd?.viewMode ?? this.state.viewMode;
     this.glide.active = false;
