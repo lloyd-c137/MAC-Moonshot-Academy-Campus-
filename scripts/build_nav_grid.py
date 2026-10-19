@@ -304,6 +304,16 @@ def build(core_path: Path, detail_path: Path, out_path: Path, preview: Path | No
         k = int(np.argmin(score))
         rooms_out[rid] = [int(xs[k]), int(zs[k])]
 
+    # The arena (product space ARENA-01) is not an FF-01 room: anchor it at the reachable
+    # cell nearest the court centre so it can be a route end too.
+    court_pts = core['arena']['court'][0]
+    ccx = sum(p[0] for p in court_pts) / len(court_pts)
+    ccz = sum(p[1] for p in court_pts) / len(court_pts)
+    zs, xs = np.nonzero(reachable)
+    gx, gz = grid.cell((ccx, ccz))
+    k = int(np.argmin((xs - gx) ** 2 + (zs - gz) ** 2))
+    rooms_out['ARENA-01'] = [int(xs[k]), int(zs[k])]
+
     # Which room each cell belongs to (1-based index into roomOrder; 0 = corridor / open space).
     # Routes pay extra to cross rooms other than their start and end, so they keep to corridors.
     room_order: list[str] = []
@@ -346,7 +356,7 @@ def build(core_path: Path, detail_path: Path, out_path: Path, preview: Path | No
         'unreachable': unreachable,
         'counts': {
             'walkableM2': round(float(reachable.sum()) * CELL_M * CELL_M, 1),
-            'rooms': len(core['rooms']),
+            'rooms': len(core['rooms']) + 1,  # + the arena
             'reachableRooms': len(rooms_out),
             'inferredPortals': len(portals),
         },

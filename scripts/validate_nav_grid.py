@@ -39,7 +39,8 @@ def main() -> int:
     check(all(cost[i] for i in range(w * h) if room_index[i]), 'room index set on a blocked cell')
 
     room_ids = {r['id'] for r in core['rooms']}
-    check(set(nav['rooms']) == room_ids, f"rooms without an anchor: {sorted(room_ids - set(nav['rooms']))}")
+    check(room_ids <= set(nav['rooms']), f"rooms without an anchor: {sorted(room_ids - set(nav['rooms']))}")
+    check('ARENA-01' in nav['rooms'], 'the arena (ARENA-01) has no anchor')
     check(not nav['unreachable'], f"unreachable rooms: {nav['unreachable']}")
 
     # Every anchor must be reachable from every other one, using the browser's movement

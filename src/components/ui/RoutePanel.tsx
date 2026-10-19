@@ -158,7 +158,8 @@ export const RoutePanel: React.FC<RoutePanelProps> = ({
   onPickField, onChange, onSwap, onFrameRoute, onStartGuidance, onClose,
 }) => {
   const byId = useMemo(() => new Map(spaces.map((s) => [s.id, s])), [spaces]);
-  const options = useMemo(() => (routableIds ? spaces.filter((s) => routableIds.has(s.id)) : []), [spaces, routableIds]);
+  // Search every space right away; once the walking grid is in, drop the few it cannot route to.
+  const options = useMemo(() => (routableIds ? spaces.filter((s) => routableIds.has(s.id)) : spaces), [spaces, routableIds]);
   if (!isOpen) return null;
 
   const names = routeNames(byId, fromId, toId);

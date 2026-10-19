@@ -8,7 +8,7 @@ import { RouteLayer } from './routeLayer';
 import { planToWorld, SPATIAL_PLAN } from '../../data/spatialPlan';
 import { CampusCameraController, ViewMode } from './cameraController';
 import { buildCampusScene, CampusModelRoom, CampusScene, ROOM_KIND_STYLE } from './campusModel3d';
-import { loadCampusCore, loadCampusDetail } from './modelLoader';
+import { loadCampusCore, loadCampusDetail, loadNavGrid } from './modelLoader';
 import { dismissBootSplash, setBootStage } from '../../bootSplash';
 import { Box, Info, Maximize, Minus, Plus, ScanLine, Square, X } from 'lucide-react';
 import { layerColor, NO_DATA_COLOR } from '../ui/mapLayers';
@@ -473,7 +473,9 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
         whenIdle(() => {
           loadCampusDetail()
             .then((detail) => { if (!abort.signal.aborted) { campus.addFloorDetail(detail); invalidate(); } })
-            .catch((error) => console.warn('Floor detail lines could not be loaded.', error));
+            .catch((error) => console.warn('Floor detail lines could not be loaded.', error))
+            // Then the walking grid (~46 KB), so 路线 is ready by the time someone opens it.
+            .finally(() => { loadNavGrid().catch(() => {}); });
         });
       })
       .catch((error) => {
