@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { Check, ChevronLeft, ChevronRight, Flag, LocateFixed, Route, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Check, ChevronLeft, ChevronRight, Flag, LocateFixed, Route, Volume2, VolumeX, X } from 'lucide-react';
 import type { RouteStep, TurnKind } from '../../services/pathfinding';
 import { metres, spaced, stepText, thenText, walkMinutes, type RouteNames } from './routeText';
 
@@ -28,6 +28,24 @@ export const ManeuverIcon: React.FC<{ kind: Glyph; className?: string }> = ({ ki
 };
 
 export const glyphOf = (step: RouteStep): Glyph => (step.kind === 'turn' ? step.turn ?? 'straight' : step.kind);
+
+/** Voice prompts with the browser's own speech synthesis (Web Speech API). */
+const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+const VOICE_KEY = 'mac_route_voice';
+const readVoicePref = () => { try { return localStorage.getItem(VOICE_KEY) !== 'off'; } catch { return true; } };
+
+function speak(text: string) {
+  if (!canSpeak) return;
+  const synth = window.speechSynthesis;
+  synth.cancel(); // a new step interrupts the previous prompt
+  const utterance = new SpeechSynthesisUtterance(text.replace(/\s+/g, ''));
+  utterance.lang = 'zh-CN';
+  utterance.rate = 1.05;
+  const voice = synth.getVoices().find((v) => v.lang.replace('_', '-').toLowerCase().startsWith('zh-cn'))
+    ?? synth.getVoices().find((v) => v.lang.toLowerCase().startsWith('zh'));
+  if (voice) utterance.voice = voice;
+  synth.speak(utterance);
+}
 
 interface RouteGuidanceProps {
   steps: RouteStep[];
@@ -63,6 +81,20 @@ export const RouteGuidance: React.FC<RouteGuidanceProps> = ({
   const legs = last;
   const remaining = arrived ? 0 : current.remainingM;
 
+  // Voice: read each step out when it comes up (on by default; the choice is remembered).
+  const [voice, setVoice] = useState(readVoicePref);
+  const spoken = arrived
+    ? `已到达${names.to}`
+    : `${index === 0 && current.heading ? `从${names.from}出发，向${current.heading}走。` : ''}${metres(current.legM)}后，${nextText.primary}`;
+  useEffect(() => { if (voice) speak(spoken); }, [voice, spoken]);
+  useEffect(() => () => { if (canSpeak) window.speechSynthesis.cancel(); }, []);
+  const toggleVoice = () => {
+    const next = !voice;
+    setVoice(next);
+    try { localStorage.setItem(VOICE_KEY, next ? 'on' : 'off'); } catch { /* storage blocked */ }
+    if (!next && canSpeak) window.speechSynthesis.cancel();
+  };
+
   const onPointerDown = (e: React.PointerEvent) => { swipe.current = { x: e.clientX, y: e.clientY, id: e.pointerId }; };
   const onPointerUp = (e: React.PointerEvent) => {
     const s = swipe.current;
@@ -83,7 +115,7 @@ export const RouteGuidance: React.FC<RouteGuidanceProps> = ({
         className="animate-rise absolute z-40 touch-pan-y select-none overflow-hidden rounded-[22px] bg-ink text-white shadow-[0_24px_48px_-20px_rgb(24_32_46/0.7)]
           left-4 top-4 w-[420px] lg:left-6 lg:top-6 max-sm:inset-x-3 max-sm:top-3 max-sm:w-auto"
       >
-        <div key={index} className="animate-fade flex items-center gap-4 px-5 py-4" aria-live="polite" aria-atomic="true">
+        <div key={index} className="animate-fade flex items-center gap-4 py-4 pl-5 pr-12" aria-live="polite" aria-atomic="true">
           <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${arrived ? 'bg-flare' : 'bg-white/10'}`}>
             {arrived ? <Check className="h-8 w-8" aria-hidden /> : <ManeuverIcon kind={glyphOf(next)} className="h-9 w-9" />}
           </div>
@@ -107,6 +139,19 @@ export const RouteGuidance: React.FC<RouteGuidanceProps> = ({
             )}
           </div>
         </div>
+        {canSpeak && (
+          <button
+            type="button"
+            onClick={toggleVoice}
+            onPointerDown={(e) => e.stopPropagation()}
+            aria-pressed={voice}
+            aria-label={voice ? '关闭语音播报' : '开启语音播报'}
+            title={voice ? '关闭语音播报' : '开启语音播报'}
+            className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"
+          >
+            {voice ? <Volume2 className="h-4.5 w-4.5" /> : <VolumeX className="h-4.5 w-4.5" />}
+          </button>
+        )}
         {showThen && (
           <div className="flex items-center gap-2 border-t border-white/10 bg-white/[0.06] px-5 py-2 text-[13px] text-white/80">
             <ManeuverIcon kind={glyphOf(after)} className="h-4 w-4" />

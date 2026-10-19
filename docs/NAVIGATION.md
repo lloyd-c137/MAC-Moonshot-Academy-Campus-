@@ -14,6 +14,7 @@ Modelled on the walking navigation in Apple Maps and Google Maps, and on the man
 | Map | Turns heading-up: the current leg points up the screen, tilted into 2.5D. The camera frames the leg plus 5 m past the turn. The walked part is grey, the current leg is bright orange with direction chevrons, and the rest is light orange. A white turn arrow with a dark outline marks the next maneuver. The landmark room is highlighted. |
 | Bottom bar | Remaining distance and time, step x / n with a segmented progress bar, ✕ end, ‹ previous, 下一步 / 到达, back to this leg, and the whole route (toggle). |
 | Arrival | 已到达 + the room. 查看房间 opens its sheet; 完成 returns to the overview. |
+| Voice | Each step is read out with the browser's speech synthesis (Web Speech API, `zh-CN` voice when the system has one), e.g. "45米后，在S207工程库处向左前方走". A new step interrupts the previous prompt. The speaker button on the banner mutes it; the choice is remembered in this browser. Hidden where the browser has no speech synthesis. |
 | Input | Swipe the banner left / right, or ← / → on a keyboard. Esc ends guidance. Tapping a step in the overview list starts guidance at that step. |
 
 While guiding, the search bar, layer rail and the bottom capsule are hidden. On phones the map buttons are hidden too, so the map is not crowded.
