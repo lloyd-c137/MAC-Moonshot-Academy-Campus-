@@ -23,7 +23,7 @@ import { CAMPUS_SPACES } from './data/floorplanData';
 import { CAMPUS_EVENTS } from './data/mockEvents';
 import { getLikedMomentIds, getStoredMoments, toggleLikeMoment } from './data/mockMoments';
 import { useCampusConfig } from './config/campusConfig';
-import { useLiveSensors } from './services/sensorApi';
+import { formatAge, useLiveSensors } from './services/sensorApi';
 import { buildSpaces } from './services/spaceModel';
 import { displayName } from './components/ui/format';
 import { dismissBootSplash } from './bootSplash';
@@ -40,7 +40,7 @@ const roomFromUrl = () => {
 function CampusApp() {
   const toast = useToast();
   const { config, ready } = useCampusConfig();
-  const live = useLiveSensors(config, ready);
+  const { readings: live, refreshing: refreshingSensors, refresh: refreshSensors } = useLiveSensors(config, ready);
   const spaces = useMemo(() => buildSpaces(CAMPUS_SPACES, config, live), [config, live]);
 
   const [layerMode, setLayerMode] = useState<MapLayerMode>('explore');
@@ -83,6 +83,16 @@ function CampusApp() {
     } catch {
       toast('无法写入剪贴板，请从地址栏复制链接', 'error');
     }
+  };
+
+  const refreshEnvironment = async (id: string) => {
+    const reading = await refreshSensors(id);
+    if (!reading) return;
+    if (reading.status === 'live') toast('已更新到最新读数');
+    else if (reading.status === 'stale' && reading.error) toast(`传感器接口暂时无法访问，仍显示 ${formatAge(reading.ageMinutes)}的读数`, 'error');
+    else if (reading.status === 'stale') toast(`已刷新，传感器最近一次上报在 ${formatAge(reading.ageMinutes)}`);
+    else if (reading.status === 'empty') toast('传感器还没有上报数据', 'error');
+    else if (reading.status === 'error') toast(reading.error ?? '传感器暂时连不上', 'error');
   };
 
   const likeMoment = (momentId: string) => {
@@ -168,6 +178,8 @@ function CampusApp() {
         onOpenAddMoment={(id) => setMomentSpaceId(id)}
         onLikeMoment={likeMoment}
         onShare={shareSpace}
+        onRefreshEnvironment={selectedSpaceId && live[selectedSpaceId] ? refreshEnvironment : undefined}
+        refreshingEnvironment={selectedSpaceId ? refreshingSensors.has(selectedSpaceId) : false}
       />
 
       <BottomDiscoverDock

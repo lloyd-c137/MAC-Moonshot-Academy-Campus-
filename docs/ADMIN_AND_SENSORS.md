@@ -11,6 +11,8 @@ GET https://map.georgehan0514.top/api/devices
 
 The map polls each enabled binding every 60 s, and again whenever the tab becomes visible.
 
+The refresh button next to the status in the room sheet's 环境 block fetches that room's sensor immediately, restarts the 60 s interval, and reports the result in a toast (更新到最新读数, the age of the last upload when the device itself is behind, or the API error).
+
 **Values.** Temperature and humidity come from the SHT sensor when it reports, otherwise from the SCD4x. CO₂ comes from the SCD4x. These values replace the demo environment for the bound room in three places:
 - the room sheet;
 - the 环境 map layer (温度 / 湿度 / CO₂);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CampusConfig, SensorBinding } from '../config/campusConfig';
 
 /** Raw reading as returned by GET /api/readings. */
@@ -135,40 +135,74 @@ function withFallback(result: LiveRoomReading, previous: LiveRoomReading | undef
   };
 }
 
-/** Polls every enabled sensor binding; returns readings keyed by room ID. */
-export function useLiveSensors(config: CampusConfig, ready: boolean): Record<string, LiveRoomReading> {
+export interface LiveSensors {
+  readings: Record<string, LiveRoomReading>;
+  /** Room IDs with a manual refresh in flight. */
+  refreshing: ReadonlySet<string>;
+  /** Fetch one room now (or every bound room when omitted); resolves with the merged result. */
+  refresh: (roomId?: string) => Promise<LiveRoomReading | undefined>;
+}
+
+/** Polls every enabled sensor binding; returns readings keyed by room ID, plus a manual refresh. */
+export function useLiveSensors(config: CampusConfig, ready: boolean): LiveSensors {
   const [readings, setReadings] = useState<Record<string, LiveRoomReading>>({});
+  const [refreshing, setRefreshing] = useState<ReadonlySet<string>>(() => new Set());
   const configRef = useRef(config);
   configRef.current = config;
+  const readingsRef = useRef(readings);
+  readingsRef.current = readings;
+  const pollRef = useRef<(roomIds?: string[], force?: boolean) => Promise<void>>(async () => {});
+  const restartTimerRef = useRef<() => void>(() => {});
   const key = JSON.stringify([config.sensorApi, config.sensors]);
 
   useEffect(() => {
     if (!ready) return;
     const enabled = config.sensors.filter((s) => s.enabled && s.roomId && s.locationId);
     setReadings((prev) => Object.fromEntries(enabled.map((b) => [b.roomId, prev[b.roomId]?.binding.locationId === b.locationId ? prev[b.roomId] : { binding: b, status: 'loading' as const, series: [] }])));
-    if (enabled.length === 0) return;
+    if (enabled.length === 0) { pollRef.current = async () => {}; return; }
     let abort = new AbortController();
-    const poll = async () => {
-      if (document.visibilityState === 'hidden') return; // no polling in background tabs
+    let disposed = false;
+    const poll = async (roomIds?: string[], force = false) => {
+      if (!force && document.visibilityState === 'hidden') return; // no polling in background tabs
       abort.abort();
       abort = new AbortController();
-      const results = await Promise.allSettled(enabled.map((b) => fetchRoomReadings(configRef.current, b, abort.signal)));
+      const targets = roomIds ? enabled.filter((b) => roomIds.includes(b.roomId)) : enabled;
+      const results = await Promise.allSettled(targets.map((b) => fetchRoomReadings(configRef.current, b, abort.signal)));
+      if (disposed) return;
       results.forEach((r) => { if (r.status === 'fulfilled' && r.value.status !== 'error') writeCache(r.value.binding.roomId, r.value); });
-      setReadings((prev) => {
-        const next = { ...prev };
-        results.forEach((r) => { if (r.status === 'fulfilled') next[r.value.binding.roomId] = withFallback(r.value, prev[r.value.binding.roomId]); });
-        return next;
-      });
+      const next = { ...readingsRef.current };
+      results.forEach((r) => { if (r.status === 'fulfilled') next[r.value.binding.roomId] = withFallback(r.value, next[r.value.binding.roomId]); });
+      readingsRef.current = next;
+      setReadings(next);
     };
+    pollRef.current = poll;
     poll();
-    const timer = window.setInterval(poll, Math.max(15, config.sensorApi.refreshSeconds) * 1000);
+    const interval = Math.max(15, config.sensorApi.refreshSeconds) * 1000;
+    let timer = window.setInterval(poll, interval);
+    restartTimerRef.current = () => { window.clearInterval(timer); timer = window.setInterval(poll, interval); };
     const onVisible = () => { if (document.visibilityState === 'visible') poll(); };
     document.addEventListener('visibilitychange', onVisible);
-    return () => { abort.abort(); window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
+    return () => { disposed = true; abort.abort(); window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, ready]);
 
-  return readings;
+  const refresh = useCallback(async (roomId?: string) => {
+    const ids = roomId ? [roomId] : Object.keys(readingsRef.current);
+    if (ids.length === 0) return undefined;
+    setRefreshing((prev) => new Set([...prev, ...ids]));
+    // Keep the spinner up long enough to register, even when the API answers instantly.
+    const minimum = new Promise((resolve) => window.setTimeout(resolve, 600));
+    try {
+      // A manual refresh also covers the next scheduled poll, so restart the interval from now.
+      restartTimerRef.current();
+      await Promise.all([pollRef.current(roomId ? [roomId] : undefined, true).catch(() => {}), minimum]);
+    } finally {
+      setRefreshing((prev) => { const next = new Set(prev); ids.forEach((id) => next.delete(id)); return next; });
+    }
+    return roomId ? readingsRef.current[roomId] : undefined;
+  }, []);
+
+  return useMemo(() => ({ readings, refreshing, refresh }), [readings, refreshing, refresh]);
 }
 
 /** "3 分钟前" / "6 小时前" / "2 天前". */

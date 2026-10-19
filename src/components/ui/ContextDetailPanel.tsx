@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ChevronDown, ExternalLink, Heart, PenLine, Share2, X } from 'lucide-react';
+import { ChevronDown, ExternalLink, Heart, PenLine, RefreshCw, Share2, X } from 'lucide-react';
 import type { CampusEvent, CampusMoment, CampusSpace, EnvironmentalReading } from '../../types/campus';
 import { displayCode, displayName, formatTime as time } from './format';
 
@@ -15,6 +15,9 @@ interface ContextDetailPanelProps {
   likedIds?: Set<string>;
   tabRequest?: { tab: DetailTab; nonce: number } | null;
   onShare?: (spaceId: string) => void;
+  /** Present when the room has a bound sensor: fetch its latest reading now. */
+  onRefreshEnvironment?: (spaceId: string) => void;
+  refreshingEnvironment?: boolean;
 }
 
 const CATEGORY_LABEL: Partial<Record<CampusSpace['category'], string>> = {
@@ -151,7 +154,7 @@ const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: 
 };
 
 export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
-  space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare,
+  space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare, onRefreshEnvironment, refreshingEnvironment = false,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -251,7 +254,21 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
             <section aria-labelledby="sheet-env" className="mt-9">
               <div className="flex items-baseline justify-between gap-3">
                 <h3 id="sheet-env" className="text-[13px] font-semibold text-ink">环境</h3>
-                {status && <span className="inline-flex items-center gap-1.5 text-[12px] text-crater"><span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />{status.text}</span>}
+                <div className="flex items-center gap-1">
+                  {status && <span className="inline-flex items-center gap-1.5 text-[12px] text-crater"><span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />{refreshingEnvironment ? '正在获取最新数据' : status.text}</span>}
+                  {env.source === 'sensor' && onRefreshEnvironment && (
+                    <button
+                      type="button"
+                      onClick={() => onRefreshEnvironment(space.id)}
+                      disabled={refreshingEnvironment}
+                      aria-label="刷新环境数据"
+                      title="获取最新数据"
+                      className="-my-1.5 -mr-1.5 grid h-7 w-7 place-items-center rounded-full text-crater transition-colors hover:bg-ink/[0.06] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-flare disabled:cursor-default disabled:hover:bg-transparent"
+                    >
+                      <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${refreshingEnvironment ? 'animate-refresh' : ''}`} />
+                    </button>
+                  )}
+                </div>
               </div>
               {hasValues && headline ? (
                 <>
@@ -273,7 +290,7 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
                   </div>
                 </>
               ) : (
-                <p className="mt-3 text-[14px] text-crater">{env.source === 'sensor' ? '传感器暂时连不上，稍后会自动重试。' : '这个房间没有环境传感器。'}</p>
+                <p className="mt-3 text-[14px] text-crater">{env.source === 'sensor' ? '传感器暂时连不上，稍后会自动重试，也可以点右上角手动刷新。' : '这个房间没有环境传感器。'}</p>
               )}
               {(hasValues || env.provider) && (
                 <p className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-dust">
