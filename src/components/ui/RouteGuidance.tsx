@@ -34,10 +34,14 @@ const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window &&
 const VOICE_KEY = 'mac_route_voice';
 const readVoicePref = () => { try { return localStorage.getItem(VOICE_KEY) !== 'off'; } catch { return true; } };
 
-function speak(text: string) {
+const WELCOME = '欢迎使用MAC导航';
+const FAREWELL = '导航结束，欢迎下次使用';
+
+/** Speak `text`; by default it interrupts whatever is playing, `queue` plays it after. */
+function speak(text: string, queue = false) {
   if (!canSpeak) return;
   const synth = window.speechSynthesis;
-  synth.cancel(); // a new step interrupts the previous prompt
+  if (!queue) synth.cancel(); // a new step interrupts the previous prompt
   const utterance = new SpeechSynthesisUtterance(text.replace(/\s+/g, ''));
   utterance.lang = 'zh-CN';
   utterance.rate = 1.05;
@@ -86,8 +90,29 @@ export const RouteGuidance: React.FC<RouteGuidanceProps> = ({
   const spoken = arrived
     ? `已到达${names.to}`
     : `${index === 0 && current.heading ? `从${names.from}出发，向${current.heading}走。` : ''}${metres(current.legM)}后，${nextText.primary}`;
-  useEffect(() => { if (voice) speak(spoken); }, [voice, spoken]);
-  useEffect(() => () => { if (canSpeak) window.speechSynthesis.cancel(); }, []);
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
+  const arrivedRef = useRef(arrived);
+  arrivedRef.current = arrived;
+  const greeted = useRef(false);
+  useEffect(() => {
+    if (!voice) return;
+    if (!greeted.current) {
+      // Starting guidance: greet first, then the first step.
+      greeted.current = true;
+      speak(WELCOME);
+      speak(spoken, true);
+      return;
+    }
+    speak(spoken);
+  }, [voice, spoken]);
+  // Leaving guidance (✕, 完成, 查看房间, Esc): say goodbye instead of cutting off mid-sentence.
+  useEffect(() => () => {
+    if (!canSpeak) return;
+    // After arriving, let "已到达…" finish first; mid-route, end at once.
+    if (voiceRef.current) speak(FAREWELL, arrivedRef.current);
+    else window.speechSynthesis.cancel();
+  }, []);
   const toggleVoice = () => {
     const next = !voice;
     setVoice(next);
