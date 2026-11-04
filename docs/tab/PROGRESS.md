@@ -38,16 +38,31 @@
 | Tab 项目方案 | DOCUMENTED | 本次 docs/tab/PROJECT_PLAN.md |
 | 真实 SEIUE 凭证 / 接口联调 | TODO | 未获得授权凭证和成功请求证据 |
 | ESP32 点亮 / MAC 画面显示 / 30 天续航 | TODO | 尚无成功烧录、刷屏或功耗日志证明 |
+| 实体 Tab MVP 方案 V0.1 | DOCUMENTED_ONLY | [MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md) 已定义统一课表/画面/版本与固件交付门禁；**无实体设备验收记录** |
 | 3D 打印外壳与安装试验 | TODO | 尚无 CAD 与实物验证证据 |
 
 **严禁误读：** 以上为本轮已获得的证据边界，而不是声称其他开发者没有私有成果。首次执行时应重新核对远端分支/PR 与实际硬件，并补充最新事实。
+
+## 1.1 实体 Tab MVP：开发门禁（新）
+
+**实现合同：[MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md)。** 下列条目与 P0–P3 已有任务 ID 对应，仅用于记录设备闭环验收，不重复开发已有 Tab 网页功能。
+
+| MVP Gate | 当前状态 | 已有成果 / 需要的证据 |
+|---|---|---|
+| M0 实物识别、面板点亮 | TODO / HARDWARE_UNVERIFIED | P0-04/05/06：真实主控/屏幕型号、官方驱动源码、实拍和串口输出 |
+| M1 MAC→电子纸帧 | TODO | P1-10：复用 PR #5 的 `schedule.ts` 和固定 Adapter，生成 deterministic `DisplayViewModel`、时间线帧、mono1 位图及 golden 测试 |
+| M2 ESP32 获取/显示/自动切换 | TODO | P2-01 至 P2-05：设备下载/校验 Manifest 与 bitmaps、两次边界刷新和设备日志 |
+| M3 Deep Sleep/故障恢复/功耗基线 | TODO | P3-01/02/03：实测 Wi-Fi、刷新、休眠电流、恢复与时钟；**非 30 天认证** |
+| M4 来源无关契约验证 | TODO | P1-07：Fixed / 合成 SEIUE 响应产出相同统一课程及画面；真实 SEIUE 授权另行验收 |
+
+**第一轮执行优先级：M0 硬件识别与 M1 软件位图可并行；随后集中交付 M2。** 设备型号尚未确认时可先生成候选 800×480 软件帧，但不得将其标为实物已验证。公开 Demo 不需要为此先实现 D1/Cloudflare Access，正式接口与学校真实数据不得绕过 S0–S3。
 
 ## 2. 开发主线与阶段门禁
 
 | 阶段 | 当前进度 | 进入下一阶段的门禁 |
 |---|---|---|
 | **P0 方案与硬件识别** | IN_PROGRESS | 面板、主控、引脚、供电识别；官方 Demo 可点亮 |
-| **P1 MAC 软件 MVP** | TODO | Fixed 可端到端展示；SEIUE 适配器边界清楚；异常场景正确 |
+| **P1 MAC 软件 MVP** | IN_PROGRESS | PR #5 已实现固定模拟课表与网页预览；真实线上域名验收、设备位图、周重复和生产数据仍待完成 |
 | **P2 ESP32 联机显示** | TODO | 不接电脑持续显示；能从 MAC 拉取新版本并恢复断网 |
 | **P3 低功耗与工业设计** | TODO | ≥30 天实测；外壳、挂架、充电均安全 |
 | **P4 校园试点** | TODO | 1–3 间教室安装稳定，课表、延迟和维护记录合格 |
@@ -169,6 +184,8 @@
 
 ## 5. 下一轮优先执行顺序（可并行但不重复造轮子）
 
+> 下列早期清单为历史开发背景；**当前最优先的开发任务以第 1.1 节实体 MVP M0–M4 和本节末尾「设备 MVP 下一轮工作建议」为准**，已完成的 Tab Demo 和数据导入不可重复实现。
+
 **主线 A：软件先跑通**
 1. P1-01 统一模型与状态测试。
 2. P1-02 固定模拟数据 fixture 导入，并确认它不是权威学校排课。
@@ -184,6 +201,15 @@
 **外部依赖：** P1-05 由学校协调希悦授权，P1-06 联调随凭证到位启动。
 
 **明确不提前启动：** 自研充电 PCB、批量外壳生产、独立设备云平台、自动预约功能。省去“先做一整套基础设施再想办法让屏幕亮起来”的经典工程浪费。
+
+### 设备 MVP 下一轮工作建议（2026-11-04）
+
+1. 检查现有 `src/features/tab/schedule.ts`、`fixedSchedule.ts`、`/tab/demo`，**禁止重做 PR #5 的页面、搜索、状态机和数据导入**。
+2. **M1** 新增单一 `DisplayViewModel`、跨数据源标准 `DailySchedule`、确定性的 mono1 帧和 Manifest；固定数据与合成 SEIUE 的合同测试。
+3. **M0** 核对已购板卡/电子纸，使用官方 Demo 点亮实屏，记录引脚、内存和图片格式。
+4. **M2** 将 M1 的帧下载/校验/刷屏；测试 M123 初始 10:50 和至少两个真实面板上的自动状态边界。
+5. **M3** 再进入 Deep Sleep、失败恢复和功耗测量；不可将 DEMO 加速刷屏认作 30 天续航验收。
+6. 不提前做大规模 D1/Access 管理 UI、OTA、外壳或真实 SEIUE 授权。正式学校数据必须先通过安全门禁。
 
 ## 6. 开发报告模板（每轮更新）
 
@@ -220,5 +246,6 @@
 | 2026-11-04 | 项目文档与进度分离；此文件记录验收证据 | DOCUMENTED |
 | 2026-11-04 | 明确 `mac.moonshotacademy.space` 是现有 MAC 校园空间线上平台；Tab 是新增实体终端和待开发的课表功能，需复用现有房间身份、预览入口并补足安全服务端 | DOCUMENTED / TAB_NOT_DEPLOYED |
 | 2026-11-04 | 云端安全架构选定 Cloudflare Access + Pages Functions/Workers + D1 + Secrets；设备独立高熵凭证、绑定、吊销、审计、HTTPS、签名 OTA；新增 S0–S6 门禁 | PROPOSED / NOT_IMPLEMENTED |
+| 2026-11-04 | V0.1 实体 MVP 采用统一 DailySchedule/DisplayViewModel、分离 scheduleRevision/frameRevision、版本化 1-bit 画面与 Manifest、DemoClock/RealClock；先实屏运行再做生产化 | DESIGN_DOCUMENTED / HARDWARE_NOT_READY |
 
 **首版基线：** 2026-11-04，创建文档与追踪骨架。**在首次实际开发会话后复查远端仓库、板卡及模拟数据来源，再更新任务状态**。不得把文档创建当作整体开发完成。

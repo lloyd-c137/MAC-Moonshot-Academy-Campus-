@@ -136,9 +136,9 @@ CSV/JSON + weekly rules ─> Fixed adapter ─┘
 
 提供例外覆盖：指定日期新增、取消、换房间，以及整个日期停课。**例外优先于每周模板**；同一时刻不得在不同地方重复记同一事件。每份固定课表必须记录版本、生效区间与最近更新来源。
 
-当前对话中已经准备过 8 间教室、5 个教学日的模拟课表，用于测试；**这些数据尚未确认导入 MAC 仓库，不得视为当前生产真实排课。** 个人学生课表不能代表学校全部教室占用情况。测试数据应与真实数据明显区分。
+最新 Fixture 已入库：[`docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`](./demo/Tab_FF01_AP_Demo_2026W46.json)，包含 102 个编号空间、53 个 AP 模拟教学空间、43 门 AP 课程及 763 条模拟事件，覆盖 2026-11-09 至 13。网页预览已在 PR #5 实现；**这仍然不是学校真实排课或真实占用**。实体屏幕显示及端到端自动切换尚未完成，见 [MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md)。
 
-### 3.4 统一课程事件（建议契约）
+### 3.4 统一课程事件（早期参考草案，MVP 以 3.5 的 DailySchedule 为准）
 
 ```ts
 type ScheduleEvent = {
@@ -165,6 +165,20 @@ type ScheduleEvent = {
 - 重叠排课、缺字段、跨日、同名课程、时间格式错误须有显式处理或校验结果。
 - 区分 **成功取得空课表**、**查询失败**、**数据已过期**，不把未知展示为无课。
 - 记录 `source`、数据有效日期、`fetched_at`、版本 hash 以支持追溯。
+
+## 3.5 实体电子纸 MVP 冻结实施方案（2026-11-04）
+
+**执行规范：[MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md)。** 这是项目第一条完整的设备端交付链路，现有 `/tab/demo` 网页及 `src/features/tab/schedule.ts` 已实现，禁止重复建设。
+
+- 统一模型 `DailySchedule`：Fixed、未来 SEIUE 都归一化为同一事件/变更结构。数据源拆分为 `source.type=fixed|seiue`、`source.mode=demo|production`；当前 Fixture 的 `fixed_mock` 仅由 Adapter 转换。
+- 统一视图模型 `DisplayViewModel`：MAC 网页与电子纸渲染复用课程状态、次序、取消、调房与过期判断；屏幕布局可按物理分辨率适配。
+- 两个版本：`scheduleRevision` 只随标准课表改变；`frameRevision` 还随课程开始/结束、高亮与渲染布局变化。后者决定电子纸是否需要刷屏。
+- 设备通过 Manifest + 带长度/校验和的版本化单色位图显示，不在固件中解析全校 AP JSON 或 SEIUE API。
+- 采用演示时钟与真实时钟的依赖注入，**相同的课程状态逻辑**；在设备上使用 Demo 时间时必须明显标识。
+- **Demo 公共静态资产仅用于模拟数据**。正式设备接口需要独立凭证和服务端房间绑定，必须通过 [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md) 既有门禁。
+- 设备识别、官方驱动点亮、两次课程边界真实刷屏、断网恢复和功耗基线均需实体证据；800×480 不构成真实面板规格或 30 天续航证明。
+
+**MVP 分阶段门禁：** M0=硬件识别/点亮；M1=现有 MAC 数据到 1-bit 帧；M2=实际 ESP32 下载、验证、显示、自动切换；M3=休眠/恢复/功耗测量；M4=Fixed 和合成 SEIUE 适配器等价性。M1 可独立推进而不受硬件具体型号阻塞。
 
 ## 4. 屏幕内容及显示状态
 
@@ -305,6 +319,8 @@ Tab **定时主动 Pull**，不依赖常在线 MQTT/远程实时 Push。管理�
 | 域名/Cloudflare 部署映射未核实 | OPEN | 核实生产域名、Pages Functions 和 Secrets/Access 可用性 |
 
 ## 11. 外部参考
+
+- 实体 Tab V0.1 从模型到固件的实施方案：[MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md)
 
 - Tab 安全云端设备管理架构与官方资料：[SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
 
