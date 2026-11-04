@@ -1,6 +1,6 @@
 # Tab｜实体电子纸 MVP 实现方案 V0.1
 
-> 状态：**APPROVED DESIGN PROPOSAL / NOT YET IMPLEMENTED ON DEVICE**  
+> 状态：**DESIGN SPECIFIED / NOT YET IMPLEMENTED ON DEVICE**  
 > 基线：2026-11-04 · 目标：已购 ESP32 + 电子纸能从 MAC 数据链路显示真实可验证的模拟课表，并自动切换  
 > 对应总方案：[PROJECT_PLAN.md](./PROJECT_PLAN.md) · 追踪：[PROGRESS.md](./PROGRESS.md) · 正式安全边界：[SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
 
@@ -21,7 +21,7 @@
 **MVP 成功 =** 选定一间教室（第一台默认 M123）、使用指定模拟日期的固定课表，通过 MAC 模型生成**单色、无裁切的完整日程画面**，将画面交给**实际 ESP32**，在真实电子纸上稳定显示。之后按约定时间边界**自动切换当前高亮课程**，并在无变化时避免无意义刷屏。
 
 必须有以下**可分别验收**的交付：
-1. **Mac Renderer Ready**：浏览器画面、电子纸图片源自同一课程投影；格式、分辨率与数据版本清楚。
+1. **MAC Renderer Ready**：浏览器画面、电子纸图片源自同一课程投影；格式、分辨率与数据版本清楚。
 2. **Physical Screen Ready**：准确识别硬件、匹配驱动、下载/读取位图并刷屏，有设备照片和串口日志。
 3. **Automatic Switching Ready**：无需重新烧录，课程状态改变后自动取/换画面；失败恢复有日志。
 4. **Battery Feasibility Baseline**：测量休眠、联网与刷屏电流；**不等同已满足 30 天**。
