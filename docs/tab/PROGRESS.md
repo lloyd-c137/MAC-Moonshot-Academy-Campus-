@@ -32,9 +32,9 @@
 | 多教室模拟数据 | REPOSITORY_FIXTURE_VERIFIED | `docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`；固定模拟数据，2026-11-09 至 2026-11-13；102 个编号空间中 53 个参与 AP 模拟，49 个明确排除 |
 | MAC 现有线上平台 | VERIFIED_SITE_AND_REPOSITORY | [mac.moonshotacademy.space](https://mac.moonshotacademy.space/) 已可从浏览器读取主页；仓库具备地图/房间搜索/详情/路线/发现/传感器及本地配置管理，详见 [方案中的“MAC 线上平台”](./PROJECT_PLAN.md#21-mac-线上平台现有功能限制与-tab-的位置)；**不代表 Tab 已上线** |
 | MAC 在线平台原有管理能力 | VERIFIED_CODE_WITH_LIMITATIONS | 现有 `/admin` 主要保存至浏览器 localStorage，发布变更通过 `public/campus-config.json` 和重部署；没有可直接复用的安全云端 Tab 设备管理权限体系 |
-| MAC Tab 模拟预览 | IMPLEMENTED_PENDING_PRODUCTION_CHECK | `/tab/demo` 已实现，使用固定演示 Fixture；真实 SEIUE、设备管理与硬件尚未接入 |
+| MAC Tab 模拟预览 | FIXED_DEMO_ONLINE_VERIFIED | [mac.moonshotacademy.space/tab/demo](https://mac.moonshotacademy.space/tab/demo) 已在 Cloudflare Pages 生产环境打开并显示 53 间空间；只使用固定模拟 Fixture，SEIUE、设备管理与硬件尚未接入 |
 | Tab 安全云端管理架构 | DOCUMENTED_NOT_IMPLEMENTED | [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md) 已定义 Cloudflare Access/Functions/D1、独立设备凭证、撤销、审计与安全门禁；尚无生产部署或安全测试证据 |
-| MAC 已有项目基础 | VERIFIED_REPOSITORY | 当前仓库 React/TS/Vite；Cloudflare Pages 文档记录 Git-connected 项目 `mac-github`、生产分支 `main`，登记域名为 `mac.lloydev.site`；`mac.moonshotacademy.space` 的线上映射待核验 |
+| MAC 已有项目基础 | VERIFIED_REPOSITORY | 当前仓库 React/TS/Vite；Cloudflare Pages Git-connected 项目 `mac-github`，生产分支 `main`，绑定 `mac.lloydev.site` 与 `mac.moonshotacademy.space`；本轮已实际验证 Tab 路由 |
 | Tab 项目方案 | DOCUMENTED | 本次 docs/tab/PROJECT_PLAN.md |
 | 真实 SEIUE 凭证 / 接口联调 | TODO | 未获得授权凭证和成功请求证据 |
 | ESP32 点亮 / MAC 画面显示 / 30 天续航 | TODO | 尚无成功烧录、刷屏或功耗日志证明 |
@@ -189,14 +189,15 @@
 
 ```markdown
 ### 2026-11-04 · FF-01 AP 模拟课表页面
-- Repo / branch / HEAD SHA: `lloyd-c137/MAC-Moonshot-Academy-Campus-` / `feat/tab-ff01-ap-demo` / implementation commit pending.
+- Repo / branch / HEAD SHA: `lloyd-c137/MAC-Moonshot-Academy-Campus-` / `feat/tab-ff01-ap-demo` / `5f4cd05deef011449e0ca340eae0e39ac20bd057` (merged as `9953710fbd95ea1d3b7d8057a5db2e041d4f86b3`).
 - 本轮目标（任务 ID）: TAB-P1-01、02、08、08A、09、11（固定模拟课表软件演示切片）。
 - 已完成: lazy-loaded `/tab/demo`; fixed fixture adapter and schedule-state model; map room detail entry; date/time URL state; scope-out explanation; full course display and isolated M115 stress mode. Fixture stats: 102 coded spaces, 53 AP-scope spaces, 43 courses, 763 week events, 510 room-day rows, 408 status samples. Data is simulated only.
 - 测试范围与结果: `npm run test:tab-schedule`, `npm run validate:spatial`, `npm run validate:review`, `npm run lint`, `npm run build` all passed. Playwright desktop/mobile: 53 rooms, M123 cancellation/current class, M105→M106 change, A101 out-of-scope, unknown date, 11 stress rows, direct query restore and no horizontal overflow; map room detail link rendered for M123; no page errors.
-- 未通过 / 阻塞 / 原因: production route not yet confirmed. `mac.moonshotacademy.space` returned connection reset from this environment; deployment documentation names `mac.lloydev.site`. Verify Cloudflare hostname/deployment before marking TAB-P1-08B. SEIUE, device management, ESP32, hardware resolution and actual e-paper legibility remain unimplemented/unverified.
+- 未通过 / 阻塞 / 原因: SEIUE, device management, ESP32, hardware resolution and actual e-paper legibility remain unimplemented/unverified. These stay outside the fixed-demo release claim.
 - 已确认的产品或架构变更: the fixture is now in-repository at `docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`; no live schedule or presence claim is made. Original M102 revision 5 and review history remain unchanged.
-- 下一轮优先任务: commit/push branch, open PR, allow Git-connected Pages deployment, then verify the requested production URL and update this record with actual PR/deployment evidence.
-- 本轮阶段门禁：**Fixed Demo implementation PASS; production deployment PENDING; overall P1 NOT_READY**（P1-03/04 and hardware/real-source items remain incomplete）。
+- GitHub / deployment: PR [#5](https://github.com/lloyd-c137/MAC-Moonshot-Academy-Campus-/pull/5) merged 2026-11-04; merge commit `9953710fbd95ea1d3b7d8057a5db2e041d4f86b3`. Cloudflare Pages production deployment `5b5d8c2f-d821-4630-90a1-445dad75786f` from `main` / `9953710`; live route [https://mac.moonshotacademy.space/tab/demo](https://mac.moonshotacademy.space/tab/demo) displayed 53 rooms and M123 schedule in Chrome.
+- 下一轮优先任务: implement weekly-rule source expansion and per-room source selection; SEIUE access and device/hardware work require their separate prerequisites.
+- 本轮阶段门禁：**Fixed Demo implementation PASS; production static Demo PASS; overall P1 NOT_READY**（P1-03/04 and hardware/real-source items remain incomplete）。
 
 ### YYYY-MM-DD · Tab 开发记录
 - Repo / branch / HEAD SHA:
