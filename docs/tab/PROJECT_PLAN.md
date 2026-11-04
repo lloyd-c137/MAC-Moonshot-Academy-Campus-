@@ -138,7 +138,7 @@ CSV/JSON + weekly rules ─> Fixed adapter ─┘
 
 最新 Fixture 已入库：[`docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`](./demo/Tab_FF01_AP_Demo_2026W46.json)，包含 102 个编号空间、53 个 AP 模拟教学空间、43 门 AP 课程及 763 条模拟事件，覆盖 2026-11-09 至 13。网页预览已在 PR #5 实现；**这仍然不是学校真实排课或真实占用**。实体屏幕显示及端到端自动切换尚未完成，见 [MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md)。
 
-### 3.4 统一课程事件（建议契约）
+### 3.4 统一课程事件（早期参考草案，MVP 以 3.5 的 DailySchedule 为准）
 
 ```ts
 type ScheduleEvent = {
