@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ChevronDown, ExternalLink, Heart, LocateFixed, Navigation, PenLine, RefreshCw, Share2, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, ExternalLink, Heart, LocateFixed, Navigation, PenLine, RefreshCw, Share2, X } from 'lucide-react';
 import type { CampusEvent, CampusMoment, CampusSpace, EnvironmentalReading } from '../../types/campus';
 import { displayCode, displayName, formatTime as time } from './format';
 
@@ -221,6 +221,16 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
           </>
         ) : (
           <h2 className="mt-3 pr-16 text-[30px] font-semibold leading-tight tracking-[-0.01em] text-ink">{displayName(space)}</h2>
+        )}
+
+        {/^[AMS]\d{3}(?:-\d+)?$/.test(space.id) && (
+          <a
+            href={`/tab/demo?room=${encodeURIComponent(space.id)}`}
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink/10 px-3.5 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-ink/20 hover:bg-ink/[0.03] hover:text-ink"
+          >
+            <CalendarDays aria-hidden className="h-4 w-4" />
+            Tab · 模拟课表
+          </a>
         )}
 
         {(access || occupancy || space.capacity) && (
