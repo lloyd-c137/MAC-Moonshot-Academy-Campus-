@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "mode": "demo",
+  "manifests": [
+    {
+      "room_id": "M123",
+      "path": "/tab/demo/device/v1/manifest-M123-2026-11-10.json"
+    },
+    {
+      "room_id": "M107",
+      "path": "/tab/demo/device/v1/manifest-M107-2026-11-11.json"
+    },
+    {
+      "room_id": "M115",
+      "path": "/tab/demo/device/v1/manifest-M115-2026-11-12.json"
+    }
+  ]
+}

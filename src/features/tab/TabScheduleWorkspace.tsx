@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CalendarDays, Clock3, Search } from 'lucide-react';
 import { FixedScheduleAdapter, type RoomScheduleSnapshot, type ScheduleAdapter, type TabRoom, type TabScheduleData } from './schedule';
+import { dailyScheduleFromFixed, displayViewModel } from './display/model';
 
 const statusText: Record<RoomScheduleSnapshot['state'], string> = {
   scheduled_class: '正在上课', next_class_later: '稍后有课', classes_finished: '今日课程结束',
@@ -24,6 +25,7 @@ export const TabScheduleWorkspace: React.FC<{ data: TabScheduleData; initialRoom
   const inRange = adapter.isDateValid(date);
   const selected = adapter.getRoom(roomId);
   const snapshot = adapter.getRoomDay(roomId, date, time, stressMode ? 'stress' : 'normal');
+  const displayModel = displayViewModel(dailyScheduleFromFixed(adapter, roomId, date, stressMode ? 'stress' : 'normal'), time);
   const visibleRooms = useMemo(() => data.rooms
     .filter((room) => includeOutOfScope || room.apScope)
     .filter((room) => series === 'ALL' || room.series === series)
@@ -106,13 +108,13 @@ export const TabScheduleWorkspace: React.FC<{ data: TabScheduleData; initialRoom
           {!inRange ? <div className="mt-5 rounded-xl bg-ink/[0.04] p-4 text-[13px] text-crater">该日期没有有效模拟数据。选择 2026-11-09 至 2026-11-13 之间的日期。</div> : !selected ? <div className="mt-5 rounded-xl bg-ink/[0.04] p-4 text-[13px] text-crater">请先从左侧选择一间教室。</div> : snapshot.state === 'out_of_ap_scope' ? <div className="mt-5 rounded-xl bg-ink/[0.04] p-4"><p className="text-[13px] font-medium">{statusText[snapshot.state]}</p><p className="mt-1 text-[12px] text-crater">{selected.outOfScopeReason ?? '该空间未被此 AP 模拟课表覆盖。'}</p></div> : (
             <div className="mt-5 border border-black bg-white p-4 text-black shadow-[0_8px_24px_rgba(24,32,46,.08)] sm:p-5">
               <div className="flex flex-wrap items-end justify-between gap-2 border-b border-black/20 pb-3">
-                <div><p className="text-[10px] font-semibold tracking-[0.08em]">今日课表 · 模拟数据</p><p className="mt-1 text-[13px] font-medium">{date}　{time} · Asia/Shanghai</p></div>
-                <p className={`text-[12px] font-semibold ${statusTone[snapshot.state]}`}>{statusText[snapshot.state]}{snapshot.current ? ` · ${snapshot.current.title}` : snapshot.next ? ` · 下一节 ${snapshot.next.title} ${snapshot.next.startTime}` : ''}</p>
+                <div><p className="text-[10px] font-semibold tracking-[0.08em]">{displayModel.sourceMode === 'demo' ? 'DEMO · 固定模拟数据' : '生产课表'}</p><p className="mt-1 text-[13px] font-medium">{displayModel.date}　{displayModel.timeLabel} · Asia/Shanghai</p></div>
+                <p className={`text-[12px] font-semibold ${statusTone[snapshot.state]}`}>{displayModel.state === 'in_class' ? '正在上课' : displayModel.state === 'before' ? '稍后有课' : displayModel.state === 'between' ? '课间' : displayModel.state === 'finished' ? '今日课程结束' : displayModel.state === 'no_classes' ? '今日无 AP 模拟排课' : displayModel.state}</p>
               </div>
-              {snapshot.courses.length === 0 ? <p className="py-8 text-center text-[14px]">今日无 AP 模拟排课</p> : <ol className={`mt-2 grid gap-x-5 ${snapshot.courses.length > 7 ? 'sm:grid-cols-2' : ''}`}>
-                {snapshot.courses.map((course) => <li key={course.eventId} className={`grid grid-cols-[88px_1fr] gap-3 border-b border-black/10 py-2.5 ${course.eventId === snapshot.current?.eventId ? 'bg-amber-100 px-2 ring-1 ring-inset ring-amber-500' : ''} ${course.status !== 'scheduled' ? 'text-black/50' : ''}`}>
-                  <span className="text-[12px] tabular-nums">{course.startTime}–{course.endTime}</span>
-                  <span className="min-w-0 break-words text-[13px] font-medium">{course.title}{course.status !== 'scheduled' && <span className="ml-2 text-[10px] font-normal">{course.status === 'cancelled' ? '已取消' : `已调出 → ${course.destinationRoomId ?? '其他教室'}`}</span>}{course.status === 'scheduled' && course.originRoomId && <span className="ml-2 text-[10px] font-normal">从 {course.originRoomId} 调入</span>}</span>
+              {displayModel.rows.length === 0 ? <p className="py-8 text-center text-[14px]">今日无 AP 模拟排课</p> : <ol className={`mt-2 grid gap-x-5 ${displayModel.rows.length > 7 ? 'sm:grid-cols-2' : ''}`}>
+                {displayModel.rows.map((row) => <li key={row.id} className={`grid grid-cols-[88px_1fr] gap-3 border-b border-black/10 py-2.5 ${row.emphasis === 'current' ? 'bg-amber-100 px-2 ring-1 ring-inset ring-amber-500' : row.emphasis === 'next' ? 'rounded-sm bg-ink/[0.03] px-2 ring-1 ring-inset ring-ink/20' : ''} ${row.note === 'cancelled' || row.note === 'moved_out' ? 'text-black/50' : ''}`}>
+                  <span className="text-[12px] tabular-nums">{row.start}–{row.end}</span>
+                  <span className="min-w-0 break-words text-[13px] font-medium">{row.title}{row.noteText && <span className="ml-2 text-[10px] font-normal">{row.noteText}</span>}</span>
                 </li>)}
               </ol>}
               <p className="mt-3 flex justify-between border-t border-black/20 pt-2 text-[10px] text-black/60"><span>计划排课利用率　{Math.round(snapshot.utilization * 100)}%</span><span>不代表实际有人或可用状态</span></p>
