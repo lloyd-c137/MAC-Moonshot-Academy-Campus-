@@ -65,6 +65,17 @@ const minutes = (time: string) => {
   return h * 60 + m;
 };
 
+/** Shared course selection primitive used by fixed and future source adapters. */
+export function selectCoursesAtTime<T extends { status: string }>(
+  courses: readonly T[], time: string, startOf: (course: T) => string, endOf: (course: T) => string,
+) {
+  const activeCourses = courses.filter((course) => course.status === 'scheduled');
+  const now = minutes(time);
+  const current = activeCourses.find((course) => minutes(startOf(course)) <= now && now < minutes(endOf(course))) ?? null;
+  const next = activeCourses.find((course) => minutes(startOf(course)) > now) ?? null;
+  return { activeCourses, current, next };
+}
+
 /** Fixed demo adapter. Date/time strings are compared as Asia/Shanghai wall time, never browser-local time. */
 export class FixedScheduleAdapter implements ScheduleAdapter {
   constructor(readonly data: TabScheduleData) {}
@@ -82,10 +93,7 @@ export class FixedScheduleAdapter implements ScheduleAdapter {
     const courses = source
       .filter((course) => course.roomId === roomId && course.date === date)
       .sort((a, b) => a.startTime.localeCompare(b.startTime) || a.eventId.localeCompare(b.eventId));
-    const activeCourses = courses.filter((course) => ACTIVE.has(course.status));
-    const now = minutes(time);
-    const current = activeCourses.find((course) => minutes(course.startTime) <= now && now < minutes(course.endTime)) ?? null;
-    const next = activeCourses.find((course) => minutes(course.startTime) > now) ?? null;
+    const { activeCourses, current, next } = selectCoursesAtTime(courses, time, (course) => course.startTime, (course) => course.endTime);
     const booked = unionMinutes(activeCourses.map((course) => [Math.max(DAY_START, minutes(course.startTime)), Math.min(DAY_END, minutes(course.endTime))] as const));
     const state: RoomScheduleState = activeCourses.length === 0
       ? 'no_ap_class_scheduled'

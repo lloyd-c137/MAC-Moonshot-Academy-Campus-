@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { FixedScheduleAdapter, validateScheduleData, validateSourceRoomMappings, type TabScheduleData } from '../src/features/tab/schedule';
 import { normalizeFixedFixture } from '../src/features/tab/data/fixedSchedule';
+import { createDailySchedule, dailyScheduleFromFixed, dailyScheduleFromSyntheticSeiue, displayViewModel } from '../src/features/tab/display/model';
+import { MONO1_800X480_TEST, displayProfile } from '../src/features/tab/display/profiles';
+import { packRgbaMono1, assertMonoBitmap } from '../src/features/tab/display/mono1';
+import { renderDisplaySvg } from '../src/features/tab/display/render';
+import { buildDeviceManifest, validateDeviceManifest } from '../src/features/tab/device/manifest';
+import { frameRevision } from '../src/features/tab/device/manifest';
 
 const data: TabScheduleData = {
   metadata: { timezone: 'Asia/Shanghai', validFrom: '2026-11-09', validThrough: '2026-11-13', defaultDate: '2026-11-10', defaultTime: '10:50', sourceLabel: 'DEMO' },
@@ -74,4 +80,56 @@ assert.equal(movedTo.current?.originRoomId, 'M105');
 assert.equal(fixed.getRoomDay('M107', '2026-11-11', '10:00').state, 'no_ap_class_scheduled');
 assert.equal(fixed.getRoomDay('A101', '2026-11-11', '10:00').state, 'out_of_ap_scope');
 assert.equal(fixed.getRoomDay('M123', '2026-11-14', '10:00').state, 'unknown');
+
+// The fixed and synthetic SEIUE-shaped sources project through one view model and selector.
+const fixedDaily = dailyScheduleFromFixed(fixed, 'M123', '2026-11-10');
+const sourceCourses = fixedDaily.lessons.map((lesson) => ({
+  event_id: lesson.id, room_id: lesson.roomId, date: lesson.date, start_time: lesson.start, end_time: lesson.end,
+  title: lesson.title, status: lesson.status, moved_to_room_id: lesson.movedToRoomId, moved_from_room_id: lesson.movedFromRoomId,
+}));
+const seiueDaily = dailyScheduleFromSyntheticSeiue({ room_id: 'M123', date: '2026-11-10', timezone: 'Asia/Shanghai', lessons: sourceCourses });
+for (const time of ['08:30', '10:50', '12:20', '16:00', '17:30']) {
+  const fixedView = displayViewModel(fixedDaily, time);
+  const seiueView = displayViewModel(seiueDaily, time);
+  assert.equal(fixedView.state, seiueView.state, `source-neutral state at ${time}`);
+  assert.deepEqual(fixedView.rows, seiueView.rows, `source-neutral rows at ${time}`);
+  assert.equal(renderDisplaySvg(fixedView, MONO1_800X480_TEST), renderDisplaySvg(seiueView, MONO1_800X480_TEST), `source-neutral image content at ${time}`);
+}
+assert.equal(displayViewModel(fixedDaily, '10:50').state, 'in_class');
+assert.equal(displayViewModel(dailyScheduleFromFixed(fixed, 'M107', '2026-11-11'), '10:00').state, 'no_classes');
+const movedOutView = displayViewModel(dailyScheduleFromFixed(fixed, 'M105', '2026-11-12'), '08:30');
+const movedInView = displayViewModel(dailyScheduleFromFixed(fixed, 'M106', '2026-11-12'), '08:30');
+assert.equal(movedOutView.rows[0].note, 'moved_out');
+assert.equal(movedInView.rows[0].note, 'moved_in');
+const stressDaily = dailyScheduleFromFixed(fixed, 'M115', '2026-11-12', 'stress');
+assert.equal(stressDaily.lessons.length, 11, 'M115 stress fixture keeps every lesson');
+assert.equal(new Set([fixedDaily.scheduleRevision, dailyScheduleFromFixed(fixed, 'M123', '2026-11-10').scheduleRevision]).size, 1, 'schedule revision is stable across reads');
+assert.equal(displayViewModel(fixedDaily, '10:39').rows.find((row) => row.emphasis !== 'none')?.emphasis, 'next');
+assert.equal(displayViewModel(fixedDaily, '10:40').rows.find((row) => row.emphasis !== 'none')?.emphasis, 'current', 'frame display selection changes at lesson boundary');
+assert.notEqual(await frameRevision(displayViewModel(fixedDaily, '10:39'), MONO1_800X480_TEST, 'test-v1', '2026-11-10T10:40:00+08:00'),
+  await frameRevision(displayViewModel(fixedDaily, '10:40'), MONO1_800X480_TEST, 'test-v1', '2026-11-10T10:40:00+08:00'), 'frame revision tracks a highlight transition');
+const longTitle = 'A very long bilingual studio title for an intentionally dense electronic paper room schedule';
+const longSchedule = { ...fixedDaily, lessons: [{ ...fixedDaily.lessons[0], id: 'long-title', title: longTitle }] };
+const longSvgText = renderDisplaySvg(displayViewModel(longSchedule, '10:00'), MONO1_800X480_TEST);
+assert.ok(longTitle.split(' ').every((word) => longSvgText.includes(word)), 'long title words are not dropped from SVG output');
+
+const testProfile = displayProfile(8, 1, 'unit-test');
+const mono = packRgbaMono1(new Uint8ClampedArray([0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255]), testProfile);
+assert.deepEqual([...mono.data], [0b10101010], 'mono1 rows are MSB-first and bit 1 means black');
+assertMonoBitmap(mono, testProfile);
+const stressSvg = renderDisplaySvg(displayViewModel(stressDaily, '10:00'), MONO1_800X480_TEST);
+assert.match(stressSvg, /M115/);
+for (const lesson of stressDaily.lessons) assert.ok(stressSvg.includes(lesson.title), `stress title is rendered: ${lesson.title}`);
+const m123Svg = renderDisplaySvg(displayViewModel(fixedDaily, '10:50'), MONO1_800X480_TEST);
+assert.match(m123Svg, /DEMO/);
+assert.ok(m123Svg.includes(displayViewModel(fixedDaily, '10:50').rows.find((row) => row.emphasis === 'current')?.title ?? 'not-found'));
+
+const zeroData = dailyScheduleFromFixed(fixed, 'M107', '2026-11-11');
+assert.equal(displayViewModel(createDailySchedule({ roomId: 'M123', date: '2026-11-10', timezone: 'Asia/Shanghai', source: { type: 'fixed', mode: 'demo' }, dataState: 'stale', lessons: fixedDaily.lessons }), '10:50').state, 'stale');
+assert.equal(displayViewModel(createDailySchedule({ roomId: 'M123', date: '2026-11-14', timezone: 'Asia/Shanghai', source: { type: 'fixed', mode: 'demo' }, dataState: 'unavailable', lessons: [], unavailableReason: 'unknown day' }), '10:50').state, 'unavailable');
+const manifest = await buildDeviceManifest(zeroData, testProfile, [{ time: '00:00', frameRevision: `sha256:${'b'.repeat(64)}`, path: '/tab/demo/device/v1/frames/test.bin', byteLength: 1, sha256: 'a'.repeat(64) }]);
+assert.equal(manifest.frames[0].effective_from, '2026-11-11T00:00:00+08:00');
+assert.equal(manifest.frames[0].effective_until, '2026-11-12T00:00:00+08:00');
+validateDeviceManifest(manifest);
+assert.throws(() => validateDeviceManifest({ ...manifest, frames: [{ ...manifest.frames[0], byte_length: 2 }] }), /Invalid frame payload metadata/);
 console.log('Tab schedule core checks passed.');

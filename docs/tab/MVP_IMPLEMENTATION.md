@@ -1,8 +1,10 @@
 # Tab｜实体电子纸 MVP 实现方案 V0.1
 
-> 状态：**DESIGN SPECIFIED / NOT YET IMPLEMENTED ON DEVICE**  
+> 状态：**M1 SOFTWARE RENDERER IMPLEMENTED / DEVICE INTEGRATION NOT YET VERIFIED**
 > 基线：2026-11-04 · 目标：已购 ESP32 + 电子纸能从 MAC 数据链路显示真实可验证的模拟课表，并自动切换  
 > 对应总方案：[PROJECT_PLAN.md](./PROJECT_PLAN.md) · 追踪：[PROGRESS.md](./PROGRESS.md) · 正式安全边界：[SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
+
+> 实施记录（2026-11-04）：M1 软件渲染合同已在 `feat/tab-epaper-mvp-v01` 实现并通过当前分支自动验证；本记录不代表本轮已重新烧录或验证实体面板。最新状态见 [PROGRESS.md](./PROGRESS.md)。
 
 ## 0. 当前工程事实，不重复造轮子
 
@@ -261,6 +263,16 @@ docs/tab/                     # 方案、进度、硬件识别和测试证据
 - 小心 Cloudflare Pages 静态导出：**不要默认 Pages 当前已有设备 API**。纯模拟版可以从构建产物生成静态 manifest/帧，无需数据库或密钥。
 
 **M1 gate**：浏览器/命令行可以生成按真实像素定义打包的文件；从课表切换时间导致正确 `frameRevision` 变化。
+
+### M1 实际实现（2026-11-04）
+
+- `src/features/tab/display/model.ts` 将现有 `FixedScheduleAdapter` 转为来源无关 `DailySchedule`，再使用 `schedule.ts` 同一课程选择函数生成 `DisplayViewModel`。固定 `fixed_mock` 映射为 `fixed + demo`；合成 SEIUE 输入通过等价投影测试，不需要凭证。
+- `/tab/demo` 课表预览读取同一 `DisplayViewModel` 的课程、高亮和调课说明。
+- `src/features/tab/display/render.ts` 输出高对比 SVG 版式；`mono1.ts` 按行打包、MSB-first、bit 1 黑。800×480 是软件测试 profile，不代表驱动参数已经对应到面板。
+- `device/manifest.ts` 冻结 Manifest v1 与无缝日内帧窗口校验；课程版本和按边界计算的画面版本分离。
+- `npm run build:tab-device-demo` 从仓库固定演示 Fixture 生成 M123、M107、M115 的公开静态 DEMO Manifest、40 个 48,000-byte 帧及 PNG 预览。资源只含模拟数据；生产设备 API 和真实课程数据仍与公开静态路径隔离。
+- `npm run validate:tab-device-assets` 逐帧验证完整日期覆盖、数据长度与 SHA-256；`npm run test:tab-browser` 对 M123、M107、M115 做 Chromium 页面交互并保存截图证据。
+- 课表版本使用稳定 FNV-1a 64 内容标识（不是安全校验值）；frame revision 和帧 payload 使用 SHA-256。
 
 ### M2：设备通信与刷屏（依赖 M0 + M1）
 

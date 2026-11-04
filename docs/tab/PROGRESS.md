@@ -28,7 +28,7 @@
 | 产品最终形态是实体电子纸教室门牌，MAC 网页只是 MVP 预览 | USER_CONFIRMED | 用户明确范围 |
 | 支持 SEIUE API + 固定课表 | USER_CONFIRMED | 用户明确双数据源要求 |
 | 门口不可接线；≥30 天免充电 | USER_CONFIRMED | 硬性产品目标，**尚无测量验证** |
-| ESP32 + 电子纸开发硬件 | USER_CONFIRMED | 用户表示已购买并提供面板背面照片；**型号/固件/电源尚未核实** |
+| ESP32 + 电子纸开发硬件 | PARTIALLY_VERIFIED | 2026-11-04 只读识别 `/dev/cu.usbserial-1140`：ESP32-D0WD v1.1、4 MB Flash；2026-11-02 同一串口硬件有 GDEM075F53/Hello World 成功记录。PSRAM、电池电路及本轮刷新未重新测量，M0 未通过 |
 | 多教室模拟数据 | REPOSITORY_FIXTURE_VERIFIED | `docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`；固定模拟数据，2026-11-09 至 2026-11-13；102 个编号空间中 53 个参与 AP 模拟，49 个明确排除 |
 | MAC 现有线上平台 | VERIFIED_SITE_AND_REPOSITORY | [mac.moonshotacademy.space](https://mac.moonshotacademy.space/) 已可从浏览器读取主页；仓库具备地图/房间搜索/详情/路线/发现/传感器及本地配置管理，详见 [方案中的“MAC 线上平台”](./PROJECT_PLAN.md#21-mac-线上平台现有功能限制与-tab-的位置)；**不代表 Tab 已上线** |
 | MAC 在线平台原有管理能力 | VERIFIED_CODE_WITH_LIMITATIONS | 现有 `/admin` 主要保存至浏览器 localStorage，发布变更通过 `public/campus-config.json` 和重部署；没有可直接复用的安全云端 Tab 设备管理权限体系 |
@@ -37,8 +37,8 @@
 | MAC 已有项目基础 | VERIFIED_REPOSITORY | 当前仓库 React/TS/Vite；Cloudflare Pages Git-connected 项目 `mac-github`，生产分支 `main`，绑定 `mac.lloydev.site` 与 `mac.moonshotacademy.space`；本轮已实际验证 Tab 路由 |
 | Tab 项目方案 | DOCUMENTED | 本次 docs/tab/PROJECT_PLAN.md |
 | 真实 SEIUE 凭证 / 接口联调 | TODO | 未获得授权凭证和成功请求证据 |
-| ESP32 点亮 / MAC 画面显示 / 30 天续航 | TODO | 尚无成功烧录、刷屏或功耗日志证明 |
-| 实体 Tab MVP 方案 V0.1 | DOCUMENTED_ONLY | [MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md) 已定义统一课表/画面/版本与固件交付门禁；**无实体设备验收记录** |
+| ESP32 点亮 / MAC 画面显示 / 30 天续航 | PARTIAL | 既有 Hello World 屏幕验收可复用；本轮尚未刷 MAC 课表帧、自动切换或测功耗 |
+| 实体 Tab 软件渲染 M1 | SOFTWARE_READY | 固定/合成 SEIUE 共享投影、mono1 profile、静态 manifest/帧、40 帧 hash 校验及 Chromium 交互；不等同硬件 Ready |
 | 3D 打印外壳与安装试验 | TODO | 尚无 CAD 与实物验证证据 |
 
 **严禁误读：** 以上为本轮已获得的证据边界，而不是声称其他开发者没有私有成果。首次执行时应重新核对远端分支/PR 与实际硬件，并补充最新事实。
@@ -102,6 +102,7 @@
 - [ ] **TAB-P1-08B｜MAC 线上部署与权限验证。** 验收：`mac.moonshotacademy.space` 上可访问 Tab 预览；SEIUE Secret 仅保存在受保护的服务端，管理员写入具备鉴权；现有未登录 `/admin` 及 localStorage 配置不能承担安全设备管理。
 - [x] **TAB-P1-09｜显示容量/状态回归（演示 Fixture 范围）。** 验收：11 节压力日全量呈现，取消、调房、无课、范围外和无有效日期状态正确；不静默截断有效课程。硬件面板实际可读性仍待确认。
 - [ ] **TAB-P1-10｜设备可复用的渲染输出。** 验收：按真实面板规格生成、预览与硬件输出信息一致，图像可被目标 ESP32 解码。
+- [x] **TAB-P1-10A｜800×480 mono1 软件渲染合同与静态演示帧。** 验收：M123/M107/M115 产生可重建的 1-bit 帧；Manifest 完整覆盖日期，stride、长度、bit order 和每帧 SHA-256 校验通过。证据：`npm run build:tab-device-demo`、`npm run validate:tab-device-assets`；该 profile 是软件测试格式，未声称可直接送入四色情况面板驱动。
 - [x] **TAB-P1-11｜MAC 现有构建验证。** `npm run lint`、`npm run build` 和本轮空间/审阅校验通过；浏览器无页面异常。证据与 commit/PR 在本轮开发记录补充。
 - [ ] **TAB-P1-12｜D1 表、迁移与环境隔离。** 验收：独立预发布/生产 D1；设备、身份摘要、房间数据源、课表版本、健康与审计 schema；迁移、备份与恢复演练记录。
 - [ ] **TAB-P1-13｜Cloudflare Access 与最小 RBAC。** 验收：保护 `/tab/manage*` 和 `/api/tab/admin/*`；JWT 签名/issuer/audience 验证、Viewer/Operator/Admin 服务端权限；未授权、伪造身份、跨资源、CSRF 测试通过。
@@ -111,6 +112,8 @@
 **P1 Gate（Fixed 模拟开发）：** P1-01 至 P1-04、P1-08、P1-08A、P1-09 至 P1-11。**P1 真实课表上线/生产管理员操作另必须通过 P1-08B、P1-12 至 P1-15 和安全 S0/S1/S3。** SEIUE 真实端到端需 P1-05 至 P1-07 的授权/联调证明；不得因 SEIUE 审批阻塞 Fixed→Tab 测试。
 
 ### P2：MAC → ESP32 → 真实电子纸
+
+- [ ] **TAB-P2-00｜固件运行时核心接口。** 当前已提供来源无关的 Frame/Clock/Transport/Display/State/Sleep 接口和离线单元测试；尚无板级网络、GDEM 驱动适配或实际刷新。见 `firmware/tab/README.md`。
 
 - [ ] **TAB-P2-01｜固件网络与配网。** 验收：首次配置 Wi-Fi、重启自动连接、设备身份/最低权限凭证安全存放。
 - [ ] **TAB-P2-02｜设备版本接口。** 验收：MAC manifest 提供教室、画面 hash、有效日期与资源地址。
@@ -249,3 +252,14 @@
 | 2026-11-04 | V0.1 实体 MVP 采用统一 DailySchedule/DisplayViewModel、分离 scheduleRevision/frameRevision、版本化 1-bit 画面与 Manifest、DemoClock/RealClock；先实屏运行再做生产化 | DESIGN_DOCUMENTED / HARDWARE_NOT_READY |
 
 **首版基线：** 2026-11-04，创建文档与追踪骨架。**在首次实际开发会话后复查远端仓库、板卡及模拟数据来源，再更新任务状态**。不得把文档创建当作整体开发完成。
+
+### 2026-11-04 · Physical E-paper MVP V0.1 / M1 software renderer
+
+- Repo / branch / base: `lloyd-c137/MAC-Moonshot-Academy-Campus-` / `feat/tab-epaper-mvp-v01` / base `8365951` (PR #6 specification merge).
+- 已实现：共用课程状态选择函数、`DailySchedule`、`DisplayViewModel`、固定与 synthetic-SEIUE 等价投影、800×480 mono1 renderer/packing、Manifest v1 时间线与版本号、三个固定演示场景的静态 PNG/1-bit 帧、固件运行时接口及宿主端测试。
+- 浏览器产物：`docs/tab/evidence/browser-M123-2026-11-10-1050.png`、`browser-M107-2026-11-11.png`、`browser-M115-2026-11-12-stress.png`；页面实际验证取消/当前课程、有效空课和 11 节压力清单。
+- 硬件：本轮通过 esptool 只读取得 `ESP32-D0WD revision 1.1`、4 MB Flash，MAC `58:2a:bd:97:f8:a8`。历史记录显示同一串口板卡已驱动 GDEM075F53 显示 Hello World；本轮未再烧录/刷新，故 M0 保持 IN_PROGRESS。PSRAM、电池电路、联网凭证未验证。
+- 测试：`npm run test:tab-schedule`、`npm run validate:tab-device-assets`、`npm run test:tab-firmware-core`、`npm run test:tab-browser`、`npm run lint`、`npm run build` 均通过。Vite 既有 `__dirname` 与 bundle size 警告仍存在。
+- 安全边界：公开静态路径只包含仓库固定 DEMO Fixture；无真实课表、密钥、设备凭证或生产 API。
+- 状态：M1 SOFTWARE_READY；M0 HARDWARE_IDENTIFIED_PARTIAL；M2/M3/M4 尚未验收。还需板级 GDEM 驱动适配、Wi-Fi 配置及实体屏幕连续两次课程边界切换；不得将软件截图当作设备证据。
+- 下一步：提交并推送分支、创建 PR；合并后由 GitHub/Pages 自动部署公开 DEMO 静态资源。
