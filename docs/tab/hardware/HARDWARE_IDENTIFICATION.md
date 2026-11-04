@@ -9,11 +9,11 @@
 - Chip: ESP32-D0WD, revision v1.1；40 MHz crystal；Wi-Fi/BT；MAC `58:2a:bd:97:f8:a8`。
 - Flash: 4 MB，3.3 V strapping。
 - 工具输出指出 classic ESP32；未从本次 flash-id 读取 PSRAM 信息。
-- V0.1 离线 Tab 固件已写入 app0 `0x10000`，esptool 写后 hash 校验通过；五个 M123 演示帧均有本轮 F53 刷新日志。完整日志见 `../evidence/tab-firmware-demo-serial-2026-11-04.log`。未采集功耗。
+- V0.1 离线 Tab 固件已写入 app0 `0x10000`，esptool 写后 hash 校验通过；固定帧版本启动时只执行一次 F53 刷新。日志见 `../evidence/tab-fixed-frame-serial-2026-11-04.log`。未采集功耗。
 
 ## 面板身份与此前照片确认
 
-2026-11-02 同一串口上曾确认 Good Display ESP32-L 配套 `GDEM075F53`：800×480、B/W/R/Y 四色、SPI、JD79665CA。先前运行的 Good Display 样例驱动使用 BUSY=13、RST=12、DC=14、CS=27、SCK=18、MOSI=23，并且用户当时确认屏幕显示 Hello World。本轮已将该 F53 驱动适配纳入仓库并刷入 Tab 课表帧；本轮未采集新的屏幕照片。
+2026-11-02 同一串口上曾确认 Good Display ESP32-L 配套 `GDEM075F53`：800×480、B/W/R/Y 四色、SPI、JD79665CA。先前运行的 Good Display 样例驱动使用 BUSY=13、RST=12、DC=14、CS=27、SCK=18、MOSI=23，并且用户当时确认屏幕显示 Hello World。本轮已将该 F53 驱动适配纳入仓库并刷入 Tab 课表帧；当前固定帧不会重复刷新。本轮未采集新的屏幕照片。
 
 ## 未验证事项与安全界限
 

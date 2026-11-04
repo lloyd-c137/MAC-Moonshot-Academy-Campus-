@@ -1,0 +1,6 @@
+TAB_BOOT mode=DEMO frame_policy=fixed room=M123 date=2026-11-10 time=10:50 profile=800x480-mono1
+refresh : 22281000
+F53 BUSY after refresh: 1
+_PowerOff : 81000
+TAB_REFRESH time=10:50 revision=sha256:4bf57d39e844b5c3c0e788d40624bae0fe1041d4b1697830d6e4ffc5764df81f bytes=48000 ms=23009
+TAB_FIXED_FRAME_READY; keeping image on panel
