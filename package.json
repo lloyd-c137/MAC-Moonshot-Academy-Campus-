@@ -22,6 +22,7 @@
     "rebuild:campus-3d": "python3 scripts/build_campus_3d.py",
     "validate:campus-3d": "python3 scripts/validate_campus_3d.py",
     "test:tab-firmware-core": "sh scripts/test_tab_firmware_core.sh",
+    "test:tab-week12-public": "tsx scripts/test_public_week12.ts",
     "rebuild:nav-grid": "python3 scripts/build_nav_grid.py",
     "validate:nav-grid": "python3 scripts/validate_nav_grid.py",
     "preview": "vite preview",

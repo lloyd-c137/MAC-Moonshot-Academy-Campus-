@@ -6,7 +6,7 @@
 
 > 实施记录（2026-11-04）：M1 软件渲染合同通过；离线 M123 Tab 固件已刷写至 ESP32-L app0；本次修正后的固定帧固件只在启动时刷新一次并保持画面。串口证据和边界见 [PROGRESS.md](./PROGRESS.md)；这仍不代表已完成网络协议、可信时钟、低功耗或目视照片验收。
 
-> 当前调整（2026-11-04）：旧的 `/tab/demo` 独立模拟课表页面、模拟 Fixture 和公开静态帧路径已退役。教室详情改为读取第 12 周重建课表；真实课表仍为私有数据，只能由 Cloudflare Pages Function 在验证 Cloudflare Access JWT 后按教室和日期返回。实体面板中已烧录的固定帧不受此次网页清理影响。当前页面不把课表排期当成实际有人或空闲状态。
+> 当前调整（2026-11-04）：旧的 `/tab/demo` 独立模拟课表页面、模拟 Fixture 和公开静态帧路径已退役。教室详情读取第 12 周重建课表；只读查询对所有访客开放，由 Cloudflare Pages Function 按教室和日期筛选，源 JSON 不进入静态前端包。实体面板中已烧录的固定帧不受此次网页清理影响。页面不把课表排期当成实际有人或空闲状态。
 
 ## 0. 当前工程事实，不重复造轮子
 
@@ -144,7 +144,7 @@ type DisplayViewModel = {
 
 ### 4.1 Demo 服务与未来生产 API 隔离
 
-**历史 Demo 通道：** 旧版公开 `/tab/demo/device/v1` 静态资源和独立模拟课表页面已删除。真实周课表只由受 Cloudflare Access JWT 校验的 Pages Function 返回；不得恢复为 Vite 静态资源或匿名设备 API。
+**当前只读课表：** `/api/tab/week12` 是公开的只读查询接口，校验房间 ID 与日期后返回相应记录；底层 JSON 不复制到 Vite 静态资源。**历史 Demo 通道：** 旧版 `/tab/demo/device/v1` 静态资源和独立模拟页面已删除。未来设备写入、管理及生产设备 API 仍须单独鉴权；开放此查询不构成管理权限。
 
 **Production（后续）：** 采用既有 [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md) 所定义的 `/api/tab/device/v1/manifest`、`/api/tab/device/v1/display`；在服务端识别设备身份，按授权绑定的教室生成响应，独立设备凭证可撤销。**不能把 Demo 的自由 `room_id` / `date` / `time` 查询参数原样搬到真实设备 API。**
 

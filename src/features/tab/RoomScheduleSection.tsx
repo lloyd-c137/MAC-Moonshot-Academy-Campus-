@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Clock3, LockKeyhole } from 'lucide-react';
+import { CalendarDays, Clock3 } from 'lucide-react';
 
 type Week12Entry = {
   date: string;
@@ -26,7 +26,6 @@ type RoomScheduleResponse = {
 
 type LoadState =
   | { kind: 'loading' }
-  | { kind: 'unauthorized' }
   | { kind: 'unavailable' }
   | { kind: 'ready'; schedule: RoomScheduleResponse };
 
@@ -68,13 +67,12 @@ export const RoomScheduleSection: React.FC<{ roomId: string }> = ({ roomId }) =>
     fetch(`/api/tab/week12?room=${encodeURIComponent(roomId)}&date=${encodeURIComponent(date)}`, {
       credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
     }).then(async (response) => {
-      if (response.status === 401 || response.status === 403) throw new Error('unauthorized');
       if (!response.ok) throw new Error('unavailable');
       const schedule = await response.json() as RoomScheduleResponse;
       setState({ kind: 'ready', schedule });
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
-      setState({ kind: error instanceof Error && error.message === 'unauthorized' ? 'unauthorized' : 'unavailable' });
+      setState({ kind: 'unavailable' });
     });
     return () => controller.abort();
   }, [date, roomId]);
@@ -111,8 +109,7 @@ export const RoomScheduleSection: React.FC<{ roomId: string }> = ({ roomId }) =>
         ))}
       </div>
 
-      {state.kind === 'loading' && <p className="mt-4 text-[12px] text-crater">正在获取授权课表…</p>}
-      {state.kind === 'unauthorized' && <p className="mt-4 flex items-center gap-1.5 text-[12px] text-crater"><LockKeyhole aria-hidden className="h-3.5 w-3.5" />课表仅对经授权的校内用户开放。</p>}
+      {state.kind === 'loading' && <p className="mt-4 text-[12px] text-crater">正在获取本周课程安排…</p>}
       {state.kind === 'unavailable' && <p className="mt-4 text-[12px] text-crater">课表服务暂不可用，空间占用状态未知。</p>}
       {state.kind === 'ready' && state.schedule.data_state === 'stale' && <p className="mt-4 text-[12px] text-crater">该日不在第 12 周数据范围内；当前占用状态未知。</p>}
       {state.kind === 'ready' && state.schedule.data_state === 'valid' && (

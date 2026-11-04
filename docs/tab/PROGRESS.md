@@ -8,7 +8,7 @@
 
 ## 0. 使用方法与状态规范
 
-> **2026-11-04 当前更新：** 独立 `/tab/demo` 页面及其公开浏览器/设备帧资产已移除。教室详情接入 `data/tab/reconstructed/2026-fall-week12/week12-schedule.json` 的按需查询；源 JSON 不进入 Vite 客户端包，Cloudflare Pages Function 需验证 Access JWT。线上 API 在配置 Access Team Domain/Audience 和 `/api/tab/*` Access Application 前保持 fail-closed。设备上已烧录的固定帧未修改。
+> **2026-11-04 当前更新：** 独立 `/tab/demo` 页面及其公开浏览器/设备帧资产已移除。教室详情接入第 12 周只读公开查询；源 JSON 不进入 Vite 客户端包，Pages Function 按教室和日期返回匹配记录，不要求登录或 Cloudflare Access。课表排期不代表现场占用。设备上已烧录的固定帧未修改。
 
 **勾选规则：** 只有满足对应验收标准，且有可复核的 PR / commit、测试日志、照片、测量报告或授权 API 响应记录时，才勾选为完成。没有证据的一律保持未完成。
 
@@ -32,8 +32,8 @@
 | 门口不可接线；≥30 天免充电 | USER_CONFIRMED | 硬性产品目标，**尚无测量验证** |
 | ESP32 + 电子纸开发硬件 | PARTIALLY_VERIFIED | 2026-11-04 `/dev/cu.usbserial-1140`：ESP32-D0WD v1.1、4 MB Flash；V0.1 Tab Demo 固件已写入 app0，esptool 写后校验通过，串口记录五个 M123 课表帧的真实 F53 全屏刷新。PSRAM、电池电路、目视照片及功耗未验收 |
 | 多教室模拟数据 | RETIRED | 独立课表演示页面及其浏览器/公开静态数据已删除；ESP32 已烧录的固定帧保留，不影响现有屏幕 |
-| 第12周重建课表 | PRIVATE_SOURCE_IMPORTED | 610 条待校验展示记录，覆盖 2026-11-02 至 2026-11-06；含直接观察与推断状态，不代表实时占用 |
-| 教室详情课表接口 | IMPLEMENTED_FAIL_CLOSED | Pages Function 按房间/日期筛选并校验 Cloudflare Access JWT；生产需配置 Access Team Domain、Audience 和 Access Application |
+| 第12周重建课表 | PUBLIC_READ_ONLY | 610 条展示记录，覆盖 2026-11-02 至 2026-11-06；包含直接观察与推断状态，不代表实时占用 |
+| 教室详情课表接口 | IMPLEMENTED_PUBLIC_READ_ONLY | Pages Function 按房间/日期筛选，访客无需认证；源 JSON 不进入静态前端包 |
 | MAC 现有线上平台 | VERIFIED_SITE_AND_REPOSITORY | [mac.moonshotacademy.space](https://mac.moonshotacademy.space/) 已可从浏览器读取主页；仓库具备地图/房间搜索/详情/路线/发现/传感器及本地配置管理，详见 [方案中的“MAC 线上平台”](./PROJECT_PLAN.md#21-mac-线上平台现有功能限制与-tab-的位置)；**不代表 Tab 已上线** |
 | MAC 在线平台原有管理能力 | VERIFIED_CODE_WITH_LIMITATIONS | 现有 `/admin` 主要保存至浏览器 localStorage，发布变更通过 `public/campus-config.json` 和重部署；没有可直接复用的安全云端 Tab 设备管理权限体系 |
 | MAC Tab 模拟预览 | RETIRED | `/tab/demo` 已移除并重定向到主地图；课程信息现在并入教室详情页 |
