@@ -21,17 +21,13 @@
     "validate:architecture-v9": "python3 scripts/validate_architecture_v9.py",
     "rebuild:campus-3d": "python3 scripts/build_campus_3d.py",
     "validate:campus-3d": "python3 scripts/validate_campus_3d.py",
-    "test:tab-schedule": "tsx scripts/test_tab_schedule.ts",
-    "build:tab-device-demo": "tsx scripts/build_tab_device_demo.ts",
-    "validate:tab-device-assets": "tsx scripts/validate_tab_device_assets.ts",
     "test:tab-firmware-core": "sh scripts/test_tab_firmware_core.sh",
-    "test:tab-browser": "tsx scripts/test_tab_browser.ts",
     "rebuild:nav-grid": "python3 scripts/build_nav_grid.py",
     "validate:nav-grid": "python3 scripts/validate_nav_grid.py",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "build:tab-firmware-demo": "python3 scripts/embed_tab_demo_frames.py && uvx --from platformio platformio run -d firmware/tab"
+    "build:tab-firmware-fixed": "uvx --from platformio platformio run -d firmware/tab"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

@@ -1472,3 +1472,11 @@ for (const room of SOURCE_ROOMS) {
     locationProvenance: 'derived',
   });
 }
+
+// Occupancy and pulse values in the legacy seed objects were illustrative placeholders.
+// Keep them unknown until a live, room-bound presence source is connected.
+for (const space of CAMPUS_SPACES) {
+  space.occupancy = 'unknown';
+  space.headcountEstimate = undefined;
+  space.pulse = 'unknown';
+}

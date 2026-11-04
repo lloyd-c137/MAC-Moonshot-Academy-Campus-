@@ -80,7 +80,7 @@ export function validateDeviceManifest(manifest: DeviceManifest): void {
   for (let i = 0; i < manifest.frames.length; i += 1) {
     const frame = manifest.frames[i];
     if (frame.byte_length !== stride * height || !/^[a-f0-9]{64}$/.test(frame.sha256) || !/^sha256:[a-f0-9]{64}$/.test(frame.frame_revision)) throw new Error(`Invalid frame payload metadata: ${frame.frame_revision}`);
-    if (!frame.path.startsWith('/tab/demo/device/v1/frames/')) throw new Error(`Frame path is outside the public demo asset namespace: ${frame.path}`);
+    if (!frame.path.startsWith('/api/tab/device/v1/frames/')) throw new Error(`Frame path is outside the protected device API namespace: ${frame.path}`);
     if (i > 0 && manifest.frames[i - 1].effective_until !== frame.effective_from) throw new Error('Frame timeline has a gap or overlap.');
     if (Date.parse(frame.effective_until) <= Date.parse(frame.effective_from)) throw new Error('Frame timeline contains an empty or reversed interval.');
   }

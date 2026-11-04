@@ -4,7 +4,7 @@
 
 ## Physical Tab demo firmware
 
-`platformio.ini` builds an ESP32-L / GDEM075F53 demo that displays one MAC-generated M123 mono1 frame (2026-11-10 10:50) and keeps it on the panel. `scripts/embed_tab_demo_frames.py` validates and embeds that fixture frame. The firmware sends black/white pixels through the verified full-refresh F53 adapter once at boot, then idles without redrawing or restarting. It is explicitly offline DEMO firmware, not the future network/SEIUE production client, and it does not use deep sleep.
+`platformio.ini` builds an ESP32-L / GDEM075F53 fixed-frame prototype. Its current mono1 frame is already embedded in `include/tab/demo_frames.hpp`; it is independent of the retired browser schedule page and public frame-download path. The firmware sends black/white pixels through the verified full-refresh F53 adapter once at boot, then idles without redrawing or restarting. It remains an offline prototype, not the future network/SEIUE production client, and it does not use deep sleep. Replacing this embedded frame requires an explicitly authorized private schedule-to-frame build flow.
 
 Build from the repository root:
 

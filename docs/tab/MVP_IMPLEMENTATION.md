@@ -1,18 +1,18 @@
 # Tab｜实体电子纸 MVP 实现方案 V0.1
 
-> 状态：**M1 SOFTWARE READY / OFFLINE TAB FIRMWARE FLASHED AND FIVE FRAMES REFRESHED / NETWORK DEVICE INTEGRATION PENDING**
+> 状态：**M1 RENDERER BASELINE RETAINED / OFFLINE FIXED-FRAME FIRMWARE FLASHED / PRIVATE ROOM-SCHEDULE API FAIL-CLOSED PENDING ACCESS CONFIGURATION**
 > 基线：2026-11-04 · 目标：已购 ESP32 + 电子纸能从 MAC 数据链路显示真实可验证的模拟课表，并自动切换  
 > 对应总方案：[PROJECT_PLAN.md](./PROJECT_PLAN.md) · 追踪：[PROGRESS.md](./PROGRESS.md) · 正式安全边界：[SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
 
 > 实施记录（2026-11-04）：M1 软件渲染合同通过；离线 M123 Tab 固件已刷写至 ESP32-L app0；本次修正后的固定帧固件只在启动时刷新一次并保持画面。串口证据和边界见 [PROGRESS.md](./PROGRESS.md)；这仍不代表已完成网络协议、可信时钟、低功耗或目视照片验收。
 
+> 当前调整（2026-11-04）：旧的 `/tab/demo` 独立模拟课表页面、模拟 Fixture 和公开静态帧路径已退役。教室详情改为读取第 12 周重建课表；真实课表仍为私有数据，只能由 Cloudflare Pages Function 在验证 Cloudflare Access JWT 后按教室和日期返回。实体面板中已烧录的固定帧不受此次网页清理影响。当前页面不把课表排期当成实际有人或空闲状态。
+
 ## 0. 当前工程事实，不重复造轮子
 
 截至本方案制定时，`main` 已合并 **PR #5**（`9953710`），实现：
 - `src/features/tab/schedule.ts`：`FixedScheduleAdapter`、`TabScheduleData`、按时间判断课程状态、基础数据校验。
-- `src/features/tab/data/fixedSchedule.ts`：从 FF-01/AP Fixture 读取并转换为当前 Demo 模型。
-- `src/features/tab/TabDemoPage.tsx` + `TabScheduleWorkspace.tsx`：`/tab/demo` 页面、教室日期时间选择、课表列表、电子纸样式预览。
-- `docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`：2026-11-09 至 13 的模拟记录（102 个有编号空间、其中 53 个 AP 模拟教学空间、43 门 AP 课程、763 条周事件）；**非真实教务课表**。
+- 以上旧版固定模拟 Adapter、独立页面与 Fixture 已在 2026-11-04 退役；其历史验收记录保留在下方文档历史中。
 
 **本轮禁止重新生成模拟数据、重写已有状态机、建立第二套教室主数据或另起独立 Tab 网站。** 优先把当前模型**抽出为数据源无关的投影合同**，并新增真正可输出电子纸像素的渲染与设备固件。
 
@@ -144,7 +144,7 @@ type DisplayViewModel = {
 
 ### 4.1 Demo 服务与未来生产 API 隔离
 
-**Demo：** 允许使用纯模拟数据、开发机预览或 Cloudflare Pages 的**公共静态 Demo 资产**，例如 `/tab/demo/device/v1/manifest.json` 和对应版本位图；可以构建时预生成整天的时间边界帧。不得放真实密钥或真实教务数据。公共演示 URL 不能被误认为受保护的生产设备接口。
+**历史 Demo 通道：** 旧版公开 `/tab/demo/device/v1` 静态资源和独立模拟课表页面已删除。真实周课表只由受 Cloudflare Access JWT 校验的 Pages Function 返回；不得恢复为 Vite 静态资源或匿名设备 API。
 
 **Production（后续）：** 采用既有 [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md) 所定义的 `/api/tab/device/v1/manifest`、`/api/tab/device/v1/display`；在服务端识别设备身份，按授权绑定的教室生成响应，独立设备凭证可撤销。**不能把 Demo 的自由 `room_id` / `date` / `time` 查询参数原样搬到真实设备 API。**
 
@@ -173,7 +173,7 @@ type DisplayViewModel = {
       "effective_from": "2026-11-10T08:00:00+08:00",
       "effective_until": "2026-11-10T09:35:00+08:00",
       "frame_revision": "sha256:example-frame-a",
-      "path": "/tab/demo/device/v1/frames/example-frame-a.bin",
+      "path": "/api/tab/device/v1/frames/example-frame-a.bin",
       "byte_length": 48000,
       "sha256": "64-hexadecimal-hash-of-binary"
     }

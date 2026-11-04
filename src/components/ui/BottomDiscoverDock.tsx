@@ -187,7 +187,7 @@ export const BottomDiscoverDock: React.FC<BottomDiscoverDockProps> = ({ events, 
                       </ul>
                     </div>
                   ))}
-                  <p className="text-[11px] text-dust sm:col-span-2">人流与环境为演示数据。</p>
+                  <p className="text-[11px] text-dust sm:col-span-2">当前没有已接入的人流数据；课程安排显示在教室详情中，环境示例数据仍单独标注。</p>
                 </div>
               )}
 
