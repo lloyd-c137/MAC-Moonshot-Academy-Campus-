@@ -1,4 +1,5 @@
 node_modules/
+.pio/
 build/
 dist/
 coverage/

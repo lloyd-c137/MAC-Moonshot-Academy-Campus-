@@ -30,7 +30,8 @@
     "validate:nav-grid": "python3 scripts/validate_nav_grid.py",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "build:tab-firmware-demo": "python3 scripts/embed_tab_demo_frames.py && uvx --from platformio platformio run -d firmware/tab"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

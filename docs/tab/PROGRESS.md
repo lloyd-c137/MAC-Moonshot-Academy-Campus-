@@ -28,7 +28,7 @@
 | 产品最终形态是实体电子纸教室门牌，MAC 网页只是 MVP 预览 | USER_CONFIRMED | 用户明确范围 |
 | 支持 SEIUE API + 固定课表 | USER_CONFIRMED | 用户明确双数据源要求 |
 | 门口不可接线；≥30 天免充电 | USER_CONFIRMED | 硬性产品目标，**尚无测量验证** |
-| ESP32 + 电子纸开发硬件 | PARTIALLY_VERIFIED | 2026-11-04 只读识别 `/dev/cu.usbserial-1140`：ESP32-D0WD v1.1、4 MB Flash；2026-11-02 同一串口硬件有 GDEM075F53/Hello World 成功记录。PSRAM、电池电路及本轮刷新未重新测量，M0 未通过 |
+| ESP32 + 电子纸开发硬件 | PARTIALLY_VERIFIED | 2026-11-04 `/dev/cu.usbserial-1140`：ESP32-D0WD v1.1、4 MB Flash；V0.1 Tab Demo 固件已写入 app0，esptool 写后校验通过，串口记录五个 M123 课表帧的真实 F53 全屏刷新。PSRAM、电池电路、目视照片及功耗未验收 |
 | 多教室模拟数据 | REPOSITORY_FIXTURE_VERIFIED | `docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`；固定模拟数据，2026-11-09 至 2026-11-13；102 个编号空间中 53 个参与 AP 模拟，49 个明确排除 |
 | MAC 现有线上平台 | VERIFIED_SITE_AND_REPOSITORY | [mac.moonshotacademy.space](https://mac.moonshotacademy.space/) 已可从浏览器读取主页；仓库具备地图/房间搜索/详情/路线/发现/传感器及本地配置管理，详见 [方案中的“MAC 线上平台”](./PROJECT_PLAN.md#21-mac-线上平台现有功能限制与-tab-的位置)；**不代表 Tab 已上线** |
 | MAC 在线平台原有管理能力 | VERIFIED_CODE_WITH_LIMITATIONS | 现有 `/admin` 主要保存至浏览器 localStorage，发布变更通过 `public/campus-config.json` 和重部署；没有可直接复用的安全云端 Tab 设备管理权限体系 |
@@ -37,7 +37,7 @@
 | MAC 已有项目基础 | VERIFIED_REPOSITORY | 当前仓库 React/TS/Vite；Cloudflare Pages Git-connected 项目 `mac-github`，生产分支 `main`，绑定 `mac.lloydev.site` 与 `mac.moonshotacademy.space`；本轮已实际验证 Tab 路由 |
 | Tab 项目方案 | DOCUMENTED | 本次 docs/tab/PROJECT_PLAN.md |
 | 真实 SEIUE 凭证 / 接口联调 | TODO | 未获得授权凭证和成功请求证据 |
-| ESP32 点亮 / MAC 画面显示 / 30 天续航 | PARTIAL | 既有 Hello World 屏幕验收可复用；本轮尚未刷 MAC 课表帧、自动切换或测功耗 |
+| ESP32 点亮 / MAC 画面显示 / 30 天续航 | PARTIAL | 本轮已刷入并运行 MAC 生成的 M123 课表位图序列，五个 frame revision 均有刷新日志；自动按真实课程时钟取帧、联网拉取、目视照片和功耗仍未验收 |
 | 实体 Tab 软件渲染 M1 | SOFTWARE_READY | 固定/合成 SEIUE 共享投影、mono1 profile、静态 manifest/帧、40 帧 hash 校验及 Chromium 交互；不等同硬件 Ready |
 | 3D 打印外壳与安装试验 | TODO | 尚无 CAD 与实物验证证据 |
 
@@ -49,13 +49,13 @@
 
 | MVP Gate | 当前状态 | 已有成果 / 需要的证据 |
 |---|---|---|
-| M0 实物识别、面板点亮 | TODO / HARDWARE_UNVERIFIED | P0-04/05/06：真实主控/屏幕型号、官方驱动源码、实拍和串口输出 |
-| M1 MAC→电子纸帧 | TODO | P1-10：复用 PR #5 的 `schedule.ts` 和固定 Adapter，生成 deterministic `DisplayViewModel`、时间线帧、mono1 位图及 golden 测试 |
-| M2 ESP32 获取/显示/自动切换 | TODO | P2-01 至 P2-05：设备下载/校验 Manifest 与 bitmaps、两次边界刷新和设备日志 |
-| M3 Deep Sleep/故障恢复/功耗基线 | TODO | P3-01/02/03：实测 Wi-Fi、刷新、休眠电流、恢复与时钟；**非 30 天认证** |
-| M4 来源无关契约验证 | TODO | P1-07：Fixed / 合成 SEIUE 响应产出相同统一课程及画面；真实 SEIUE 授权另行验收 |
+| M0 实物识别、面板点亮 | IN_PROGRESS | ESP32-D0WD / GDEM075F53 及引脚已确认；app0 写入校验和五帧刷新串口日志通过；缺本轮实拍照片、完整板卡型号/PSRAM确认 |
+| M1 MAC→电子纸帧 | PASS / SOFTWARE_READY | 固定与合成 SEIUE 共用投影；800×480 mono1 静态帧和 hash 验证已通过，五张 M123 帧供固件复用 |
+| M2 ESP32 获取/显示/自动切换 | PARTIAL | 当前离线固件按 M123 08:30、10:50、12:20、16:00、17:30 顺序自动刷新五帧；尚未联网下载 Manifest/帧、按可信时钟自动选择、休眠或恢复 |
+| M3 Deep Sleep/故障恢复/功耗基线 | TODO | 当前固件常开循环演示；未测 Wi-Fi、刷新、休眠电流，未实现设备深睡恢复；**非 30 天认证** |
+| M4 来源无关契约验证 | PASS（合成合同） | Fixed / 合成 SEIUE 投影和浏览器视图测试通过；没有真实 SEIUE 凭证或生产 API 联调 |
 
-**第一轮执行优先级：M0 硬件识别与 M1 软件位图可并行；随后集中交付 M2。** 设备型号尚未确认时可先生成候选 800×480 软件帧，但不得将其标为实物已验证。公开 Demo 不需要为此先实现 D1/Cloudflare Access，正式接口与学校真实数据不得绕过 S0–S3。
+**当前状态：M1 已通过；M0 与 M2 有真实设备演示证据但仍为部分完成。** 当前固件仅离线轮播固定 Demo 帧，不代表已完成联网协议、真实时间课程边界、深睡或低功耗验证。公开 Demo 不需要为此先实现 D1/Cloudflare Access，正式接口与学校真实数据不得绕过 S0–S3。
 
 ## 2. 开发主线与阶段门禁
 
@@ -253,13 +253,11 @@
 
 **首版基线：** 2026-11-04，创建文档与追踪骨架。**在首次实际开发会话后复查远端仓库、板卡及模拟数据来源，再更新任务状态**。不得把文档创建当作整体开发完成。
 
-### 2026-11-04 · Physical E-paper MVP V0.1 / M1 software renderer
+### 2026-11-04 · Tab physical firmware demo / M0–M2 partial
 
-- Repo / branch / base: `lloyd-c137/MAC-Moonshot-Academy-Campus-` / `feat/tab-epaper-mvp-v01` / base `8365951` (PR #6 specification merge).
-- 已实现：共用课程状态选择函数、`DailySchedule`、`DisplayViewModel`、固定与 synthetic-SEIUE 等价投影、800×480 mono1 renderer/packing、Manifest v1 时间线与版本号、三个固定演示场景的静态 PNG/1-bit 帧、固件运行时接口及宿主端测试。
-- 浏览器产物：`docs/tab/evidence/browser-M123-2026-11-10-1050.png`、`browser-M107-2026-11-11.png`、`browser-M115-2026-11-12-stress.png`；页面实际验证取消/当前课程、有效空课和 11 节压力清单。
-- 硬件：本轮通过 esptool 只读取得 `ESP32-D0WD revision 1.1`、4 MB Flash，MAC `58:2a:bd:97:f8:a8`。历史记录显示同一串口板卡已驱动 GDEM075F53 显示 Hello World；本轮未再烧录/刷新，故 M0 保持 IN_PROGRESS。PSRAM、电池电路、联网凭证未验证。
-- 测试：`npm run test:tab-schedule`、`npm run validate:tab-device-assets`、`npm run test:tab-firmware-core`、`npm run test:tab-browser`、`npm run lint`、`npm run build` 均通过。Vite 既有 `__dirname` 与 bundle size 警告仍存在。
-- 安全边界：公开静态路径只包含仓库固定 DEMO Fixture；无真实课表、密钥、设备凭证或生产 API。
-- 状态：M1 SOFTWARE_READY；M0 HARDWARE_IDENTIFIED_PARTIAL；M2/M3/M4 尚未验收。还需板级 GDEM 驱动适配、Wi-Fi 配置及实体屏幕连续两次课程边界切换；不得将软件截图当作设备证据。
-- 下一步：提交并推送分支、创建 PR；合并后由 GitHub/Pages 自动部署公开 DEMO 静态资源。
+- 固件：新增 `firmware/tab` ESP32-L/GDEM075F53 PlatformIO target；从 MAC 的 M123 2026-11-10 mono1 资源中校验并嵌入 08:30、10:50、12:20、16:00、17:30 五帧；F53 全刷新，不调用未经验证的 partial refresh。
+- 写入：`firmware.bin` 316,816 bytes，SHA-256 `ff016ba72dde068210f80552740af90edf97d91d794c67649cee1b2b73cbda28`；仅写 app0 `0x10000`，esptool `Hash of data verified`。写前备份 app0 为 1,310,720 bytes；bootloader、partition table、NVS、app1 未写。
+- 实机日志：[`evidence/tab-firmware-demo-serial-2026-11-04.log`](./evidence/tab-firmware-demo-serial-2026-11-04.log) 记录五个 frame revision、每帧 48,000 bytes、F53 refresh/power-off 和完整序列结束。刷新约 23–34 秒/帧。没有本轮面板照片，故不将串口输出称为目视验收。
+- 构建：`npm run build:tab-firmware-demo` 成功；Flash 使用 316,453 / 1,310,720 bytes，RAM 使用 75,688 / 327,680 bytes。
+- 状态：M1 SOFTWARE_READY；M0 PARTIAL（型号/写入/刷新日志已验证，缺本轮照片及 PSRAM/电源确认）；M2 PARTIAL（设备已自动轮播五张有效课表帧，但还未联网拉取、按真实时钟切换或深睡）；M3 TODO；M4 合成 SEIUE 合同测试通过，真实接口未接。
+- 生产边界：当前固件纯离线、固定 M123 DEMO 序列，不含真实数据、Wi-Fi 凭据、Manifest 网络客户端或 SEIUE 逻辑；页面上保留 DEMO 标识。
