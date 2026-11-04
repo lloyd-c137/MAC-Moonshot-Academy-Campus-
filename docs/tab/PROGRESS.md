@@ -29,12 +29,12 @@
 | 支持 SEIUE API + 固定课表 | USER_CONFIRMED | 用户明确双数据源要求 |
 | 门口不可接线；≥30 天免充电 | USER_CONFIRMED | 硬性产品目标，**尚无测量验证** |
 | ESP32 + 电子纸开发硬件 | USER_CONFIRMED | 用户表示已购买并提供面板背面照片；**型号/固件/电源尚未核实** |
-| 多教室模拟数据 | PREPARED_OUTSIDE_REPO | 先前会话准备过示例数据；未确认本仓库有可复现 fixture |
+| 多教室模拟数据 | REPOSITORY_FIXTURE_VERIFIED | `docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`；固定模拟数据，2026-11-09 至 2026-11-13；102 个编号空间中 53 个参与 AP 模拟，49 个明确排除 |
 | MAC 现有线上平台 | VERIFIED_SITE_AND_REPOSITORY | [mac.moonshotacademy.space](https://mac.moonshotacademy.space/) 已可从浏览器读取主页；仓库具备地图/房间搜索/详情/路线/发现/传感器及本地配置管理，详见 [方案中的“MAC 线上平台”](./PROJECT_PLAN.md#21-mac-线上平台现有功能限制与-tab-的位置)；**不代表 Tab 已上线** |
 | MAC 在线平台原有管理能力 | VERIFIED_CODE_WITH_LIMITATIONS | 现有 `/admin` 主要保存至浏览器 localStorage，发布变更通过 `public/campus-config.json` 和重部署；没有可直接复用的安全云端 Tab 设备管理权限体系 |
-| MAC 正式 Tab 功能 | TODO | 当前仓库 `src/App.tsx` 尚无 Tab 课表预览或设备路由；需新增且不得破坏现有校园地图功能 |
+| MAC Tab 模拟预览 | IMPLEMENTED_PENDING_PRODUCTION_CHECK | `/tab/demo` 已实现，使用固定演示 Fixture；真实 SEIUE、设备管理与硬件尚未接入 |
 | Tab 安全云端管理架构 | DOCUMENTED_NOT_IMPLEMENTED | [SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md) 已定义 Cloudflare Access/Functions/D1、独立设备凭证、撤销、审计与安全门禁；尚无生产部署或安全测试证据 |
-| MAC 已有项目基础 | VERIFIED_REPOSITORY | 当前仓库 React/TS/Vite，Cloudflare Pages 的 Git 部署文档存在；自定义新域名与具体后端部署链路仍需运维确认 |
+| MAC 已有项目基础 | VERIFIED_REPOSITORY | 当前仓库 React/TS/Vite；Cloudflare Pages 文档记录 Git-connected 项目 `mac-github`、生产分支 `main`，登记域名为 `mac.lloydev.site`；`mac.moonshotacademy.space` 的线上映射待核验 |
 | Tab 项目方案 | DOCUMENTED | 本次 docs/tab/PROJECT_PLAN.md |
 | 真实 SEIUE 凭证 / 接口联调 | TODO | 未获得授权凭证和成功请求证据 |
 | ESP32 点亮 / MAC 画面显示 / 30 天续航 | TODO | 尚无成功烧录、刷屏或功耗日志证明 |
@@ -75,19 +75,19 @@
 
 ### P1：数据源 + MAC 预览（软件 MVP）
 
-- [ ] **TAB-P1-01｜确认统一课节模型与验证器。** 验收：字段、状态、时区、排序、取消/调课、空结果/失败区别及单元测试。
-- [ ] **TAB-P1-02｜导入/构建固定日期课表。** 验收：使用已审核的模拟 fixture，为不同教室和日期稳定生成课程列表，标记 DEMO。
+- [x] **TAB-P1-01｜确认统一课节模型与验证器。** 验收：字段、状态、时区、排序、取消/调课、空结果/失败区别及单元测试。证据：`src/features/tab/schedule.ts`、`npm run test:tab-schedule`。
+- [x] **TAB-P1-02｜导入/构建固定日期课表。** 验收：使用仓库固定 fixture，为教室与日期稳定生成课程列表，标记 DEMO。证据：`src/features/tab/data/fixedSchedule.ts`、102 个编号空间映射检查。
 - [ ] **TAB-P1-03｜支持周重复固定课表。** 验收：生效日期、周次、非教学日与日期例外覆盖，取消/调房规则正确。
 - [ ] **TAB-P1-04｜每间教室配置唯一有效数据源。** 验收：`seiue` 或 `fixed`，切源需审核新数据，不默默混源/回退到另一源。
 - [ ] **TAB-P1-05｜SEIUE 申请与配置确认。** 验收：学校授权的 `client_id`、`client_secret`、`school_id`、测试 `place_id`、只读 scope、限制与费用确认；**绝不可提交 Secret**。依赖：学校/希悦。
 - [ ] **TAB-P1-06｜SEIUE 服务端适配器。** 验收：OAuth Token 轮换、课节读取、真实 JSON 样例对账、调课/取消同步行为确认、限流/失败处理；未获凭证前仅能用 mock 测适配逻辑，不能标真实接通。
 - [ ] **TAB-P1-07｜固定与 SEIUE 统一输出契约测试。** 验收：两源一致的数据投影，缺字段/重叠/时间边界/空结果测试通过。
-- [ ] **TAB-P1-08｜MAC Tab 预览页面。** 验收：显示教室、当天完整课程、当前课程高亮、日期、数据来源和最后成功同步时间；无预约入口。
-- [ ] **TAB-P1-08A｜与 MAC 现有房间浏览能力集成。** 验收：从地图选中的房间/搜索结果可进入该房间课表预览；复用 `room_id` / `?room=` 房间身份和 MAC 视觉规范；提供可直达预览入口，但不把“有课/无课”误称实时占用或预约状态。
+- [x] **TAB-P1-08｜MAC Tab 预览页面。** 验收：显示房间、完整日程、当前课程高亮、模拟日期/时间、来源及 DEMO 声明；无预约入口。证据：`/tab/demo`、桌面和移动浏览器检查。
+- [x] **TAB-P1-08A｜与 MAC 现有房间浏览能力集成。** 验收：房间详情可带 `room_id` 进入课表预览；保留地图房间身份；明确计划课表不等于实时占用。
 - [ ] **TAB-P1-08B｜MAC 线上部署与权限验证。** 验收：`mac.moonshotacademy.space` 上可访问 Tab 预览；SEIUE Secret 仅保存在受保护的服务端，管理员写入具备鉴权；现有未登录 `/admin` 及 localStorage 配置不能承担安全设备管理。
-- [ ] **TAB-P1-09｜显示容量/状态回归。** 验收：0/3/6/10+ 课程、长中英文标题、课程取消/调房、今日结束、断网/过期，**不静默截断有效课程**。
+- [x] **TAB-P1-09｜显示容量/状态回归（演示 Fixture 范围）。** 验收：11 节压力日全量呈现，取消、调房、无课、范围外和无有效日期状态正确；不静默截断有效课程。硬件面板实际可读性仍待确认。
 - [ ] **TAB-P1-10｜设备可复用的渲染输出。** 验收：按真实面板规格生成、预览与硬件输出信息一致，图像可被目标 ESP32 解码。
-- [ ] **TAB-P1-11｜MAC 现有构建验证。** 验收：`npm run lint` 和 `npm run build` 通过；与现有 MAC 地图/管理功能无破坏性回归。
+- [x] **TAB-P1-11｜MAC 现有构建验证。** `npm run lint`、`npm run build` 和本轮空间/审阅校验通过；浏览器无页面异常。证据与 commit/PR 在本轮开发记录补充。
 - [ ] **TAB-P1-12｜D1 表、迁移与环境隔离。** 验收：独立预发布/生产 D1；设备、身份摘要、房间数据源、课表版本、健康与审计 schema；迁移、备份与恢复演练记录。
 - [ ] **TAB-P1-13｜Cloudflare Access 与最小 RBAC。** 验收：保护 `/tab/manage*` 和 `/api/tab/admin/*`；JWT 签名/issuer/audience 验证、Viewer/Operator/Admin 服务端权限；未授权、伪造身份、跨资源、CSRF 测试通过。
 - [ ] **TAB-P1-14｜真实课表与密钥保护。** 验收：SEIUE Secret 只在 Functions/Workers 环境；静态资源、浏览器包、日志不包含敏感凭证；真实课表默认受限，学校展示范围已确认。
@@ -188,6 +188,16 @@
 ## 6. 开发报告模板（每轮更新）
 
 ```markdown
+### 2026-11-04 · FF-01 AP 模拟课表页面
+- Repo / branch / HEAD SHA: `lloyd-c137/MAC-Moonshot-Academy-Campus-` / `feat/tab-ff01-ap-demo` / implementation commit pending.
+- 本轮目标（任务 ID）: TAB-P1-01、02、08、08A、09、11（固定模拟课表软件演示切片）。
+- 已完成: lazy-loaded `/tab/demo`; fixed fixture adapter and schedule-state model; map room detail entry; date/time URL state; scope-out explanation; full course display and isolated M115 stress mode. Fixture stats: 102 coded spaces, 53 AP-scope spaces, 43 courses, 763 week events, 510 room-day rows, 408 status samples. Data is simulated only.
+- 测试范围与结果: `npm run test:tab-schedule`, `npm run validate:spatial`, `npm run validate:review`, `npm run lint`, `npm run build` all passed. Playwright desktop/mobile: 53 rooms, M123 cancellation/current class, M105→M106 change, A101 out-of-scope, unknown date, 11 stress rows, direct query restore and no horizontal overflow; map room detail link rendered for M123; no page errors.
+- 未通过 / 阻塞 / 原因: production route not yet confirmed. `mac.moonshotacademy.space` returned connection reset from this environment; deployment documentation names `mac.lloydev.site`. Verify Cloudflare hostname/deployment before marking TAB-P1-08B. SEIUE, device management, ESP32, hardware resolution and actual e-paper legibility remain unimplemented/unverified.
+- 已确认的产品或架构变更: the fixture is now in-repository at `docs/tab/demo/Tab_FF01_AP_Demo_2026W46.json`; no live schedule or presence claim is made. Original M102 revision 5 and review history remain unchanged.
+- 下一轮优先任务: commit/push branch, open PR, allow Git-connected Pages deployment, then verify the requested production URL and update this record with actual PR/deployment evidence.
+- 本轮阶段门禁：**Fixed Demo implementation PASS; production deployment PENDING; overall P1 NOT_READY**（P1-03/04 and hardware/real-source items remain incomplete）。
+
 ### YYYY-MM-DD · Tab 开发记录
 - Repo / branch / HEAD SHA:
 - 本轮目标（任务 ID）:

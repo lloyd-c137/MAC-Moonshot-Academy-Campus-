@@ -17,6 +17,7 @@ import { ToastProvider, useToast } from './components/ui/Toast';
 const NotAvailable: React.FC = () => null;
 const CampusCanvas = lazy(() => import('./components/canvas/CampusCanvas').then((m) => ({ default: m.CampusCanvas })));
 const AdminPage = lazy(() => import('./admin/AdminPage').then((m) => ({ default: m.AdminPage })));
+const TabDemoPage = lazy(() => import('./features/tab/TabDemoPage').then((m) => ({ default: m.TabDemoPage })));
 const GeometryReviewEditor = import.meta.env.DEV ? lazy(() => import('./components/dev/GeometryReviewEditor').then((m) => ({ default: m.GeometryReviewEditor }))) : NotAvailable;
 const GeometryReviewSession = import.meta.env.DEV ? lazy(() => import('./components/dev/GeometryReviewSession').then((m) => ({ default: m.GeometryReviewSession }))) : NotAvailable;
 const BuildingPreviewV6 = import.meta.env.DEV ? lazy(() => import('./components/dev/BuildingPreviewV6').then((m) => ({ default: m.BuildingPreviewV6 }))) : NotAvailable;
@@ -327,6 +328,7 @@ export default function App() {
     return null;
   })();
   if (dev) return <Suspense fallback={null}><DismissSplash />{dev}</Suspense>;
+  if (path === '/tab/demo') return <Suspense fallback={null}><DismissSplash /><TabDemoPage /></Suspense>;
   return (
     <ToastProvider>
       {path === '/admin' ? <Suspense fallback={null}><AdminPage /></Suspense> : <CampusApp />}
