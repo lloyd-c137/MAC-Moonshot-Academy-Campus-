@@ -1,0 +1,22 @@
+TAB_BOOT mode=DEMO room=M123 date=2026-11-10 frames=5 profile=800x480-mono1
+refresh : 22305000
+F53 BUSY after refresh: 1
+_PowerOff : 81000
+TAB_REFRESH time=08:30 revision=sha256:e1739e7df54a230c54e9591fd6fca2877c3519b4f94fea0d00f8e000dfce3cdc bytes=48000 ms=23014
+refresh : 32751000
+F53 BUSY after refresh: 1
+_PowerOff : 81000
+TAB_REFRESH time=10:50 revision=sha256:4bf57d39e844b5c3c0e788d40624bae0fe1041d4b1697830d6e4ffc5764df81f bytes=48000 ms=33482
+refresh : 32736000
+F53 BUSY after refresh: 1
+_PowerOff : 81000
+TAB_REFRESH time=12:20 revision=sha256:bb7105826b1bbde0ff2120fb2915b550ad71c5ca290c268b4644d59fa7adcd57 bytes=48000 ms=33448
+refresh : 32751000
+F53 BUSY after refresh: 1
+_PowerOff : 81000
+TAB_REFRESH time=16:00 revision=sha256:e64d9573309a45d9004956edffacb0988bc9c074a206318c7be5e86b13a94dfe bytes=48000 ms=33479
+refresh : 32743000
+F53 BUSY after refresh: 1
+_PowerOff : 81000
+TAB_REFRESH time=17:30 revision=sha256:025f9e1a6db8287cc0800e3c904a4949079ae5851e882c58e911237ec661a6f5 bytes=48000 ms=33452
+TAB_DEMO_SEQUENCE_COMPLETE; restarting in 10 seconds
