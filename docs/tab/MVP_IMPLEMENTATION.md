@@ -4,7 +4,7 @@
 > 基线：2026-11-04 · 目标：已购 ESP32 + 电子纸能从 MAC 数据链路显示真实可验证的模拟课表，并自动切换  
 > 对应总方案：[PROJECT_PLAN.md](./PROJECT_PLAN.md) · 追踪：[PROGRESS.md](./PROGRESS.md) · 正式安全边界：[SECURITY_ARCHITECTURE.md](./SECURITY_ARCHITECTURE.md)
 
-> 实施记录（2026-11-04）：M1 软件渲染合同通过；离线 M123 Tab 固件已刷写至 ESP32-L app0，并在 GDEM075F53 上执行五个真实全屏刷新。串口证据和边界见 [PROGRESS.md](./PROGRESS.md)；这仍不代表已完成网络协议、可信时钟、低功耗或目视照片验收。
+> 实施记录（2026-11-04）：M1 软件渲染合同通过；离线 M123 Tab 固件已刷写至 ESP32-L app0；本次修正后的固定帧固件只在启动时刷新一次并保持画面。串口证据和边界见 [PROGRESS.md](./PROGRESS.md)；这仍不代表已完成网络协议、可信时钟、低功耗或目视照片验收。
 
 ## 0. 当前工程事实，不重复造轮子
 

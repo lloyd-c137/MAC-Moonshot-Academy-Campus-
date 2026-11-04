@@ -37,7 +37,7 @@
 | MAC 已有项目基础 | VERIFIED_REPOSITORY | 当前仓库 React/TS/Vite；Cloudflare Pages Git-connected 项目 `mac-github`，生产分支 `main`，绑定 `mac.lloydev.site` 与 `mac.moonshotacademy.space`；本轮已实际验证 Tab 路由 |
 | Tab 项目方案 | DOCUMENTED | 本次 docs/tab/PROJECT_PLAN.md |
 | 真实 SEIUE 凭证 / 接口联调 | TODO | 未获得授权凭证和成功请求证据 |
-| ESP32 点亮 / MAC 画面显示 / 30 天续航 | PARTIAL | 本轮已刷入并运行 MAC 生成的 M123 课表位图序列，五个 frame revision 均有刷新日志；自动按真实课程时钟取帧、联网拉取、目视照片和功耗仍未验收 |
+| ESP32 点亮 / MAC 画面显示 / 30 天续航 | PARTIAL | 已刷入 MAC 生成的 M123 固定课表帧并验证 F53 刷新；当前已改为只刷新一次并保持画面。联网取帧、真实时钟切换、目视照片和功耗仍未验收 |
 | 实体 Tab 软件渲染 M1 | SOFTWARE_READY | 固定/合成 SEIUE 共享投影、mono1 profile、静态 manifest/帧、40 帧 hash 校验及 Chromium 交互；不等同硬件 Ready |
 | 3D 打印外壳与安装试验 | TODO | 尚无 CAD 与实物验证证据 |
 
@@ -51,7 +51,7 @@
 |---|---|---|
 | M0 实物识别、面板点亮 | IN_PROGRESS | ESP32-D0WD / GDEM075F53 及引脚已确认；app0 写入校验和五帧刷新串口日志通过；缺本轮实拍照片、完整板卡型号/PSRAM确认 |
 | M1 MAC→电子纸帧 | PASS / SOFTWARE_READY | 固定与合成 SEIUE 共用投影；800×480 mono1 静态帧和 hash 验证已通过，五张 M123 帧供固件复用 |
-| M2 ESP32 获取/显示/自动切换 | PARTIAL | 当前离线固件按 M123 08:30、10:50、12:20、16:00、17:30 顺序自动刷新五帧；尚未联网下载 Manifest/帧、按可信时钟自动选择、休眠或恢复 |
+| M2 ESP32 获取/显示/自动切换 | PARTIAL | 当前离线固件启动时只刷新 M123 10:50 固定帧并保持显示；尚未联网下载 Manifest/帧、按可信时钟切换、休眠或恢复 |
 | M3 Deep Sleep/故障恢复/功耗基线 | TODO | 当前固件常开循环演示；未测 Wi-Fi、刷新、休眠电流，未实现设备深睡恢复；**非 30 天认证** |
 | M4 来源无关契约验证 | PASS（合成合同） | Fixed / 合成 SEIUE 投影和浏览器视图测试通过；没有真实 SEIUE 凭证或生产 API 联调 |
 
@@ -253,11 +253,11 @@
 
 **首版基线：** 2026-11-04，创建文档与追踪骨架。**在首次实际开发会话后复查远端仓库、板卡及模拟数据来源，再更新任务状态**。不得把文档创建当作整体开发完成。
 
-### 2026-11-04 · Tab physical firmware demo / M0–M2 partial
+### 2026-11-04 · Tab physical firmware fixed-frame demo / M0–M2 partial
 
-- 固件：新增 `firmware/tab` ESP32-L/GDEM075F53 PlatformIO target；从 MAC 的 M123 2026-11-10 mono1 资源中校验并嵌入 08:30、10:50、12:20、16:00、17:30 五帧；F53 全刷新，不调用未经验证的 partial refresh。
-- 写入：`firmware.bin` 316,816 bytes，SHA-256 `ff016ba72dde068210f80552740af90edf97d91d794c67649cee1b2b73cbda28`；仅写 app0 `0x10000`，esptool `Hash of data verified`。写前备份 app0 为 1,310,720 bytes；bootloader、partition table、NVS、app1 未写。
-- 实机日志：[`evidence/tab-firmware-demo-serial-2026-11-04.log`](./evidence/tab-firmware-demo-serial-2026-11-04.log) 记录五个 frame revision、每帧 48,000 bytes、F53 refresh/power-off 和完整序列结束。刷新约 23–34 秒/帧。没有本轮面板照片，故不将串口输出称为目视验收。
-- 构建：`npm run build:tab-firmware-demo` 成功；Flash 使用 316,453 / 1,310,720 bytes，RAM 使用 75,688 / 327,680 bytes。
-- 状态：M1 SOFTWARE_READY；M0 PARTIAL（型号/写入/刷新日志已验证，缺本轮照片及 PSRAM/电源确认）；M2 PARTIAL（设备已自动轮播五张有效课表帧，但还未联网拉取、按真实时钟切换或深睡）；M3 TODO；M4 合成 SEIUE 合同测试通过，真实接口未接。
-- 生产边界：当前固件纯离线、固定 M123 DEMO 序列，不含真实数据、Wi-Fi 凭据、Manifest 网络客户端或 SEIUE 逻辑；页面上保留 DEMO 标识。
+- 固件：`firmware/tab` ESP32-L/GDEM075F53 PlatformIO target 从 MAC 的 M123 2026-11-10 mono1 资源校验并嵌入单张 10:50 帧；启动后全刷一次、面板休眠并保持画面，不轮换或重启。
+- 写入：`firmware.bin` 293,216 bytes，SHA-256 `beb3802ee40ef2616ba67e4c2662897f6e61bda14dd5a0fb7351dfe4afdd09d5`；仅写 app0 `0x10000`，esptool `Hash of data verified`。bootloader、partition table、NVS、app1 未写。
+- 实机日志：[`evidence/tab-fixed-frame-serial-2026-11-04.log`](./evidence/tab-fixed-frame-serial-2026-11-04.log) 记录本次启动和单次 10:50 refresh。75 秒监听期间没有第二次 refresh 或重启；之前五帧轮换日志 [`evidence/tab-firmware-demo-serial-2026-11-04.log`](./evidence/tab-firmware-demo-serial-2026-11-04.log) 保留为历史证据。没有本轮面板照片，故不将串口输出称为目视验收。
+- 构建：`npm run build:tab-firmware-demo` 成功；Flash 使用 292,845 / 1,310,720 bytes，RAM 使用 75,680 / 327,680 bytes。
+- 状态：M1 SOFTWARE_READY；M0 PARTIAL（型号/写入/刷新日志已验证，缺本轮照片及 PSRAM/电源确认）；M2 PARTIAL（固定帧显示已验证，联网拉取、按真实时钟切换和深睡未实现）；M3 TODO；M4 合成 SEIUE 合同测试通过，真实接口未接。
+- 生产边界：当前固件纯离线，只显示固定的 M123 DEMO 帧，不含真实数据、Wi-Fi 凭据、Manifest 网络客户端或 SEIUE 逻辑；页面上保留 DEMO 标识。

@@ -4,7 +4,7 @@
 
 ## Physical Tab demo firmware
 
-`platformio.ini` builds an ESP32-L / GDEM075F53 demo that displays actual MAC-generated M123 mono1 frames. `scripts/embed_tab_demo_frames.py` validates and embeds the five existing fixture frames at 08:30, 10:50, 12:20, 16:00, and 17:30. The firmware decodes those images and sends black/white pixels through the verified full-refresh F53 adapter; it repeats the visible sequence and logs each frame revision. It is explicitly offline DEMO firmware, not the future network/SEIUE production client, and it does not use deep sleep.
+`platformio.ini` builds an ESP32-L / GDEM075F53 demo that displays one MAC-generated M123 mono1 frame (2026-11-10 10:50) and keeps it on the panel. `scripts/embed_tab_demo_frames.py` validates and embeds that fixture frame. The firmware sends black/white pixels through the verified full-refresh F53 adapter once at boot, then idles without redrawing or restarting. It is explicitly offline DEMO firmware, not the future network/SEIUE production client, and it does not use deep sleep.
 
 Build from the repository root:
 
@@ -18,7 +18,7 @@ Flash only the active app slot after confirming `/dev/cu.usbserial-1140` is the 
 uvx --from esptool esptool --chip esp32 --port /dev/cu.usbserial-1140 --baud 115200 write-flash 0x10000 firmware/tab/.pio/build/esp32l_f53_demo/firmware.bin
 ```
 
-The binary ships only when the five embedded images fit the existing 1.31 MB app partition; PlatformIO reports the actual size. The firmware sequence is a hardware demo and does not claim cloud fetching, automatic natural-time schedule transitions, battery life, or production authentication.
+The binary ships only when the embedded image fits the existing 1.31 MB app partition; PlatformIO reports the actual size. The firmware is a fixed-frame hardware demo and does not claim cloud fetching, automatic natural-time schedule transitions, battery life, or production authentication.
 
 The attached setup is an ESP32-L / ESP32-D0WD with a Good Display GDEM075F53 800×480 four-color SPI panel and JD79665CA. The checked driver uses BUSY 13, RST 12, DC 14, CS 27, SCK 18, MOSI 23. A fresh check on 2026-11-04 found `/dev/cu.usbserial-1140`, ESP32-D0WD revision 1.1, and 4 MB flash. PSRAM and battery/charge circuitry remain unverified.
 

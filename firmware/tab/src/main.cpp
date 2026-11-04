@@ -8,7 +8,6 @@
 // verified panel setup. The firmware stays USB-powered; battery behavior is not tested.
 constexpr int PIN_CS = 27, PIN_DC = 14, PIN_RST = 12, PIN_BUSY = 13;
 constexpr int PIN_SCK = 18, PIN_MOSI = 23;
-constexpr uint32_t DEMO_HOLD_MS = 5000;
 
 GxEPD2_4C<GxEPD2_750c_GDEM075F53, 30> display(
   GxEPD2_750c_GDEM075F53(PIN_CS, PIN_DC, PIN_RST, PIN_BUSY));
@@ -66,16 +65,10 @@ void setup() {
   delay(250);
   SPI.begin(PIN_SCK, -1, PIN_MOSI, PIN_CS);
   display.init(115200);
-  Serial.printf("TAB_BOOT mode=DEMO room=M123 date=2026-11-10 frames=%u profile=800x480-mono1\n",
-                tab_demo::FRAME_COUNT);
-  for (uint8_t i = 0; i < tab_demo::FRAME_COUNT; ++i) {
-    const auto& frame = tab_demo::FRAMES[i];
-    if (refreshFrame(frame)) delay(DEMO_HOLD_MS);
-    else delay(1000);
-  }
-  Serial.println("TAB_DEMO_SEQUENCE_COMPLETE; restarting in 10 seconds");
-  delay(10000);
-  ESP.restart();
+  const auto& frame = tab_demo::FRAMES[0];
+  Serial.printf("TAB_BOOT mode=DEMO frame_policy=fixed room=M123 date=2026-11-10 time=%s profile=800x480-mono1\n",
+                frame.time);
+  if (refreshFrame(frame)) Serial.println("TAB_FIXED_FRAME_READY; keeping image on panel");
 }
 
-void loop() {}
+void loop() { delay(1000); }

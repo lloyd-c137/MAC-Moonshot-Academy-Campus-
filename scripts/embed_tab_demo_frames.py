@@ -10,7 +10,8 @@ BASE = ROOT / "public/tab/demo/device/v1"
 MANIFEST = BASE / "manifest-M123-2026-11-10.json"
 OUT = ROOT / "firmware/tab/include/tab/demo_frames.hpp"
 PROFILE = {"width": 800, "height": 480, "stride": 100}
-SAMPLES = ["08:30", "10:50", "12:20", "16:00", "17:30"]
+# Fixed hardware demo frame. The browser/static manifest still owns the complete timeline.
+SAMPLES = ["10:50"]
 
 
 def packbits(data: bytes) -> bytes:
