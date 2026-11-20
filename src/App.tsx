@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TopNav } from './components/ui/TopNav';
 import { EnergyPanel } from './components/ui/EnergyPanel';
-import { isLitClassroom, LIGHTING, useLighting } from './services/energyModel';
+import { litRoom, useLighting } from './services/energyModel';
 import { LayerRail } from './components/ui/LayerRail';
 import { ContextDetailPanel, type DetailTab } from './components/ui/ContextDetailPanel';
 import { BottomDiscoverDock } from './components/ui/BottomDiscoverDock';
@@ -50,7 +50,10 @@ function CampusApp() {
   const { readings: live, refreshing: refreshingSensors, refresh: refreshSensors } = useLiveSensors(config, ready);
   const lighting = useLighting();
   const spaces = useMemo(() => buildSpaces(CAMPUS_SPACES, config, live).map((s) => (
-    isLitClassroom(s.id) ? { ...s, lighting: { lampsOn: lighting.state[s.id] ?? LIGHTING.lampsPerRoom, lampsTotal: LIGHTING.lampsPerRoom } } : s
+    (() => {
+      const lit = litRoom(s.id);
+      return lit ? { ...s, lighting: { lampsOn: lighting.state[s.id] ?? lit.lamps, lampsTotal: lit.lamps, estimated: lit.basis !== 'surveyed' } } : s;
+    })()
   )), [config, live, lighting.state]);
 
   const [layerMode, setLayerMode] = useState<MapLayerMode>('explore');
@@ -327,6 +330,8 @@ function CampusApp() {
         onRouteTo={(id) => openRoute('to', id)}
         onRouteFrom={(id) => openRoute('from', id)}
         lampsOn={selectedSpace?.lighting?.lampsOn}
+        lampsTotal={selectedSpace?.lighting?.lampsTotal}
+        lampsEstimated={selectedSpace?.lighting?.estimated}
         onSetLamps={lighting.setLamps}
         onRefreshEnvironment={selectedSpaceId && live[selectedSpaceId] ? refreshEnvironment : undefined}
         refreshingEnvironment={selectedSpaceId ? refreshingSensors.has(selectedSpaceId) : false}

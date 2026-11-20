@@ -26,6 +26,9 @@ interface ContextDetailPanelProps {
   onRouteFrom?: (spaceId: string) => void;
   /** Classroom lighting (energy panel simulation): lamps on, and a setter. */
   lampsOn?: number;
+  lampsTotal?: number;
+  /** Lamp count estimated from floor area (not one of the surveyed classrooms). */
+  lampsEstimated?: boolean;
   onSetLamps?: (spaceId: string, lamps: number) => void;
 }
 
@@ -157,7 +160,7 @@ const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: 
 };
 
 export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
-  space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare, onRefreshEnvironment, refreshingEnvironment = false, onRouteTo, onRouteFrom, lampsOn, onSetLamps,
+  space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare, onRefreshEnvironment, refreshingEnvironment = false, onRouteTo, onRouteFrom, lampsOn, lampsTotal = LIGHTING.lampsPerRoom, lampsEstimated = false, onSetLamps,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -301,7 +304,7 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
             </section>
 
             {lampsOn !== undefined && onSetLamps && (() => {
-              const r = roomFigures(lampsOn);
+              const r = roomFigures(lampsOn, lampsTotal);
               const step = 'grid h-8 w-8 place-items-center rounded-full border hairline bg-white text-[15px] font-semibold text-ink hover:border-ink/25 disabled:opacity-35';
               return (
                 <section aria-labelledby="sheet-energy" className="mt-9">
@@ -309,7 +312,7 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
                     <h3 id="sheet-energy" className="text-[13px] font-semibold text-ink">照明能耗</h3>
                     <span className="flex items-center gap-2 text-[12px] text-crater">
                       {lampsOn > 0 ? '灯开着' : '已关灯'}
-                      <LightSwitch size="md" on={lampsOn > 0} label={lampsOn > 0 ? '关灯' : '开灯'} onChange={(v) => onSetLamps(space.id, v ? LIGHTING.lampsPerRoom : 0)} />
+                      <LightSwitch size="md" on={lampsOn > 0} label={lampsOn > 0 ? '关灯' : '开灯'} onChange={(v) => onSetLamps(space.id, v ? lampsTotal : 0)} />
                     </span>
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-5">
@@ -328,20 +331,24 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
                   </div>
                   <div className="mt-4 flex items-center gap-3">
                     <button type="button" className={step} aria-label="少开一盏" disabled={lampsOn === 0} onClick={() => onSetLamps(space.id, lampsOn - 1)}>−</button>
-                    <div className="flex flex-1 gap-1" aria-label={`${lampsOn} / ${r.lampsTotal} 盏灯开着`}>
+                    <div className={`flex flex-1 ${r.lampsTotal > 16 ? 'gap-px' : 'gap-1'}`} aria-label={`${lampsOn} / ${r.lampsTotal} 盏灯开着`}>
                       {Array.from({ length: r.lampsTotal }, (_, i) => (
                         <button
                           key={i}
                           type="button"
                           aria-label={`开 ${i + 1} 盏`}
                           onClick={() => onSetLamps(space.id, i + 1 === lampsOn ? i : i + 1)}
-                          className={`h-5 flex-1 rounded-[4px] transition-colors ${i < lampsOn ? 'bg-[#f5b623]' : 'bg-ink/10 hover:bg-ink/20'}`}
+                          className={`h-5 flex-1 rounded-[3px] transition-colors ${i < lampsOn ? 'bg-[#f5b623]' : 'bg-ink/10 hover:bg-ink/20'}`}
                         />
                       ))}
                     </div>
                     <button type="button" className={step} aria-label="多开一盏" disabled={lampsOn === r.lampsTotal} onClick={() => onSetLamps(space.id, lampsOn + 1)}>+</button>
                   </div>
-                  <p className="mt-2 text-[11px] text-dust">{lampsOn} / {r.lampsTotal} 盏 × {LIGHTING.lampWatts} W，按额定功率模拟，不是电表读数。</p>
+                  <p className="mt-2 text-[11px] text-dust">
+                    {lampsOn} / {r.lampsTotal} 盏 × {LIGHTING.lampWatts} W，按额定功率模拟，不是电表读数。
+                    {lampsEstimated && space.id !== 'A114' && '这间的灯数是按面积估算的（参照已调查教室的灯具密度），未实地统计。'}
+                    {lampsEstimated && space.id === 'A114' && '24 盏为此前统计的灯数，单灯功率未确认，暂按 40 W 计。'}
+                  </p>
                 </section>
               );
             })()}

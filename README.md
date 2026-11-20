@@ -21,7 +21,7 @@ See [`docs/CAMPUS_3D_MODEL.md`](docs/CAMPUS_3D_MODEL.md).
 
 ## Energy (能耗)
 
-Top bar → 能耗 opens a live view of classroom lighting power and cost. It covers 30 classrooms × 12 lamps × 40 W at ¥0.5003/kWh. You can switch lights off per room or all at once, and the map's energy layer shows which rooms are lit. Figures are a simulation from rated power, not meter readings. See [`docs/ENERGY.md`](docs/ENERGY.md).
+Top bar → 能耗 opens a live view of lighting power and cost at ¥0.5003/kWh, with the map at night. It covers the 30 surveyed classrooms (12 lamps × 40 W each) and every other room people work in, whose lamp counts are estimated from floor area. You can switch lights off per room or all at once, and the map's energy layer shows which rooms are lit. Figures are a simulation from rated power, not meter readings. See [`docs/ENERGY.md`](docs/ENERGY.md).
 
 ## Routes (路线)
 

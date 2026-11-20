@@ -54,7 +54,7 @@ export interface EnvironmentalReading {
 
 export interface CampusSpace {
   /** Classroom lighting switchboard state (energy panel simulation). */
-  lighting?: { lampsOn: number; lampsTotal: number };
+  lighting?: { lampsOn: number; lampsTotal: number; estimated?: boolean };
   id: string; // e.g. "M104", "S404", "A114", "ARENA-01"
   name: string; // e.g. "一小步空间", "绝对安静自习室", "餐厅"
   englishName?: string;

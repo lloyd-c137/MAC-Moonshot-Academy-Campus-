@@ -1,6 +1,6 @@
 # Energy panel (能耗)
 
-The energy panel shows how much electricity the classroom lighting uses, live, and lets you switch lights off to see the effect.
+The energy panel shows how much electricity the campus lighting uses, live, and lets you switch lights off to see the effect. It covers the 30 surveyed classrooms and every other room people work in (105 rooms, 47.3 kW at full load).
 
 ![Energy panel](evidence/energy/energy-panel-1536x864.png)
 
@@ -43,6 +43,16 @@ From the Lighting Audit Dataset:
 | Lamp power | 40 W | Rated power, confirmed by a teacher |
 | Tariff | ¥0.5003 / kWh | Tariff used in earlier calculations; bill evidence still to be kept |
 | Classrooms | 30: M 16, A 11, primary 2 (A101, A102), middle school 1 (A223) | Floor-plan count; configuration not checked room by room |
+
+**Rooms other than the 30 classrooms** have no survey yet. They are estimated and labelled 估算:
+- Rooms covered: labs, studios, 书院 and other teaching rooms, libraries and study rooms, offices and meeting rooms, halls, dining, nurse station. Restrooms, stairs, plant and store rooms, entrance halls and the open courtyards have no lights in the model.
+- Lamp count = floor area (the area printed on FF-01) × the surveyed classrooms' lamp density. That density is 12 lamps over their median area, about one lamp per 5.9 m². At least one lamp per room.
+- Power: 40 W per lamp, the same as the classrooms.
+- The cafeteria (A114) uses the 24 linear fittings counted earlier (labelled 已统计). Their power is unconfirmed and taken as 40 W.
+
+Result: 75 estimated rooms with 822 lamps (32.9 kW), plus the 30 classrooms with 360 lamps (14.4 kW). That is 47.3 kW at full load, about ¥23.65 per hour. The panel shows the classroom subtotal separately. The rooms are grouped by type, and each group has its own 本组关灯 / 本组开灯.
+
+![All rooms at night](evidence/energy/energy-all-rooms-1536x864.png)
 
 The 30 classrooms are those named 教室 / 综合教室 / 小学教室 / 初中教室 on FF-01 (`CLASSROOM_IDS` in `src/services/energyModel.ts`).
 
