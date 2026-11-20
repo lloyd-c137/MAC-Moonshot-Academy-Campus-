@@ -215,7 +215,7 @@ function CampusApp() {
   }, [findOpen, momentSpaceId, leftPanel, pickField, closeRoute, guiding, guideStep, goToStep]);
 
   return (
-    <main className="relative h-dvh w-screen overflow-hidden bg-regolith text-ink">
+    <main className={`relative h-dvh w-screen overflow-hidden text-ink transition-colors duration-700 ${energyOpen ? 'night bg-[#0a0f1c]' : 'bg-regolith'}`}>
       <h1 className="sr-only">Moonshot Academy Campus 校园地图</h1>
 
       <div className="absolute inset-0">
@@ -229,6 +229,7 @@ function CampusApp() {
           routeStep={guiding ? guideStep : null}
           routeFrameNonce={routeFrameNonce}
           guiding={guiding}
+          night={energyOpen}
           routeOverview={guiding && guidePeek}
           reviewMode={leftPanel === 'review'}
           showNavGraph={false}

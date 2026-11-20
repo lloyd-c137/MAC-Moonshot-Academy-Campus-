@@ -9,6 +9,16 @@ The energy panel shows how much electricity the classroom lighting uses, live, a
 - **Top bar → 能耗**, or **能耗** in the layer rail. Both open the panel and switch the map to the energy layer. Classrooms with all lamps on are warm yellow, partly lit ones pale yellow, and dark ones grey.
 - **Room sheet → 照明能耗** (the 30 classrooms only). It shows power, kWh per hour and cost per hour. Turn the room off or on with the switch. Set the number of lamps with − / + or by tapping the 12 lamp cells.
 
+## Night view
+
+While the panel is open the map turns to night, so lit rooms stand out:
+- The sky fill dims to moonlight, the sun almost goes out, and the background becomes a dark night sky.
+- Wall sides lose their daytime glow.
+- A lit classroom's floor glows warm, and its volume fills with soft additive light. Both scale with the share of lamps on, so a room at 6 / 12 glows half as bright and a room switched off goes dark.
+- Everything eases over about half a second and returns to day when the panel closes. With reduced motion the change is instant.
+
+![Night view](evidence/energy/energy-night-1536x864.png)
+
 ## What the panel shows
 
 | Figure | Meaning |

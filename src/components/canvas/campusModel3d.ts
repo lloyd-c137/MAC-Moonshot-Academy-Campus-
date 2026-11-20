@@ -173,6 +173,14 @@ export interface CampusScene {
   setWallHeight: (fraction: number) => void;
   /** True while walls are changing height (the shadow map must follow). */
   readonly wallsMoving: boolean;
+  /** Night view (energy panel): 0 = day, 1 = night. Animated; read `nightLevel` for the current value. */
+  setNight: (on: boolean) => void;
+  readonly nightLevel: number;
+  /**
+   * Lit rooms at night: 0..1 per room (share of lamps on), or null for rooms without lighting data.
+   * A lit room's floor glows warm and its volume fills with soft light, scaled by the night level.
+   */
+  setRoomGlow: (glowFor: (room: CampusModelRoom) => number | null) => void;
   /** Advances colour transitions; returns true while something is still animating. */
   tick: (dtMs: number) => boolean;
   dispose: () => void;
@@ -285,6 +293,11 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
   let hovered: string | null = null;
   let wallScale = 1;
   let wallTarget = 1;
+  let nightLevel = 0;
+  let nightTarget = 0;
+  const glowTarget = new Map<string, number>();
+  const glowNow = new Map<string, number>();
+  const glowVolumes = new Map<string, THREE.Mesh>();
   const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const flare = new THREE.Color(COLORS.selected);
   const hoverTint = new THREE.Color(COLORS.hovered);
@@ -318,6 +331,43 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
     }
   };
 
+  // Night: walls lose their daytime glow; lit rooms glow warm.
+  const WALL_DAY = new THREE.Color(0x4a463f);
+  const WALL_NIGHT = new THREE.Color(0x07090f);
+  const LAMP = new THREE.Color(0xffb53d);
+  const wallSide = (walls.material as THREE.MeshLambertMaterial[])[1];
+  const glowVolume = (id: string) => {
+    let mesh = glowVolumes.get(id);
+    const room = roomById.get(id);
+    if (!mesh && room?.polygon) {
+      mesh = new THREE.Mesh(
+        extrude(room.polygon, H * 0.96, 0.03),
+        new THREE.MeshBasicMaterial({ color: LAMP, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }),
+      );
+      mesh.renderOrder = 4;
+      mesh.visible = false;
+      mesh.raycast = () => {}; // not pickable: clicks reach the room floor
+      root.add(mesh);
+      glowVolumes.set(id, mesh);
+    }
+    return mesh;
+  };
+  const applyNight = () => {
+    wallSide.emissive.copy(WALL_DAY).lerp(WALL_NIGHT, nightLevel);
+    for (const [id, mesh] of roomMeshes) {
+      const g = glowNow.get(id) ?? 0;
+      const material = mesh.material as THREE.MeshLambertMaterial;
+      material.emissive.copy(LAMP).multiplyScalar(g * nightLevel * 0.85);
+      const volume = glowVolumes.get(id);
+      if (volume) {
+        const opacity = 0.2 * g * nightLevel;
+        (volume.material as THREE.MeshBasicMaterial).opacity = opacity;
+        volume.visible = opacity > 0.002;
+        volume.scale.y = wallScale;
+      }
+    }
+  };
+
   return {
     root,
     roomMeshes,
@@ -340,8 +390,40 @@ export function buildCampusScene(model: CampusModelData): CampusScene {
     get wallsMoving() {
       return wallScale !== wallTarget;
     },
+    setNight(on) {
+      nightTarget = on ? 1 : 0;
+      if (reduceMotion) { nightLevel = nightTarget; applyNight(); }
+    },
+    get nightLevel() {
+      return nightLevel;
+    },
+    setRoomGlow(glowFor) {
+      for (const [id, room] of roomById) {
+        const g = glowFor(room);
+        if (g === null) { glowTarget.delete(id); continue; }
+        glowTarget.set(id, THREE.MathUtils.clamp(g, 0, 1));
+        glowVolume(id);
+      }
+      for (const id of glowNow.keys()) if (!glowTarget.has(id)) glowTarget.set(id, 0);
+      if (reduceMotion) { for (const [id, g] of glowTarget) glowNow.set(id, g); applyNight(); }
+    },
     tick(dtMs) {
       let moving = false;
+      // Night level and room glow ease towards their targets.
+      let nightChanged = false;
+      if (nightLevel !== nightTarget) {
+        nightLevel += (nightTarget - nightLevel) * (1 - Math.exp(-dtMs / 240));
+        if (Math.abs(nightTarget - nightLevel) < 0.003) nightLevel = nightTarget;
+        nightChanged = true;
+      }
+      for (const [id, target] of glowTarget) {
+        const now = glowNow.get(id) ?? 0;
+        if (now === target) continue;
+        const next = now + (target - now) * (1 - Math.exp(-dtMs / 160));
+        glowNow.set(id, Math.abs(target - next) < 0.003 ? target : next);
+        nightChanged = true;
+      }
+      if (nightChanged || wallScale !== wallTarget) { applyNight(); moving = moving || nightChanged; }
       if (wallScale !== wallTarget) {
         wallScale += (wallTarget - wallScale) * (1 - Math.exp(-dtMs / 110));
         if (Math.abs(wallTarget - wallScale) < 0.004) wallScale = wallTarget;

@@ -27,6 +27,8 @@ interface CampusCanvasProps {
   guiding?: boolean;
   /** While guiding, frame the whole route instead of the current leg. */
   routeOverview?: boolean;
+  /** Night view: dark sky, lit classrooms glow (energy panel). */
+  night?: boolean;
   reviewMode: boolean;
   showNavGraph: boolean;
   showGrid: boolean;
@@ -108,6 +110,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
   routeFrameNonce = 0,
   guiding = false,
   routeOverview = false,
+  night = false,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<CampusCameraController | null>(null);
@@ -241,10 +244,20 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     invalidateRef.current();
   }, [selectedSpaceId, hoveredSpaceId, modelVersion]);
 
+  // Night view.
+  useEffect(() => {
+    sceneRef.current?.setNight(night);
+    invalidateRef.current();
+  }, [night, modelVersion]);
+
   // Layer colouring.
   useEffect(() => {
     const byId = spaces ? new Map(spaces.map((sp) => [sp.id, sp])) : STATIC_SPACES;
     sceneRef.current?.setRoomColors((room) => roomColor(room, layerMode, byId));
+    sceneRef.current?.setRoomGlow((room) => {
+      const l = byId.get(room.id)?.lighting;
+      return l ? l.lampsOn / l.lampsTotal : null;
+    });
     sceneRef.current?.setDetailVisible(layerMode === 'explore' || layerMode === 'spaces');
     invalidateRef.current();
   }, [layerMode, modelVersion, spaces]);
@@ -341,8 +354,22 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
     let viewH = height;
 
     // Lighting: soft sky fill + a low warm sun for wall shadows.
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xd9dee4, 1.95));
+    const hemi = new THREE.HemisphereLight(0xffffff, 0xd9dee4, 1.95);
+    scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xfff6ec, 0.95);
+    // Day → night (energy panel): sky fill turns to dim moonlight, the sun almost goes out.
+    const DAY = { sky: new THREE.Color(0xffffff), ground: new THREE.Color(0xd9dee4), hemi: 1.95, sunColor: new THREE.Color(0xfff6ec), sun: 0.95 };
+    const NIGHT = { sky: new THREE.Color(0x8296c4), ground: new THREE.Color(0x0e1320), hemi: 0.5, sunColor: new THREE.Color(0xa8b9e8), sun: 0.1 };
+    let appliedNight = -1;
+    const applySky = (level: number) => {
+      if (level === appliedNight) return;
+      appliedNight = level;
+      hemi.color.copy(DAY.sky).lerp(NIGHT.sky, level);
+      hemi.groundColor.copy(DAY.ground).lerp(NIGHT.ground, level);
+      hemi.intensity = THREE.MathUtils.lerp(DAY.hemi, NIGHT.hemi, level);
+      sun.color.copy(DAY.sunColor).lerp(NIGHT.sunColor, level);
+      sun.intensity = THREE.MathUtils.lerp(DAY.sun, NIGHT.sun, level);
+    };
     sun.position.set(-34, 130, -24);
     sun.castShadow = true;
     sun.shadow.mapSize.set(3072, 3072);
@@ -551,6 +578,7 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
       const wallsWereMoving = sceneRef.current?.wallsMoving ?? false;
       const fading = sceneRef.current?.tick(Math.min(64, now - lastFrame)) ?? false;
       if (wallsWereMoving) sun.shadow.needsUpdate = true; // shadows follow the wall height
+      applySky(sceneRef.current?.nightLevel ?? 0);
       lastFrame = now;
       if (fading) needsRender = true;
       if (needsRender) {
@@ -616,6 +644,11 @@ export const CampusCanvas: React.FC<CampusCanvasProps> = ({
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[radial-gradient(ellipse_75%_70%_at_50%_46%,#f3f5f8_0%,#e3e7eb_58%,#cfd6de_100%)]">
+      {/* Night sky: fades in over the day gradient (energy panel). */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_70%_at_50%_46%,#1a2236_0%,#0d1322_60%,#060912_100%)] transition-opacity duration-700 ${night ? 'opacity-100' : 'opacity-0'}`}
+      />
       <div ref={mountRef} className="relative isolate h-full w-full" />
 
       {modelState === 'error' && (
