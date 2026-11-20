@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Navigation, Search, Sparkles, X } from 'lucide-react';
+import { CalendarDays, Navigation, Search, Sparkles, X, Zap } from 'lucide-react';
 import type { CampusEvent, CampusSpace } from '../../types/campus';
 import { displayCode, displayName } from './format';
 
@@ -10,6 +10,8 @@ interface TopNavProps {
   onOpenFindSpot: () => void;
   onOpenRoute?: () => void;
   routeOpen?: boolean;
+  onOpenEnergy?: () => void;
+  energyOpen?: boolean;
 }
 
 type Result =
@@ -55,7 +57,7 @@ function search(query: string, spaces: CampusSpace[], events: CampusEvent[]): Re
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
-  spaces, events, onSelectSpace, onOpenFindSpot, onOpenRoute, routeOpen = false,
+  spaces, events, onSelectSpace, onOpenFindSpot, onOpenRoute, routeOpen = false, onOpenEnergy, energyOpen = false,
 }) => {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -168,6 +170,16 @@ export const TopNav: React.FC<TopNavProps> = ({
 
       {/* Actions */}
       <div className="pointer-events-auto flex shrink-0 items-center gap-2">
+        {onOpenEnergy && (
+          <button
+            onClick={onOpenEnergy}
+            aria-pressed={energyOpen}
+            className={`${capsuleButton} glass max-sm:w-11 max-sm:justify-center max-sm:px-0 ${energyOpen ? 'text-[#c98a00]' : 'text-ink-soft hover:text-ink'}`}
+          >
+            <Zap className={`h-4 w-4 ${energyOpen ? 'fill-[#f5b623] text-[#f5b623]' : ''}`} />
+            <span className="max-sm:sr-only">能耗</span>
+          </button>
+        )}
         {onOpenRoute && (
           <button
             onClick={onOpenRoute}

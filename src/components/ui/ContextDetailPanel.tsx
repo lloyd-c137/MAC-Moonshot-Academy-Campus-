@@ -3,6 +3,8 @@ import { ChevronDown, ExternalLink, Heart, LocateFixed, Navigation, PenLine, Ref
 import type { CampusEvent, CampusMoment, CampusSpace, EnvironmentalReading } from '../../types/campus';
 import { displayCode, displayName, formatTime as time } from './format';
 import { RoomScheduleSection } from '../../features/tab/RoomScheduleSection';
+import { LIGHTING, roomFigures } from '../../services/energyModel';
+import { LightSwitch } from './EnergyPanel';
 
 export type DetailTab = 'overview' | 'events' | 'memories';
 
@@ -22,6 +24,9 @@ interface ContextDetailPanelProps {
   /** Open the route panel with this room as the destination / the start. */
   onRouteTo?: (spaceId: string) => void;
   onRouteFrom?: (spaceId: string) => void;
+  /** Classroom lighting (energy panel simulation): lamps on, and a setter. */
+  lampsOn?: number;
+  onSetLamps?: (spaceId: string, lamps: number) => void;
 }
 
 const CATEGORY_LABEL: Partial<Record<CampusSpace['category'], string>> = {
@@ -152,7 +157,7 @@ const Trend: React.FC<{ data: number[]; times?: number[]; color: string; label: 
 };
 
 export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
-  space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare, onRefreshEnvironment, refreshingEnvironment = false, onRouteTo, onRouteFrom,
+  space, events, moments, onClose, onOpenAddMoment, onLikeMoment, likedIds, tabRequest, onShare, onRefreshEnvironment, refreshingEnvironment = false, onRouteTo, onRouteFrom, lampsOn, onSetLamps,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -294,6 +299,52 @@ export const ContextDetailPanel: React.FC<ContextDetailPanelProps> = ({
                 </p>
               )}
             </section>
+
+            {lampsOn !== undefined && onSetLamps && (() => {
+              const r = roomFigures(lampsOn);
+              const step = 'grid h-8 w-8 place-items-center rounded-full border hairline bg-white text-[15px] font-semibold text-ink hover:border-ink/25 disabled:opacity-35';
+              return (
+                <section aria-labelledby="sheet-energy" className="mt-9">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 id="sheet-energy" className="text-[13px] font-semibold text-ink">照明能耗</h3>
+                    <span className="flex items-center gap-2 text-[12px] text-crater">
+                      {lampsOn > 0 ? '灯开着' : '已关灯'}
+                      <LightSwitch size="md" on={lampsOn > 0} label={lampsOn > 0 ? '关灯' : '开灯'} onChange={(v) => onSetLamps(space.id, v ? LIGHTING.lampsPerRoom : 0)} />
+                    </span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-5">
+                    {[
+                      ['功率', r.watts.toLocaleString('zh-CN'), 'W'],
+                      ['每小时耗电', r.kwhPerHour.toFixed(2), 'kWh'],
+                      ['每小时电费', `¥${r.costPerHour.toFixed(3)}`, ''],
+                    ].map(([label, value, unit]) => (
+                      <div key={label} className="min-w-0">
+                        <div className="text-[12px] text-crater">{label}</div>
+                        <div className="mt-1.5 whitespace-nowrap text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink">
+                          {value}{unit && <span className="ml-0.5 text-[11px] font-medium tracking-normal text-crater">{unit}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <button type="button" className={step} aria-label="少开一盏" disabled={lampsOn === 0} onClick={() => onSetLamps(space.id, lampsOn - 1)}>−</button>
+                    <div className="flex flex-1 gap-1" aria-label={`${lampsOn} / ${r.lampsTotal} 盏灯开着`}>
+                      {Array.from({ length: r.lampsTotal }, (_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          aria-label={`开 ${i + 1} 盏`}
+                          onClick={() => onSetLamps(space.id, i + 1 === lampsOn ? i : i + 1)}
+                          className={`h-5 flex-1 rounded-[4px] transition-colors ${i < lampsOn ? 'bg-[#f5b623]' : 'bg-ink/10 hover:bg-ink/20'}`}
+                        />
+                      ))}
+                    </div>
+                    <button type="button" className={step} aria-label="多开一盏" disabled={lampsOn === r.lampsTotal} onClick={() => onSetLamps(space.id, lampsOn + 1)}>+</button>
+                  </div>
+                  <p className="mt-2 text-[11px] text-dust">{lampsOn} / {r.lampsTotal} 盏 × {LIGHTING.lampWatts} W，按额定功率模拟，不是电表读数。</p>
+                </section>
+              );
+            })()}
 
             <section ref={eventsRef} aria-labelledby="sheet-events" className="mt-10 scroll-mt-4">
               <h3 id="sheet-events" className="text-[13px] font-semibold text-ink">活动{spaceEvents.length > 0 && <span className="ml-1.5 font-normal text-dust">{spaceEvents.length}</span>}</h3>

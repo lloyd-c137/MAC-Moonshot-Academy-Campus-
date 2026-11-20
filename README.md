@@ -19,6 +19,10 @@ npm run validate:campus-3d
 
 See [`docs/CAMPUS_3D_MODEL.md`](docs/CAMPUS_3D_MODEL.md).
 
+## Energy (能耗)
+
+Top bar → 能耗 opens a live view of classroom lighting power and cost. It covers 30 classrooms × 12 lamps × 40 W at ¥0.5003/kWh. You can switch lights off per room or all at once, and the map's energy layer shows which rooms are lit. Figures are a simulation from rated power, not meter readings. See [`docs/ENERGY.md`](docs/ENERGY.md).
+
 ## Routes (路线)
 
 Pick a start and a destination (top bar 路线, or 到这里去 / 从这里出发 in a room sheet, or click rooms on the map) and the map draws the walking route with distance, walking time and turn-by-turn directions. Routes are found with A* on a 0.2 m walking grid derived from the 3D wall, glazing and footprint geometry; links like `/?from=ENTRANCE-WEST&to=A106` open a route directly. Routes are estimates from the drawing: 9 door openings are inferred from the door layer, and doors are not verified as open. One floor only (FF-01).

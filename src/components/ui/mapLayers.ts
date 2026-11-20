@@ -1,4 +1,4 @@
-import { Activity, CalendarDays, Compass, LayoutGrid, Thermometer } from 'lucide-react';
+import { Activity, CalendarDays, Compass, LayoutGrid, Thermometer, Zap } from 'lucide-react';
 import type { CampusEvent, CampusSpace, MapLayerMode } from '../../types/campus';
 
 export interface LegendStop { color: string; label: string }
@@ -10,6 +10,7 @@ export const LAYER_GROUPS = [
   { id: 'environment', label: '环境', hint: '温度、湿度、CO₂', icon: Thermometer, modes: ['temperature', 'humidity', 'co2'] },
   { id: 'pulse', label: '人流', hint: '当前未接入实时人流数据', icon: Activity, modes: ['pulse'] },
   { id: 'events', label: '活动', hint: '正在和即将发生', icon: CalendarDays, modes: ['events'] },
+  { id: 'energy', label: '能耗', hint: '教室照明耗电与电费', icon: Zap, modes: ['energy'] },
 ] as const satisfies ReadonlyArray<{ id: string; label: string; hint: string; icon: unknown; modes: readonly MapLayerMode[] }>;
 
 export const ENVIRONMENT_METRICS: Array<{ mode: MapLayerMode; label: string; unit: string }> = [
@@ -65,6 +66,14 @@ export const LAYER_LEGENDS: Partial<Record<MapLayerMode, { title: string; stops:
       { color: '#ef9b86', label: '拥挤' },
     ],
   },
+  energy: {
+    title: '教室照明',
+    stops: [
+      { color: '#ffc94d', label: '灯全开' },
+      { color: '#ffe6a3', label: '部分开灯' },
+      { color: '#b9c3cf', label: '已关灯' },
+    ],
+  },
   events: {
     title: '活动',
     stops: [
@@ -97,6 +106,12 @@ export function layerColor(mode: MapLayerMode, space: CampusSpace | undefined, e
       if (roomEvents.some((event) => event.status === 'happening_now')) return hex(legend!.stops[0].color);
       if (roomEvents.some((event) => event.status === 'upcoming')) return hex(legend!.stops[1].color);
       return null;
+    }
+    case 'energy': {
+      const l = space?.lighting;
+      if (!l) return null;
+      const stop = l.lampsOn === 0 ? 2 : l.lampsOn < l.lampsTotal ? 1 : 0;
+      return hex(legend!.stops[stop].color);
     }
     default:
       return null;

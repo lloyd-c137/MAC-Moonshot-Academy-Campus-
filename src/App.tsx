@@ -1,5 +1,7 @@
 import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TopNav } from './components/ui/TopNav';
+import { EnergyPanel } from './components/ui/EnergyPanel';
+import { isLitClassroom, LIGHTING, useLighting } from './services/energyModel';
 import { LayerRail } from './components/ui/LayerRail';
 import { ContextDetailPanel, type DetailTab } from './components/ui/ContextDetailPanel';
 import { BottomDiscoverDock } from './components/ui/BottomDiscoverDock';
@@ -33,7 +35,7 @@ import { displayName } from './components/ui/format';
 import { dismissBootSplash } from './bootSplash';
 import type { CampusMoment, MapLayerMode } from './types/campus';
 
-type LeftPanel = 'none' | 'review' | 'route';
+type LeftPanel = 'none' | 'review' | 'route' | 'energy';
 const VALID_IDS = new Set(CAMPUS_SPACES.map((s) => s.id));
 
 const idFromUrl = (key: string) => {
@@ -46,7 +48,10 @@ function CampusApp() {
   const toast = useToast();
   const { config, ready } = useCampusConfig();
   const { readings: live, refreshing: refreshingSensors, refresh: refreshSensors } = useLiveSensors(config, ready);
-  const spaces = useMemo(() => buildSpaces(CAMPUS_SPACES, config, live), [config, live]);
+  const lighting = useLighting();
+  const spaces = useMemo(() => buildSpaces(CAMPUS_SPACES, config, live).map((s) => (
+    isLitClassroom(s.id) ? { ...s, lighting: { lampsOn: lighting.state[s.id] ?? LIGHTING.lampsPerRoom, lampsTotal: LIGHTING.lampsPerRoom } } : s
+  )), [config, live, lighting.state]);
 
   const [layerMode, setLayerMode] = useState<MapLayerMode>('explore');
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(roomFromUrl);
@@ -108,6 +113,22 @@ function CampusApp() {
     else { setRouteFrom(id); setPickField(routeTo && routeTo !== id ? null : 'to'); if (routeTo === id) setRouteTo(null); }
   }, [routeFrom, routeTo]);
   const closeRoute = useCallback(() => { setLeftPanel('none'); setPickField(null); }, []);
+
+  // 能耗: the energy panel goes with the energy map layer; closing it restores the previous layer.
+  const energyOpen = leftPanel === 'energy';
+  const layerBeforeEnergy = useRef<MapLayerMode>('explore');
+  const openEnergy = useCallback(() => {
+    setLayerMode((mode) => { if (mode !== 'energy') layerBeforeEnergy.current = mode; return 'energy'; });
+    setLeftPanel('energy');
+  }, []);
+  useEffect(() => {
+    if (!energyOpen) setLayerMode((mode) => (mode === 'energy' ? layerBeforeEnergy.current : mode));
+  }, [energyOpen]);
+  const changeLayer = useCallback((mode: MapLayerMode) => {
+    if (mode === 'energy') { openEnergy(); return; }
+    setLayerMode(mode);
+    setLeftPanel((panel) => (panel === 'energy' ? 'none' : panel));
+  }, [openEnergy]);
 
   // While an end of the route is being picked, a click on the map fills it instead of opening the room.
   const selectSpace = useCallback((id: string | null) => {
@@ -230,9 +251,11 @@ function CampusApp() {
         onOpenFindSpot={() => setFindOpen(true)}
         onOpenRoute={() => { setLeftPanel('route'); if (!routeFrom) setPickField('from'); else if (!routeTo) setPickField('to'); }}
         routeOpen={routeOpen}
+        onOpenEnergy={() => (energyOpen ? setLeftPanel('none') : openEnergy())}
+        energyOpen={energyOpen}
       />
 
-      <LayerRail layerMode={layerMode} onLayerChange={setLayerMode} hideLegend={leftPanel !== 'none'} liveRoomIds={Object.entries(live).filter(([, r]) => r.latest).map(([id]) => id)} />
+      <LayerRail layerMode={layerMode} onLayerChange={changeLayer} hideLegend={leftPanel !== 'none'} liveRoomIds={Object.entries(live).filter(([, r]) => r.latest).map(([id]) => id)} />
 
       <GeometryReviewDrawer
         isOpen={leftPanel === 'review'}
@@ -279,6 +302,17 @@ function CampusApp() {
         onClose={closeRoute}
       />
 
+      {!guiding && (
+        <EnergyPanel
+          isOpen={energyOpen}
+          spaces={spaces}
+          lighting={lighting}
+          selectedSpaceId={selectedSpaceId}
+          onSelectSpace={(id) => setSelectedSpaceId(id)}
+          onClose={() => setLeftPanel('none')}
+        />
+      )}
+
       <ContextDetailPanel
         space={selectedSpace}
         events={CAMPUS_EVENTS}
@@ -291,6 +325,8 @@ function CampusApp() {
         onShare={shareSpace}
         onRouteTo={(id) => openRoute('to', id)}
         onRouteFrom={(id) => openRoute('from', id)}
+        lampsOn={selectedSpace?.lighting?.lampsOn}
+        onSetLamps={lighting.setLamps}
         onRefreshEnvironment={selectedSpaceId && live[selectedSpaceId] ? refreshEnvironment : undefined}
         refreshingEnvironment={selectedSpaceId ? refreshingSensors.has(selectedSpaceId) : false}
       />

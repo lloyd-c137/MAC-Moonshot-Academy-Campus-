@@ -53,6 +53,8 @@ export interface EnvironmentalReading {
 }
 
 export interface CampusSpace {
+  /** Classroom lighting switchboard state (energy panel simulation). */
+  lighting?: { lampsOn: number; lampsTotal: number };
   id: string; // e.g. "M104", "S404", "A114", "ARENA-01"
   name: string; // e.g. "一小步空间", "绝对安静自习室", "餐厅"
   englishName?: string;
@@ -130,4 +132,4 @@ export interface NavigationRoute {
   steps: string[];
 }
 
-export type MapLayerMode = 'explore' | 'spaces' | 'temperature' | 'humidity' | 'co2' | 'pulse' | 'events';
+export type MapLayerMode = 'explore' | 'spaces' | 'temperature' | 'humidity' | 'co2' | 'pulse' | 'events' | 'energy';
