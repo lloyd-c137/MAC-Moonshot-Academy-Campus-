@@ -91,7 +91,7 @@ export const EnergyPanel: React.FC<EnergyPanelProps> = ({ isOpen, spaces, lighti
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Tile label="每秒耗电" value={n2.format(f.whPerSecond)} unit="Wh" note={`${n0.format(f.watts)} 焦耳/秒`} />
+          <Tile label="每秒耗电" value={n2.format(f.whPerSecond)} unit="Wh" note={`即 ${n0.format(f.watts)} 焦耳`} />
           <Tile label="每小时耗电" value={n2.format(f.kwhPerHour)} unit="kWh" />
           <Tile label="每小时电费" value={yuan(f.costPerHour)} note={`电价 ¥${LIGHTING.pricePerKwh}/kWh`} />
           <Tile label="比全开每小时省" value={yuan(f.savedCostPerHour)} note={`${n2.format(f.savedKwhPerHour)} kWh`} tone="save" />

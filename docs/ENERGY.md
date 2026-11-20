@@ -14,7 +14,7 @@ The energy panel shows how much electricity the classroom lighting uses, live, a
 | Figure | Meaning |
 |---|---|
 | 当前照明功率 | Lamps on × 40 W, over the 30 classrooms (full load 14,400 W) |
-| 每秒耗电 | Power ÷ 3600, in Wh (also shown in joules per second) |
+| 每秒耗电 | Energy used each second: power × 1 s, in Wh (also shown in joules) |
 | 每小时耗电 / 每小时电费 | kWh per hour at the current power, × ¥0.5003/kWh |
 | 比全开每小时省 | Saving against every lamp on |
 | 打开面板以来 | Energy, cost and saving accumulated since the panel opened. It integrates the power as it changes and updates five times a second. |
